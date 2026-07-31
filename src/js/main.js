@@ -24,6 +24,7 @@
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
     cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
+    hardWrap: false,
   };
 
   const TEMPLATES = {
@@ -249,7 +250,7 @@ Name the risk, its impact, and the mitigation you propose.
     },
     letter: {
       label: "Formal letter",
-      patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, title: "Letter", subtitle: "" },
+      patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, title: "Letter", subtitle: "" },
       source: `**Your Name**
 Your address line
 City, PIN
@@ -319,11 +320,11 @@ Start writing here.
   let autosaveTimer = null;
   let zoomMode = "fit", zoomVal = 1;
   let imgMode = null; // {type:'insert'} | {type:'attach', idx}
-  let preprintZoom = null;
+  let preprintZoom = null, appTitle = null;
 
   const editor = $("#editor");
   const scaleWrap = $("#scaleWrap");
-  const DOC_CSS = window.__DOC_CSS__ || "";
+  const DOC_CSS = Engine.fontFaceCss() + (window.__DOC_CSS__ || "");
 
   /* ---------------- toast & confirm ---------------- */
   function toast(msg, type) {
@@ -344,6 +345,118 @@ Start writing here.
       $("#cfNo").onclick = () => done(false);
     });
   }
+
+  /* ---------------- repeat table headers across page breaks ----------------
+     Paged.js fragments a table by shallow-cloning the ancestor chain
+     table > tbody > tr (rebuildAncestors) and never carries the <thead> over,
+     so each continuation page holds a headerless <table>. Every rebuilt
+     ancestor is stamped data-split-from, which is the marker we key off.
+
+     This runs in the `renderNode` hook, NOT afterPageLayout: renderNode fires
+     while the page is still being filled, so the injected header's height is
+     seen by findBreakToken and the last row spills to the next page instead of
+     being clipped. Cloning the real <thead> (rather than faking a row) is also
+     what restores the accent top/bottom rules, which doc.css declares on `th`. */
+  class RepeatTableHeader extends Paged.Handler {
+    renderNode(clone, node) {
+      const el = clone && (clone.nodeType === 1 ? clone : clone.parentElement);
+      if (!el || !el.closest) return;
+      const destTable = el.closest("table[data-split-from]");
+      if (!destTable) return;
+      if (destTable.querySelector(":scope > thead")) return; // first fragment / already done
+      const srcEl = node && (node.nodeType === 1 ? node : node.parentElement);
+      const srcTable = srcEl && srcEl.closest && srcEl.closest("table");
+      const srcHead = srcTable && srcTable.querySelector(":scope > thead");
+      if (!srcHead || !srcHead.childElementCount) return;
+      const head = srcHead.cloneNode(true);
+      head.removeAttribute("data-ref");                       // keep Paged.js' data-ref
+      head.querySelectorAll("[data-ref]").forEach(n => n.removeAttribute("data-ref"));
+      head.querySelectorAll("[id]").forEach(n => n.removeAttribute("id"));
+      head.setAttribute("data-repeated-header", "");
+      destTable.insertBefore(head, destTable.firstChild);
+    }
+  }
+  Paged.registerHandlers(RepeatTableHeader);
+
+  /* ---------------- folios ----------------
+     Front matter (cover, contents) and the body run on two different sequences, and the
+     body's "of N" must count body pages only. No CSS page counter can express either, so
+     the folio text is written per page here and picked up by
+     `@bottom-center { content: var(--df-foot) }` in Engine.dynamicCss(). */
+  const ROMAN = [[10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+  function roman(n) {
+    let out = "";
+    for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
+    return out;
+  }
+
+  class PageNumbering extends Paged.Handler {
+    afterRendered(pages) {
+      const els = [...pages].map(p => p.element || p).filter(el => el && el.classList);
+      const kindOf = el =>
+        el.classList.contains("pagedjs_cover_page") ? "cover" :
+        el.classList.contains("pagedjs_front_page") ? "front" : "body";
+      const kinds = els.map(kindOf);
+      const bodyTotal = kinds.filter(k => k === "body").length;
+
+      const folio = new Map(); // page element → the number the reader actually sees on it
+      let f = 0, b = 0;
+      els.forEach((el, i) => {
+        let num = "", txt = "";
+        if (kinds[i] === "front") { num = roman(++f); txt = num; }
+        else if (kinds[i] === "body") { num = String(++b); txt = `Page ${num} of ${bodyTotal}`; }
+        folio.set(el, num);
+        // A quoted string, because it lands in a CSS `content:` value.
+        el.style.setProperty("--df-foot", JSON.stringify(txt));
+      });
+
+      // Contents entries must quote that same folio, not the absolute sheet number —
+      // otherwise the contents page and the printed footer disagree.
+      const esc = s => (window.CSS && CSS.escape ? CSS.escape(s) : s.replace(/"/g, '\\"'));
+      els.forEach(el => el.querySelectorAll('.toc a[href^="#"]').forEach(a => {
+        const id = a.getAttribute("href").slice(1);
+        const host = els.find(pe => pe.querySelector(`#${esc(id)}`));
+        a.style.setProperty("--df-tocnum", JSON.stringify(host ? folio.get(host) || "" : ""));
+      }));
+    }
+  }
+  Paged.registerHandlers(PageNumbering);
+
+  /* ---------------- footnote hardening ----------------
+     pagedjs 0.4.3's footnote module has two defects. A note that is placed and then
+     removed (because its call was pushed off the page) leaves --pagedjs-footnotes-height
+     reserved, so the page keeps an empty strip — measured at up to 608px. And its
+     margin/border maths runs parseInt over fractional computed values, leaving the area
+     about a pixel short and clipping the descenders of the last line. */
+  class FootnoteFix extends Paged.Handler {
+    afterPageLayout(pageElement) {
+      const area = pageElement.querySelector(".pagedjs_area");
+      const cont = pageElement.querySelector(".pagedjs_footnote_content");
+      const inner = pageElement.querySelector(".pagedjs_footnote_inner_content");
+      if (!area || !cont || !inner) return;
+
+      const reserved = parseFloat(area.style.getPropertyValue("--pagedjs-footnotes-height")) || 0;
+      const notes = inner.querySelectorAll("[data-note='footnote']");
+
+      if (!notes.length) {
+        if (reserved > 0) area.style.setProperty("--pagedjs-footnotes-height", "0px");
+        cont.classList.add("pagedjs_footnote_empty");
+        return;
+      }
+
+      const px = v => parseFloat(v) || 0;
+      const cs = getComputedStyle(cont);
+      const chrome = px(cs.marginTop) + px(cs.marginBottom) + px(cs.paddingTop) +
+        px(cs.paddingBottom) + px(cs.borderTopWidth) + px(cs.borderBottomWidth);
+      let needed = 0;
+      notes.forEach(n => { needed += n.getBoundingClientRect().height; });
+      const want = Math.ceil(needed + chrome);
+      if (want > Math.ceil(reserved)) area.style.setProperty("--pagedjs-footnotes-height", want + "px");
+      inner.style.height = "auto";
+      cont.style.height = "auto";
+    }
+  }
+  Paged.registerHandlers(FootnoteFix);
 
   /* ---------------- rendering ---------------- */
   function scheduleRender() {
@@ -414,7 +527,7 @@ Start writing here.
   /* ---------------- settings UI ---------------- */
   const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
   const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins" };
-  const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break" };
+  const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
   function syncSettingsUI() {
     for (const [id, k] of Object.entries(FIELDS)) $("#" + id).value = state.settings[k] || "";
@@ -712,8 +825,16 @@ Start writing here.
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
-    window.addEventListener("beforeprint", () => { preprintZoom = scaleWrap.style.zoom; scaleWrap.style.zoom = ""; scaleWrap.style.transform = ""; });
-    window.addEventListener("afterprint", () => { if (preprintZoom != null) scaleWrap.style.zoom = preprintZoom; applyZoom(); });
+    window.addEventListener("beforeprint", () => {
+      preprintZoom = scaleWrap.style.zoom; scaleWrap.style.zoom = ""; scaleWrap.style.transform = "";
+      // Chrome names the saved PDF after the page title, so offer the document's own name.
+      appTitle = document.title;
+      document.title = safeName();
+    });
+    window.addEventListener("afterprint", () => {
+      if (appTitle) { document.title = appTitle; appTitle = null; }
+      if (preprintZoom != null) scaleWrap.style.zoom = preprintZoom; applyZoom();
+    });
   }
 
   function boot() {

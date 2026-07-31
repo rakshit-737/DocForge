@@ -1,6 +1,6 @@
-import { chromium } from "playwright-core";
+import { launch } from "./_browser.mjs";
 import { resolve } from "node:path";
-const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
+const b = await launch();
 const p = await (await b.newContext({ viewport: { width: 1560, height: 980 } })).newPage();
 await p.goto("file://" + resolve("dist/DocForge.html"));
 await p.evaluate(() => localStorage.clear());

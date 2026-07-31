@@ -4,5 +4,8 @@ qa/*.pdf
 qa/*.docx
 qa/wdo/
 qa/wdout/
+qa/out/
 publish.sh
 publish.bat
+.opencode
+tools/.fontcache/

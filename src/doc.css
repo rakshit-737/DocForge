@@ -6,24 +6,29 @@
 
 .doc {
   font-family: var(--font-body);
-  font-size: 10.8pt;
-  line-height: 1.62;
+  font-size: 11pt;      /* exactly 22 half-points, so Word matches it exactly */
+  line-height: 1.59;    /* 11 x 1.59 = 17.49pt leading — the baseline everything below divides */
   color: #1c2128;
   font-kerning: normal;
   font-variant-ligatures: common-ligatures;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   counter-reset: fig;
+  /* Never strand a single line of a paragraph at the foot or head of a page.
+     Inherited, so this covers list items, quotes and callout bodies too. */
+  orphans: 2;
+  widows: 2;
 }
 
 /* ---------- base blocks ---------- */
-.doc p { margin: 0 0 7pt; }
+.doc p { margin: 0 0 8.75pt; }
 .doc.justify .content p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
 
 .doc h1, .doc h2, .doc h3, .doc h4 {
   font-family: var(--font-head);
   color: #12161c;
   break-after: avoid;
+  break-inside: avoid;   /* a two-line heading must not split across pages */
   line-height: 1.25;
   margin: 0;
 }
@@ -31,7 +36,7 @@
   font-size: 20.5pt;
   font-weight: 700;
   letter-spacing: -0.012em;
-  margin: 22pt 0 10pt;
+  margin: 21.9pt 0 8.75pt;   /* 1.25 / 0.5 line */
   padding-bottom: 6pt;
   border-bottom: 1.4pt solid var(--a600);
 }
@@ -40,11 +45,11 @@
   font-size: 14.5pt;
   font-weight: 700;
   letter-spacing: -0.008em;
-  margin: 17pt 0 7pt;
+  margin: 17.5pt 0 6.6pt;    /* 1 / 0.375 line */
   color: var(--a800);
 }
-.doc h3 { font-size: 12pt; font-weight: 700; margin: 13pt 0 5pt; }
-.doc h4 { font-size: 10.8pt; font-weight: 700; font-style: italic; margin: 11pt 0 4pt; color: #333a45; }
+.doc h3 { font-size: 12pt; font-weight: 700; margin: 13.1pt 0 4.4pt; }   /* 0.75 / 0.25 line */
+.doc h4 { font-size: 11pt; font-weight: 700; font-style: italic; margin: 10.9pt 0 4.4pt; color: #333a45; }
 
 .doc .hnum { color: var(--a600); margin-right: 3.5pt; font-variant-numeric: tabular-nums; }
 .doc h1 .hnum { color: var(--a600); }
@@ -59,17 +64,17 @@
 
 .doc hr {
   border: 0; height: 0.8pt; background: #d7dbe0;
-  margin: 16pt auto; width: 100%;
+  margin: 17.5pt auto; width: 100%;
 }
 
-.doc ul, .doc ol { margin: 0 0 8pt; padding-left: 18pt; }
-.doc li { margin: 0 0 3pt; }
-.doc li > ul, .doc li > ol { margin: 3pt 0 3pt; }
+.doc ul, .doc ol { margin: 0 0 8.75pt; padding-left: 18pt; }
+.doc li { margin: 0 0 2.2pt; }
+.doc li > ul, .doc li > ol { margin: 2.2pt 0 2.2pt; }
 .doc ul li::marker { color: var(--a600); }
 .doc ol li::marker { color: var(--a700); font-variant-numeric: tabular-nums; }
 
 .doc blockquote {
-  margin: 10pt 0 12pt;
+  margin: 8.75pt 0 13.1pt;
   padding: 2pt 0 2pt 12pt;
   border-left: 2.2pt solid var(--a300);
   color: #3d434d;
@@ -79,7 +84,7 @@
 
 /* ---------- code ---------- */
 .doc code {
-  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, Menlo, monospace;
+  font-family: "DocForge Mono", ui-monospace, "Cascadia Code", "SF Mono", Consolas, Menlo, monospace;
   font-size: 0.86em;
 }
 .doc :not(pre) > code {
@@ -94,8 +99,8 @@
   border: 0.7pt solid #e2e5ea;
   border-radius: 4pt;
   padding: 8pt 10pt;
-  margin: 9pt 0 11pt;
-  font-size: 8.8pt;
+  margin: 8.75pt 0 13.1pt;
+  font-size: 9pt;
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -107,9 +112,10 @@
 .doc table {
   width: 100%;
   border-collapse: collapse;
-  margin: 10pt 0 13pt;
-  font-size: 9.6pt;
+  margin: 8.75pt 0 13.1pt;
+  font-size: 9.5pt;
   line-height: 1.45;
+  font-variant-numeric: tabular-nums;   /* figures line up down a column */
 }
 .doc thead { break-inside: avoid; }
 .doc th {
@@ -127,6 +133,24 @@
   vertical-align: top;
 }
 .doc tr { break-inside: avoid; }
+.doc table caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 9pt;
+  color: #5b6270;
+  line-height: 1.4;
+  padding-bottom: 4.4pt;
+}
+.doc table caption .tbl-label { font-weight: 700; color: var(--a800); }
+
+/* cross-references — [#fig:setup] resolved to "Figure 3" */
+.doc a.xref { color: var(--a700); white-space: nowrap; }
+.doc a.xref-missing { color: #bb2432; }
+/* GFM alignment ( :--- / :---: / ---: ) arrives as an align attribute, whose
+   presentational specificity loses to the rules above — so restate it. */
+.doc th[align="left"],   .doc td[align="left"]   { text-align: left; }
+.doc th[align="center"], .doc td[align="center"] { text-align: center; }
+.doc th[align="right"],  .doc td[align="right"]  { text-align: right; }
 
 /* ---------- callouts ---------- */
 .doc .callout {
@@ -134,14 +158,14 @@
   background: var(--co-bg, var(--a50));
   border-radius: 0 4pt 4pt 0;
   padding: 8pt 11pt 8.5pt;
-  margin: 10pt 0 12pt;
+  margin: 8.75pt 0 13.1pt;
   break-inside: avoid;
-  font-size: 10.2pt;
+  font-size: 10.5pt;
 }
 .doc .callout .co-title {
   font-weight: 700;
-  font-size: 9.2pt;
-  letter-spacing: 0.06em;
+  font-size: 9.5pt;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--co, var(--a700));
   margin-bottom: 3.5pt;
@@ -164,7 +188,7 @@
 
 /* ---------- figures & screenshot placeholders ---------- */
 .doc figure {
-  margin: 11pt 0 13pt;
+  margin: 13.1pt 0 13.1pt;
   text-align: center;
   break-inside: avoid;
 }
@@ -174,9 +198,9 @@
   border-radius: 2.5pt;
 }
 .doc figcaption {
-  font-size: 8.8pt;
+  font-size: 9pt;
   color: #5b6270;
-  margin-top: 5pt;
+  margin-top: 4.4pt;
   line-height: 1.4;
 }
 .doc figcaption .fig-label { font-weight: 700; color: var(--a800); }
@@ -199,15 +223,16 @@
 .doc .shot-box .shot-t {
   font-family: var(--font-head);
   font-weight: 700;
-  font-size: 9.6pt;
-  letter-spacing: 0.05em;
+  font-size: 9.5pt;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--a700);
 }
-.doc .shot-box .shot-c { font-size: 9.4pt; color: #4a5160; max-width: 80%; }
+.doc .shot-box .shot-c { font-size: 9.5pt; color: #4a5160; max-width: 80%; }
 
 /* ---------- TOC ---------- */
-.doc .toc-wrap { break-after: page; }
+/* Front matter is its own page sequence — see the PageNumbering handler in main.js. */
+.doc .toc-wrap { break-after: page; page: front; }
 .doc .toc-title {
   font-family: var(--font-head);
   font-size: 18pt;
@@ -227,16 +252,34 @@
 .doc .toc a .t  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78%; }
 .doc .toc a .dots { flex: 1; border-bottom: 1pt dotted #b9bec6; transform: translateY(-2.5pt); min-width: 18pt; }
 .doc .toc a::after {
-  content: target-counter(attr(href url), page);
+  /* Written per entry by the PageNumbering handler, so the contents quote the folio
+     the reader sees rather than the absolute sheet number. */
+  content: var(--df-tocnum, "");
   font-variant-numeric: tabular-nums;
   color: #454c58;
-  font-size: 9.6pt;
+  font-size: 9.5pt;
 }
-.doc .toc a.l1 { font-weight: 700; font-size: 11pt; margin-top: 7pt; }
+.doc .toc a.l1 { font-weight: 700; font-size: 11pt; margin-top: 6.6pt; }
 .doc .toc a.l1 .t { color: var(--a900); }
-.doc .toc a.l2 { padding-left: 14pt; font-size: 10.2pt; }
-.doc .toc a.l3 { padding-left: 28pt; font-size: 9.4pt; color: #3d434d; }
+.doc .toc a.l2 { padding-left: 14pt; font-size: 10.5pt; }
+.doc .toc a.l3 { padding-left: 28pt; font-size: 9.5pt; color: #3d434d; }
 .doc .toc a .hnum { margin-right: 4pt; }
+
+/* ---------- footnotes ----------
+   The note text sits inline at the call site; Paged.js moves it to the foot of whatever
+   page the call lands on and numbers both ends with CSS counters. Never give @footnote a
+   percentage max-height — it resolves against the footnote area's own height and silently
+   truncates every note. */
+.footnote {
+  float: footnote;
+  footnote-display: block;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  color: #3d434d;
+  text-align: left;
+}
+.footnote::footnote-call { color: var(--a700); font-weight: 700; }
+.footnote::footnote-marker { color: var(--a700); font-weight: 700; }
 
 /* ---------- explicit page break ---------- */
 .doc .page-break { break-after: page; height: 0; }
@@ -260,7 +303,7 @@
   font-family: var(--font-head);
   font-size: 10pt;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--a700);
   margin-bottom: 10mm;
