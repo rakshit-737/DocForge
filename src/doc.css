@@ -1,0 +1,345 @@
+/* ============================================================
+   doc.css — document typography & themes (processed by Paged.js)
+   All sizes in pt/mm for faithful print output.
+   CSS vars (--accent, tints, fonts, page vars) injected by app.
+   ============================================================ */
+
+.doc {
+  font-family: var(--font-body);
+  font-size: 10.8pt;
+  line-height: 1.62;
+  color: #1c2128;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  counter-reset: fig;
+}
+
+/* ---------- base blocks ---------- */
+.doc p { margin: 0 0 7pt; }
+.doc.justify .content p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+
+.doc h1, .doc h2, .doc h3, .doc h4 {
+  font-family: var(--font-head);
+  color: #12161c;
+  break-after: avoid;
+  line-height: 1.25;
+  margin: 0;
+}
+.doc h1 {
+  font-size: 20.5pt;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  margin: 22pt 0 10pt;
+  padding-bottom: 6pt;
+  border-bottom: 1.4pt solid var(--a600);
+}
+.doc .content > h1:first-child, .doc .content > *:first-child h1 { margin-top: 0; }
+.doc h2 {
+  font-size: 14.5pt;
+  font-weight: 700;
+  letter-spacing: -0.008em;
+  margin: 17pt 0 7pt;
+  color: var(--a800);
+}
+.doc h3 { font-size: 12pt; font-weight: 700; margin: 13pt 0 5pt; }
+.doc h4 { font-size: 10.8pt; font-weight: 700; font-style: italic; margin: 11pt 0 4pt; color: #333a45; }
+
+.doc .hnum { color: var(--a600); margin-right: 3.5pt; font-variant-numeric: tabular-nums; }
+.doc h1 .hnum { color: var(--a600); }
+
+.doc.h1break .content h1 { break-before: page; }
+.doc.h1break .content > h1:first-child { break-before: auto; }
+
+.doc a { color: var(--a700); text-decoration: none; }
+.doc strong { font-weight: 700; }
+.doc em { font-style: italic; }
+.doc del { color: #8a8f98; }
+
+.doc hr {
+  border: 0; height: 0.8pt; background: #d7dbe0;
+  margin: 16pt auto; width: 100%;
+}
+
+.doc ul, .doc ol { margin: 0 0 8pt; padding-left: 18pt; }
+.doc li { margin: 0 0 3pt; }
+.doc li > ul, .doc li > ol { margin: 3pt 0 3pt; }
+.doc ul li::marker { color: var(--a600); }
+.doc ol li::marker { color: var(--a700); font-variant-numeric: tabular-nums; }
+
+.doc blockquote {
+  margin: 10pt 0 12pt;
+  padding: 2pt 0 2pt 12pt;
+  border-left: 2.2pt solid var(--a300);
+  color: #3d434d;
+  font-style: italic;
+}
+.doc blockquote p:last-child { margin-bottom: 0; }
+
+/* ---------- code ---------- */
+.doc code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, Menlo, monospace;
+  font-size: 0.86em;
+}
+.doc :not(pre) > code {
+  background: #f0f2f5;
+  border: 0.6pt solid #e0e3e8;
+  border-radius: 2.5pt;
+  padding: 0.5pt 3.5pt;
+  color: #24303d;
+}
+.doc pre {
+  background: #f6f8fa;
+  border: 0.7pt solid #e2e5ea;
+  border-radius: 4pt;
+  padding: 8pt 10pt;
+  margin: 9pt 0 11pt;
+  font-size: 8.8pt;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  break-inside: avoid;
+}
+.doc pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+/* ---------- tables ---------- */
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10pt 0 13pt;
+  font-size: 9.6pt;
+  line-height: 1.45;
+}
+.doc thead { break-inside: avoid; }
+.doc th {
+  background: var(--a75);
+  color: var(--a900);
+  font-weight: 700;
+  text-align: left;
+  padding: 5.5pt 8pt;
+  border-bottom: 1.3pt solid var(--a600);
+  border-top: 0.8pt solid var(--a600);
+}
+.doc td {
+  padding: 5pt 8pt;
+  border-bottom: 0.7pt solid #dfe2e7;
+  vertical-align: top;
+}
+.doc tr { break-inside: avoid; }
+
+/* ---------- callouts ---------- */
+.doc .callout {
+  border-left: 2.6pt solid var(--co, var(--a600));
+  background: var(--co-bg, var(--a50));
+  border-radius: 0 4pt 4pt 0;
+  padding: 8pt 11pt 8.5pt;
+  margin: 10pt 0 12pt;
+  break-inside: avoid;
+  font-size: 10.2pt;
+}
+.doc .callout .co-title {
+  font-weight: 700;
+  font-size: 9.2pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--co, var(--a700));
+  margin-bottom: 3.5pt;
+  font-family: var(--font-head);
+}
+.doc .callout .co-title::before {
+  content: "";
+  display: inline-block;
+  width: 6pt; height: 6pt;
+  border-radius: 50%;
+  background: var(--co, var(--a600));
+  margin-right: 5pt;
+  vertical-align: 0.2pt;
+}
+.doc .callout .co-body > p:last-child { margin-bottom: 0; }
+.doc .callout.note      { --co: #2458c5; --co-bg: #eef3fc; }
+.doc .callout.tip       { --co: #0e7a52; --co-bg: #ebf7f1; }
+.doc .callout.warning   { --co: #b26205; --co-bg: #fdf4e7; }
+.doc .callout.important { --co: #bb2432; --co-bg: #fcedee; }
+
+/* ---------- figures & screenshot placeholders ---------- */
+.doc figure {
+  margin: 11pt 0 13pt;
+  text-align: center;
+  break-inside: avoid;
+}
+.doc figure img {
+  max-width: 100%;
+  border: 0.8pt solid #dcdfe4;
+  border-radius: 2.5pt;
+}
+.doc figcaption {
+  font-size: 8.8pt;
+  color: #5b6270;
+  margin-top: 5pt;
+  line-height: 1.4;
+}
+.doc figcaption .fig-label { font-weight: 700; color: var(--a800); }
+
+.doc .shot-box {
+  border: 1.4pt dashed var(--a400);
+  background:
+    repeating-linear-gradient(45deg, transparent 0 9pt, var(--a50) 9pt 18pt),
+    #fdfdfe;
+  border-radius: 5pt;
+  min-height: 130pt;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5pt;
+  padding: 14pt;
+}
+.doc .shot-box .shot-ic { width: 26pt; height: 26pt; opacity: 0.9; }
+.doc .shot-box .shot-t {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 9.6pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--a700);
+}
+.doc .shot-box .shot-c { font-size: 9.4pt; color: #4a5160; max-width: 80%; }
+
+/* ---------- TOC ---------- */
+.doc .toc-wrap { break-after: page; }
+.doc .toc-title {
+  font-family: var(--font-head);
+  font-size: 18pt;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 14pt;
+  padding-bottom: 6pt;
+  border-bottom: 1.4pt solid var(--a600);
+}
+.doc .toc a {
+  display: flex;
+  align-items: baseline;
+  gap: 6pt;
+  color: #1c2128;
+  margin: 0 0 4.5pt;
+}
+.doc .toc a .t  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78%; }
+.doc .toc a .dots { flex: 1; border-bottom: 1pt dotted #b9bec6; transform: translateY(-2.5pt); min-width: 18pt; }
+.doc .toc a::after {
+  content: target-counter(attr(href url), page);
+  font-variant-numeric: tabular-nums;
+  color: #454c58;
+  font-size: 9.6pt;
+}
+.doc .toc a.l1 { font-weight: 700; font-size: 11pt; margin-top: 7pt; }
+.doc .toc a.l1 .t { color: var(--a900); }
+.doc .toc a.l2 { padding-left: 14pt; font-size: 10.2pt; }
+.doc .toc a.l3 { padding-left: 28pt; font-size: 9.4pt; color: #3d434d; }
+.doc .toc a .hnum { margin-right: 4pt; }
+
+/* ---------- explicit page break ---------- */
+.doc .page-break { break-after: page; height: 0; }
+
+/* ============================================================
+   COVER — full-bleed named page
+   ============================================================ */
+.cover {
+  page: cover;
+  height: calc(var(--page-h) - 0.6mm);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 26mm 24mm;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-body);
+}
+.cover h1.cv-title { border-bottom: 0; padding-bottom: 0; }
+.cover .cv-kicker {
+  font-family: var(--font-head);
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--a700);
+  margin-bottom: 10mm;
+}
+.cover .cv-title {
+  font-family: var(--font-head);
+  font-size: 33pt;
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.018em;
+  color: #10141a;
+  margin: 0 0 7mm;
+  max-width: 92%;
+}
+.cover .cv-sub {
+  font-size: 13.5pt;
+  line-height: 1.5;
+  color: #4a5160;
+  max-width: 80%;
+}
+.cover .cv-spacer { flex: 1; }
+.cover .cv-rule { width: 22mm; height: 1.2mm; background: var(--a600); margin: 8mm 0; }
+.cover .cv-meta { font-size: 10.5pt; line-height: 1.75; color: #2a303a; }
+.cover .cv-meta .m-strong { font-weight: 700; font-size: 11.5pt; color: #171c23; }
+.cover .cv-meta .m-dim { color: #6a7180; }
+
+/* default (modern/executive) top band */
+.cover::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 7mm;
+  background: linear-gradient(90deg, var(--a800), var(--a500));
+}
+.cover::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2mm;
+  background: var(--a200);
+}
+
+/* --- theme: executive — vertical spine --- */
+.doc[data-theme="executive"] .cover { padding-left: 34mm; }
+.doc[data-theme="executive"] .cover::before {
+  top: 0; bottom: 0; left: 0; right: auto;
+  width: 9mm; height: auto;
+  background: linear-gradient(180deg, var(--a900), var(--a600));
+}
+.doc[data-theme="executive"] .cover::after { display: none; }
+
+/* --- theme: academic — centered, ruled --- */
+.doc[data-theme="academic"] .cover { align-items: center; text-align: center; padding-top: 40mm; }
+.doc[data-theme="academic"] .cover::before, .doc[data-theme="academic"] .cover::after { display: none; }
+.doc[data-theme="academic"] .cover .cv-kicker { letter-spacing: 0.3em; }
+.doc[data-theme="academic"] .cover .cv-title {
+  font-weight: 700; font-size: 27pt;
+  border-top: 1.6pt solid #14181f; border-bottom: 1.6pt solid #14181f;
+  padding: 9mm 4mm; max-width: 100%;
+}
+.doc[data-theme="academic"] .cover .cv-sub { max-width: 95%; }
+.doc[data-theme="academic"] .cover .cv-rule { margin: 8mm auto; }
+
+/* --- theme: minimal — quiet --- */
+.doc[data-theme="minimal"] .cover::before { height: 1.2mm; background: #14181f; }
+.doc[data-theme="minimal"] .cover::after { display: none; }
+.doc[data-theme="minimal"] .cover .cv-title { font-weight: 700; }
+
+/* ---------- theme body tweaks ---------- */
+.doc[data-theme="modern"] h2 {
+  padding-left: 8pt;
+  border-left: 3pt solid var(--a500);
+}
+.doc[data-theme="academic"] h1 { border-bottom-color: #14181f; }
+.doc[data-theme="academic"] h2 { color: #12161c; }
+.doc[data-theme="academic"] th { background: #f0f0ee; color: #12161c; border-color: #14181f; }
+.doc[data-theme="minimal"] h1 { border-bottom: 0.9pt solid #d7dbe0; }
+.doc[data-theme="minimal"] h2 { color: #12161c; }
+.doc[data-theme="minimal"] th { background: #f4f5f7; color: #12161c; border-color: #3c434e; }
+
+/* letter-style block (no cover): tighter top */
+.doc .content > .letter-head { margin-bottom: 14pt; }

@@ -1,0 +1,15 @@
+import { chromium } from "playwright-core";
+import { resolve } from "node:path";
+const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });
+const p = await (await b.newContext({ viewport: { width: 1560, height: 980 } })).newPage();
+await p.goto("file://" + resolve("dist/DocForge.html"));
+await p.evaluate(() => localStorage.clear());
+await p.reload();
+await p.waitForSelector(".pagedjs_page", { timeout: 25000 });
+await p.selectOption("#templateSelect", "proposal");
+await p.waitForSelector("#confirmOverlay.open");
+await p.click("#cfYes");
+await p.waitForTimeout(3000);
+await p.emulateMedia({ media: "print" });
+await p.pdf({ path: "qa/proposal.pdf", preferCSSPageSize: true });
+await b.close();

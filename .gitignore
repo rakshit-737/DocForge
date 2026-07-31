@@ -1,0 +1,8 @@
+node_modules/
+qa/*.png
+qa/*.pdf
+qa/*.docx
+qa/wdo/
+qa/wdout/
+publish.sh
+publish.bat

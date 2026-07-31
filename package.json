@@ -1,0 +1,18 @@
+{
+  "name": "docforge",
+  "version": "1.0.0",
+  "description": "Single-file document studio — beautiful PDFs and Word docs from plain text",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "docx": "^9.7.1",
+    "esbuild": "^0.28.1",
+    "marked": "^18.0.7",
+    "pagedjs": "^0.4.3",
+    "playwright-core": "^1.62.1"
+  }
+}
