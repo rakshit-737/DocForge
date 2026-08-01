@@ -24,8 +24,26 @@
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
     cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
-    hardWrap: false, citeStyle: "ieee", pageBorder: "none",
+    hardWrap: false, citeStyle: "ieee",
+    borderStyle: "none", borderWeight: "medium", borderColor: "ink",
+    fontHead: "theme", fontBody: "theme",
   };
+
+  /* Projects saved before the border system grew options carry a single
+     pageBorder key — translate it and never write it back. */
+  function normalizeSettings(s) {
+    const out = { ...DEFAULTS, ...s };
+    if (s && s.pageBorder && s.borderStyle == null) {
+      const map = {
+        rule:   { borderStyle: "rule", borderColor: "ink" },
+        double: { borderStyle: "double", borderColor: "ink" },
+        frame:  { borderStyle: "thickthin", borderColor: "accent" },
+      }[s.pageBorder];
+      if (map) Object.assign(out, map);
+    }
+    delete out.pageBorder;
+    return out;
+  }
 
   const TEMPLATES = {
     welcome: {
@@ -531,12 +549,17 @@ Start writing here.
   }
   function updateCounts() {
     const w = (state.source.trim().match(/\S+/g) || []).length;
-    $("#wordCount").textContent = w + (w === 1 ? " word" : " words");
+    const mins = Math.max(1, Math.round(w / 200));
+    $("#wordCount").textContent = w + (w === 1 ? " word" : " words") + (w > 60 ? ` · ${mins} min read` : "");
   }
 
   /* ---------------- settings UI ---------------- */
   const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
-  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle", sPageBorder: "pageBorder" };
+  const SELECTS = {
+    sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle",
+    sBorderStyle: "borderStyle", sBorderWeight: "borderWeight", sBorderColor: "borderColor",
+    sFontHead: "fontHead", sFontBody: "fontBody",
+  };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
   function syncSettingsUI() {
@@ -736,7 +759,11 @@ Start writing here.
     a.download = name;
     document.body.appendChild(a);
     a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 600);
+    // Remove synchronously — a stray element after the page stack adds a blank
+    // page to any print that happens before a timeout would have fired.
+    const url = a.href;
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
   const safeName = () => (state.settings.title || "document").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "document";
 
@@ -755,7 +782,7 @@ Start writing here.
         try {
           const d = JSON.parse(fr.result);
           if (d.app !== "docforge") throw new Error("not a DocForge file");
-          state.settings = { ...DEFAULTS, ...d.settings };
+          state.settings = normalizeSettings(d.settings);
           state.source = d.source || "";
           state.attachments = d.attachments || {};
           state.accentTouched = true;
@@ -789,7 +816,10 @@ Start writing here.
     await ensureFresh();
     if (!lastContentEl) return;
     const btn = $("#btnDocx");
+    const label = btn.innerHTML;
     btn.disabled = true;
+    btn.classList.add("busy");
+    btn.innerHTML = `<span class="btnspin"></span> Exporting…`;
     try {
       const blob = await DocxExport.build(lastContentEl, state.settings, state.attachments);
       downloadBlob(blob, safeName() + ".docx");
@@ -799,6 +829,8 @@ Start writing here.
       toast("Word export failed — check the console", "warn");
     }
     btn.disabled = false;
+    btn.classList.remove("busy");
+    btn.innerHTML = label;
   }
 
   /* ---------------- boot ---------------- */
@@ -1076,8 +1108,38 @@ Start writing here.
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
       if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
       if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
+      if (mod && e.key === "/") { e.preventDefault(); $("#keysOverlay").classList.toggle("open"); }
+      if (e.key === "Escape") $$(".overlay.open").forEach(o => o.classList.remove("open"));
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
+
+    /* Ctrl+wheel zooms the preview; clicking the percentage snaps back to fit */
+    $("#previewScroll").addEventListener("wheel", e => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      zoomMode = "man";
+      zoomVal = Math.min(2, Math.max(0.25, (zoomVal || 1) + (e.deltaY < 0 ? 0.1 : -0.1)));
+      applyZoom();
+    }, { passive: false });
+    $("#zoomPct").style.cursor = "pointer";
+    $("#zoomPct").title = "Reset to fit";
+    $("#zoomPct").onclick = () => { zoomMode = "fit"; applyZoom(); };
+
+    /* Drop an image file anywhere on the editor to insert it as a figure */
+    editor.addEventListener("dragover", e => { e.preventDefault(); });
+    editor.addEventListener("drop", async e => {
+      const file = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type));
+      if (!file) return; // let plain text drops behave natively
+      e.preventDefault();
+      try {
+        const att = await processImageFile(file);
+        const key = newKey();
+        state.attachments[key] = att;
+        const cap = file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ");
+        insertBlock(`[screenshot: ${cap} | img:${key}]`);
+        toast("Image added as a figure");
+      } catch { toast("Could not read that image", "warn"); }
+    });
     window.addEventListener("beforeprint", () => {
       preprintZoom = scaleWrap.style.zoom; scaleWrap.style.zoom = ""; scaleWrap.style.transform = "";
       // Chrome names the saved PDF after the page title, so offer the document's own name.
@@ -1105,7 +1167,7 @@ Start writing here.
     if (saved) {
       try {
         const d = JSON.parse(saved);
-        state.settings = { ...DEFAULTS, ...d.settings };
+        state.settings = normalizeSettings(d.settings);
         state.source = d.source || "";
         state.attachments = d.attachments || {};
         state.accentTouched = !!d.accentTouched;

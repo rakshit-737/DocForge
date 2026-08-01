@@ -65,13 +65,35 @@ const Engine = (() => {
      has one identity on every machine and in both formats.
      Source Sans 3 / Source Serif 4 / Source Code Pro, SIL OFL 1.1 (see fonts/). */
   const EMBEDDED = [
-    { name: "DocForge Sans",  stem: "DocForgeSans",  family: "swiss",  pitch: "variable",
+    { name: "DocForge Sans",       stem: "DocForgeSans",     family: "swiss",  pitch: "variable",
       cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
-    { name: "DocForge Serif", stem: "DocForgeSerif", family: "roman",  pitch: "variable",
+    { name: "DocForge Serif",      stem: "DocForgeSerif",    family: "roman",  pitch: "variable",
       cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
-    { name: "DocForge Mono",  stem: "DocForgeMono",  family: "modern", pitch: "fixed",
+    { name: "DocForge Mono",       stem: "DocForgeMono",     family: "modern", pitch: "fixed",
       cuts: { regular: 1, bold: 1 } },
+    { name: "DocForge Inter",      stem: "DocForgeInter",    family: "swiss",  pitch: "variable",
+      cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
+    { name: "DocForge Montserrat", stem: "DocForgeMont",     family: "swiss",  pitch: "variable",
+      cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
+    { name: "DocForge Garamond",   stem: "DocForgeGaramond", family: "roman",  pitch: "variable",
+      cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
+    { name: "DocForge Crimson",    stem: "DocForgeCrimson",  family: "roman",  pitch: "variable",
+      cuts: { regular: 1, bold: 1, italic: 1, boldItalic: 1 } },
   ];
+
+  /* Selectable text faces. `key` is what settings.fontHead / fontBody store;
+     "theme" (the default) follows the theme's own pairing. */
+  const FACES = {
+    sans:      { name: "DocForge Sans",       kind: "sans",  label: "Source Sans — humanist" },
+    serif:     { name: "DocForge Serif",      kind: "serif", label: "Source Serif — contemporary" },
+    inter:     { name: "DocForge Inter",      kind: "sans",  label: "Inter — neutral" },
+    mont:      { name: "DocForge Montserrat", kind: "sans",  label: "Montserrat — geometric" },
+    garamond:  { name: "DocForge Garamond",   kind: "serif", label: "Garamond — classic book" },
+    crimson:   { name: "DocForge Crimson",    kind: "serif", label: "Crimson — scholarly" },
+  };
+  const faceStack = key => FACES[key]
+    ? `"${FACES[key].name}", ${FACES[key].kind === "serif" ? "Georgia, serif" : "Arial, sans-serif"}`
+    : null;
   const CUT_STYLE = {
     regular:    { weight: 400, style: "normal" },
     bold:       { weight: 700, style: "normal" },
@@ -664,7 +686,12 @@ const Engine = (() => {
   /* ---------- dynamic CSS (@page + vars) ---------- */
   function dynamicCss(settings) {
     const t = tints(settings.accent);
-    const f = FONTS[settings.theme] || FONTS.modern;
+    const themeF = FONTS[settings.theme] || FONTS.modern;
+    // A chosen face overrides the theme's pairing; "theme" (or absent) follows it.
+    const f = {
+      head: faceStack(settings.fontHead) || themeF.head,
+      body: faceStack(settings.fontBody) || themeF.body,
+    };
     const pg = PAGES[settings.page] || PAGES.A4;
     const m = MARGINS[settings.margins] || MARGINS.normal;
     const title = cssStr(settings.title || "");
@@ -676,15 +703,15 @@ const Engine = (() => {
   margin: ${m.t}mm ${m.r}mm ${m.b}mm ${m.l}mm;`;
     if (settings.header) {
       css += `
-  @top-left { content: "${title}"; font-family:${f.head}; font-size:7.6pt; letter-spacing:0.13em; text-transform:uppercase; color:#828a99; margin-bottom:9mm; }
-  @top-right { content: string(sect); font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-bottom:9mm; max-width:60mm; overflow:hidden; }`;
+  @top-left { content: "${title}"; font-family:${f.head}; font-size:7.6pt; letter-spacing:0.13em; text-transform:uppercase; color:#828a99; margin-bottom:6mm; }
+  @top-right { content: string(sect); font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-bottom:6mm; max-width:60mm; overflow:hidden; }`;
     }
     if (settings.pageNums) {
       // The folio text is written per page by the PageNumbering handler in main.js, because
       // front matter and the body run on two different sequences and the body's "of N" must
       // count body pages only — neither of which a CSS page counter can express.
       css += `
-  @bottom-center { content: var(--df-foot, " "); font-family:${f.body}; font-size:8.2pt; color:#71798a; margin-top:9mm; font-variant-numeric: tabular-nums; }`;
+  @bottom-center { content: var(--df-foot, " "); font-family:${f.body}; font-size:8.2pt; color:#71798a; margin-top:6mm; font-variant-numeric: tabular-nums; }`;
     }
     css += `
   @footnote {
@@ -703,22 +730,34 @@ const Engine = (() => {
 .doc .content h1 { string-set: sect content(text); }
 `;
 
-    // Decorative page border — an overlay drawn just inside the paper edge, so it
-    // frames the page without disturbing the margin boxes. The cover keeps its own
-    // full-bleed design and is exempt.
+    // Decorative page border — an overlay drawn just inside the paper edge (between
+    // the edge and the running header), so it frames the page without disturbing the
+    // margin boxes. The cover keeps its own full-bleed design and is exempt.
+    // The styles mirror Word's page-border repertoire; the white rings inside the
+    // compound styles read as gaps because the paper is always white.
+    // 0.75pt = 1px, 1.5pt = 2px, 2.25pt = 3px — Chrome floors fractional border
+    // widths to whole CSS pixels, so weights must land on distinct integers.
+    const W = ({ fine: 0.75, medium: 1.5, bold: 2.25 })[settings.borderWeight] || 1.5;
+    const C = settings.borderColor === "accent" ? t.a600 : "#3c434e";
+    const bp = n => (Math.round(n * W * 100) / 100) + "pt";
     const BORDERS = {
-      rule:   `border: 0.9pt solid #3c434e;`,
-      double: `border: 2.4pt double #3c434e;`,
-      frame:  `border: 1.6pt solid ${t.a600}; outline: 0.6pt solid ${t.a600}; outline-offset: 1.6pt;`,
+      rule:      `border: ${bp(1)} solid ${C};`,
+      double:    `border: ${bp(3)} double ${C};`,
+      // three real lines: the border plus two inset rings, white gaps between
+      triple:    `border: ${bp(0.8)} solid ${C}; box-shadow: inset 0 0 0 ${bp(1.6)} #fff, inset 0 0 0 ${bp(2.4)} ${C}, inset 0 0 0 ${bp(3.2)} #fff, inset 0 0 0 ${bp(4)} ${C};`,
+      dashed:    `border: ${bp(1.4)} dashed ${C};`,
+      dotted:    `border: ${bp(1.4)} dotted ${C};`,
+      thickthin: `border: ${bp(2)} solid ${C}; box-shadow: inset 0 0 0 ${bp(1.2)} #fff, inset 0 0 0 ${bp(1.8)} ${C};`,
+      thinthick: `border: ${bp(0.7)} solid ${C}; box-shadow: inset 0 0 0 ${bp(1.2)} #fff, inset 0 0 0 ${bp(3.2)} ${C};`,
     };
-    if (BORDERS[settings.pageBorder]) {
+    if (BORDERS[settings.borderStyle]) {
       css += `
 .pagedjs_page { position: relative; }
 .pagedjs_page::after {
   content: "";
   position: absolute;
-  inset: 4.5mm;   /* between the paper edge and the running header */
-  ${BORDERS[settings.pageBorder]}
+  inset: 3mm;   /* the outer edge; every style grows inward from here, clear of the header */
+  ${BORDERS[settings.borderStyle]}
   pointer-events: none;
   z-index: 5;
 }
@@ -728,5 +767,5 @@ const Engine = (() => {
     return css;
   }
 
-  return { render, dynamicCss, fontFaceCss, tints, PAGES, MARGINS, FONTS, EMBEDDED, CUT_FILE, fmtDate, esc, RE_SHOT };
+  return { render, dynamicCss, fontFaceCss, tints, PAGES, MARGINS, FONTS, FACES, EMBEDDED, CUT_FILE, fmtDate, esc, RE_SHOT };
 })();

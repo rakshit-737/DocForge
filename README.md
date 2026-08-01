@@ -51,7 +51,11 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 
 ## Fonts
 
-The app embeds subsets of **Source Sans 3**, **Source Serif 4** and **Source Code Pro** (SIL Open Font License 1.1 — licence texts in `fonts/`). The same TTF bytes serve the preview, the printed PDF and the `.docx` (embedded in the package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
+The app embeds subsets of seven families — **Source Sans 3**, **Source Serif 4**, **Source Code Pro**, **Inter**, **Montserrat**, **EB Garamond** and **Crimson Pro** (all SIL Open Font License 1.1 — licence texts in `fonts/`). Pick the heading and body faces independently in Settings, or leave them on the theme's own pairing. The same TTF bytes serve the preview, the printed PDF and the `.docx` (only the families a document actually uses are embedded in its package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
+
+## Page borders
+
+Settings → Page border offers seven styles (rule, double, triple, dashed, dotted, thick–thin, thin–thick) × three weights × ink or accent colour. The PDF draws the frame 4.5 mm inside the paper edge; the `.docx` gets real Word page borders (the same styles Word's own Design → Page Borders dialog produces) at the same standoff. The cover stays full-bleed and unframed in both.
 
 ## Known limitations
 
@@ -59,6 +63,7 @@ The app embeds subsets of **Source Sans 3**, **Source Serif 4** and **Source Cod
 - **Word ≠ PDF line breaks:** the two engines break lines and pages independently, so page totals can differ by a page or two on long documents; the *design* — fonts, colours, spacing, numbering scheme — is the same.
 - **APA labels** are derived mechanically from the entry text (surname before the first comma, first year found). Two works by the same author in the same year are not disambiguated.
 - **Word cover band** uses a zero-margin first section; in very old Word versions (pre-2013) the band may print inset.
+- **Compound page borders in Word** (double, triple, thick–thin, thin–thick): Word's own renderer fills the gap between the component lines with a dark tone rather than leaving it white — a document built natively in Word's *Design → Page Borders* dialog prints the same way. The PDF draws the gaps crisply; at reading distance the Word version reads slightly heavier.
 - **Math in Word**: a handful of LaTeX constructs degrade gracefully (colours are dropped, `\\` line breaks outside environments become wide gaps, `\hline` in arrays is omitted). Everything exports as a real equation, never an image.
 
 ## Host it free on GitHub Pages

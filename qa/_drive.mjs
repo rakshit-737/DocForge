@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 export const DIST = "file:///" + resolve("dist/DocForge.html").replace(/\\/g, "/");
 
 const FIELDS = { title: "sTitle", subtitle: "sSubtitle", author: "sAuthor", kicker: "sKicker", metaExtra: "sMetaExtra", date: "sDate" };
-const SELECTS = { theme: "sTheme", page: "sPage", margins: "sMargins", citeStyle: "sCiteStyle", pageBorder: "sPageBorder" };
+const SELECTS = { theme: "sTheme", page: "sPage", margins: "sMargins", citeStyle: "sCiteStyle", borderStyle: "sBorderStyle", borderWeight: "sBorderWeight", borderColor: "sBorderColor", fontHead: "sFontHead", fontBody: "sFontBody" };
 const TOGGLES = { cover: "tCover", header: "tHeader", pageNums: "tPageNums", numbered: "tNumbered", justify: "tJustify", h1break: "tH1break", hardWrap: "tHardWrap" };
 
 export async function open(browser, { viewport = { width: 1560, height: 980 } } = {}) {

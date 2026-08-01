@@ -43,11 +43,14 @@ const DocxExport = (() => {
   }
 
   /* Hand every cut to the library under a throwaway name so it obfuscates the bytes and
-     writes the parts; DocxFonts.embed regroups them into one family per typeface. */
-  function fontPayload() {
+     writes the parts; DocxFonts.embed regroups them into one family per typeface.
+     Only the families this document actually uses are packed — embedding all seven
+     would triple the size of every .docx for no benefit. */
+  function fontPayload(usedNames) {
     const data = (typeof window !== "undefined" && window.__FONT_DATA__) || {};
     const parts = [], families = [];
     for (const fam of Engine.EMBEDDED) {
+      if (usedNames && !usedNames.has(fam.name)) continue;
       const cuts = {};
       for (const cut of Object.keys(fam.cuts)) {
         const key = `${fam.stem}-${Engine.CUT_FILE[cut]}`;
@@ -82,7 +85,12 @@ const DocxExport = (() => {
     } = D;
 
     const t = Engine.tints(settings.accent);
-    const f = WORD_FONTS[settings.theme] || WORD_FONTS.modern;
+    const themeF = WORD_FONTS[settings.theme] || WORD_FONTS.modern;
+    const face = k => (Engine.FACES[k] || {}).name;
+    const f = {
+      head: face(settings.fontHead) || themeF.head,
+      body: face(settings.fontBody) || themeF.body,
+    };
     const pg = Engine.PAGES[settings.page] || Engine.PAGES.A4;
     const mg = Engine.MARGINS[settings.margins] || Engine.MARGINS.normal;
     const availPx = Math.floor((pg.w - mg.l - mg.r) * 96 / 25.4) - 4;
@@ -657,7 +665,10 @@ const DocxExport = (() => {
     };
     const pageSize = { width: mm2t(pg.w), height: mm2t(pg.h) };
 
-    const fp = fontPayload();
+    // Mono rides along only when the document actually sets code in it.
+    const usedFonts = new Set([f.head, f.body]);
+    if (contentEl.querySelector("pre, code, kbd, samp")) usedFonts.add(MONO);
+    const fp = fontPayload(usedFonts);
 
     const doc = new Document({
       creator: settings.author || "DocForge",
@@ -708,18 +719,27 @@ const DocxExport = (() => {
       /* Decorative page border, mirroring the PDF overlay: drawn a fixed distance in
          from the paper edge on front-matter and body pages; the cover stays clean.
          Word measures border size in eighth-points and offset in points (max 31). */
+      // size is in eighth-points; compound styles need a larger nominal size for the
+      // drawn result to match the PDF overlay's total weight.
+      const BW = ({ fine: 6, medium: 12, bold: 18 })[settings.borderWeight] || 12;
+      const BC = settings.borderColor === "accent" ? hex(t.a600) : "3C434E";
       const PB = {
-        rule:   { style: BorderStyle.SINGLE, size: 7, color: "3C434E" },
-        double: { style: BorderStyle.DOUBLE, size: 6, color: "3C434E" },
-        frame:  { style: BorderStyle.THICK_THIN_SMALL_GAP, size: 18, color: hex(t.a600) },
-      }[settings.pageBorder];
+        rule:      { style: BorderStyle.SINGLE,               size: BW },
+        double:    { style: BorderStyle.DOUBLE,               size: Math.round(BW * 0.8) },
+        triple:    { style: BorderStyle.TRIPLE,               size: Math.round(BW * 0.8) },
+        dashed:    { style: BorderStyle.DASHED,               size: BW },
+        dotted:    { style: BorderStyle.DOTTED,               size: BW },
+        thickthin: { style: BorderStyle.THICK_THIN_SMALL_GAP, size: BW * 2 },
+        thinthick: { style: BorderStyle.THIN_THICK_SMALL_GAP, size: BW * 2 },
+      }[settings.borderStyle];
+      if (PB) PB.color = BC;
       const pageBorders = PB ? {
         pageBorders: { display: D.PageBorderDisplay.ALL_PAGES, offsetFrom: D.PageBorderOffsetFrom.PAGE, zOrder: D.PageBorderZOrder.FRONT },
         // 13 pt ≈ 4.6 mm from the paper edge — same standoff as the PDF overlay
-        pageBorderTop: { ...PB, space: 13 },
-        pageBorderRight: { ...PB, space: 13 },
-        pageBorderBottom: { ...PB, space: 13 },
-        pageBorderLeft: { ...PB, space: 13 },
+        pageBorderTop: { ...PB, space: 9 },
+        pageBorderRight: { ...PB, space: 9 },
+        pageBorderBottom: { ...PB, space: 9 },
+        pageBorderLeft: { ...PB, space: 9 },
       } : undefined;
       return [
         // Cover: its own section with every margin at zero so the band can bleed.

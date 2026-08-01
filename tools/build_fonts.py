@@ -60,6 +60,22 @@ CUTS = [
     ("sourceserif4", "SourceSerif4-Italic[opsz,wght].ttf", "DocForgeSerif-BoldItalic.ttf", 700, True),
     ("sourcecodepro", "SourceCodePro[wght].ttf",         "DocForgeMono-Regular.ttf",     400, False),
     ("sourcecodepro", "SourceCodePro[wght].ttf",         "DocForgeMono-Bold.ttf",        700, False),
+    ("inter",         "Inter[opsz,wght].ttf",            "DocForgeInter-Regular.ttf",    400, False),
+    ("inter",         "Inter[opsz,wght].ttf",            "DocForgeInter-Bold.ttf",       700, False),
+    ("inter",         "Inter-Italic[opsz,wght].ttf",     "DocForgeInter-Italic.ttf",     400, True),
+    ("inter",         "Inter-Italic[opsz,wght].ttf",     "DocForgeInter-BoldItalic.ttf", 700, True),
+    ("montserrat",    "Montserrat[wght].ttf",            "DocForgeMont-Regular.ttf",     400, False),
+    ("montserrat",    "Montserrat[wght].ttf",            "DocForgeMont-Bold.ttf",        700, False),
+    ("montserrat",    "Montserrat-Italic[wght].ttf",     "DocForgeMont-Italic.ttf",      400, True),
+    ("montserrat",    "Montserrat-Italic[wght].ttf",     "DocForgeMont-BoldItalic.ttf",  700, True),
+    ("ebgaramond",    "EBGaramond[wght].ttf",            "DocForgeGaramond-Regular.ttf", 400, False),
+    ("ebgaramond",    "EBGaramond[wght].ttf",            "DocForgeGaramond-Bold.ttf",    700, False),
+    ("ebgaramond",    "EBGaramond-Italic[wght].ttf",     "DocForgeGaramond-Italic.ttf",  400, True),
+    ("ebgaramond",    "EBGaramond-Italic[wght].ttf",     "DocForgeGaramond-BoldItalic.ttf", 700, True),
+    ("crimsonpro",    "CrimsonPro[wght].ttf",            "DocForgeCrimson-Regular.ttf",  400, False),
+    ("crimsonpro",    "CrimsonPro[wght].ttf",            "DocForgeCrimson-Bold.ttf",     700, False),
+    ("crimsonpro",    "CrimsonPro-Italic[wght].ttf",     "DocForgeCrimson-Italic.ttf",   400, True),
+    ("crimsonpro",    "CrimsonPro-Italic[wght].ttf",     "DocForgeCrimson-BoldItalic.ttf", 700, True),
 ]
 
 # The family name written into name ID 1. Word matches embedded fonts by this name,
@@ -68,6 +84,10 @@ FAMILY_OF = {
     "DocForgeSans": "DocForge Sans",
     "DocForgeSerif": "DocForge Serif",
     "DocForgeMono": "DocForge Mono",
+    "DocForgeInter": "DocForge Inter",
+    "DocForgeMont": "DocForge Montserrat",
+    "DocForgeGaramond": "DocForge Garamond",
+    "DocForgeCrimson": "DocForge Crimson",
 }
 
 
@@ -140,7 +160,7 @@ def build():
         print(f"  {out_name:32s} {size/1024:7.1f} KB")
 
     # licence, shipped alongside as OFL 1.1 requires
-    for fam in ("sourcesans3", "sourceserif4", "sourcecodepro"):
+    for fam in ("sourcesans3", "sourceserif4", "sourcecodepro", "inter", "montserrat", "ebgaramond", "crimsonpro"):
         with urllib.request.urlopen(f"{RAW}/{fam}/OFL.txt") as r:
             with open(os.path.join(OUT, f"OFL-{fam}.txt"), "wb") as fh:
                 fh.write(r.read())

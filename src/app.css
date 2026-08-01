@@ -563,3 +563,14 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   .pagedjs_page { box-shadow: none; margin: 0; }
   .doc .shot .shot-hint { display: none !important; }
 }
+
+/* button-embedded spinner (Word export progress) */
+.btnspin {
+  width: 12px; height: 12px;
+  border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+.btn.busy { opacity: 0.85; cursor: progress; }
