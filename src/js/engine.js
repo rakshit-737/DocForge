@@ -702,6 +702,29 @@ const Engine = (() => {
 }
 .doc .content h1 { string-set: sect content(text); }
 `;
+
+    // Decorative page border — an overlay drawn just inside the paper edge, so it
+    // frames the page without disturbing the margin boxes. The cover keeps its own
+    // full-bleed design and is exempt.
+    const BORDERS = {
+      rule:   `border: 0.9pt solid #3c434e;`,
+      double: `border: 2.4pt double #3c434e;`,
+      frame:  `border: 1.6pt solid ${t.a600}; outline: 0.6pt solid ${t.a600}; outline-offset: 1.6pt;`,
+    };
+    if (BORDERS[settings.pageBorder]) {
+      css += `
+.pagedjs_page { position: relative; }
+.pagedjs_page::after {
+  content: "";
+  position: absolute;
+  inset: 4.5mm;   /* between the paper edge and the running header */
+  ${BORDERS[settings.pageBorder]}
+  pointer-events: none;
+  z-index: 5;
+}
+.pagedjs_page:has(.cover)::after { content: none; }
+`;
+    }
     return css;
   }
 

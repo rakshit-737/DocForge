@@ -24,7 +24,7 @@
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
     cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
-    hardWrap: false, citeStyle: "ieee",
+    hardWrap: false, citeStyle: "ieee", pageBorder: "none",
   };
 
   const TEMPLATES = {
@@ -326,6 +326,14 @@ Start writing here.
   const scaleWrap = $("#scaleWrap");
   const DOC_CSS = Engine.fontFaceCss() + (window.__KATEX_CSS__ || "") + (window.__DOC_CSS__ || "");
 
+  /* The chrome wears the same faces as the document (see app.css) — register them
+     on the app document itself so the UI never waits for the first preview render. */
+  {
+    const st = document.createElement("style");
+    st.textContent = Engine.fontFaceCss();
+    document.head.appendChild(st);
+  }
+
   /* ---------------- toast & confirm ---------------- */
   function toast(msg, type) {
     const d = document.createElement("div");
@@ -528,7 +536,7 @@ Start writing here.
 
   /* ---------------- settings UI ---------------- */
   const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
-  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle" };
+  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle", sPageBorder: "pageBorder" };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
   function syncSettingsUI() {

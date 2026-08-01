@@ -8,51 +8,110 @@
 <style>
 /* ============================================================
    app.css — application chrome (never printed)
+
+   Design language: a typographer's workshop. The chrome is quiet
+   ink; the paper in the preview is the star. The app wears its own
+   embedded document faces (DocForge Sans / Serif / Mono — injected
+   at boot by main.js), and the one indulgence is a brass foil rule
+   under the top bar — the metal of the forge.
    ============================================================ */
 :root {
-  --bg: #12151b;
-  --bg2: #191d26;
-  --bg3: #202634;
-  --line: #2b3242;
-  --tx: #e6e9f0;
-  --tx2: #9aa3b5;
-  --tx3: #6b7488;
-  --pri: #4f7df9;
-  --pri2: #3d68e0;
-  --ok: #2fbf82;
-  --warn: #e0a63d;
-  --danger: #e05d5d;
-  --r: 9px;
+  --bg: #101317;        /* deep ink */
+  --bg2: #171b20;       /* panels */
+  --bg3: #20262d;       /* raised */
+  --line: #2a313a;
+  --tx: #e9ebee;
+  --tx2: #9aa1ab;
+  --tx3: #737d89;
+  --pri: #c9974a;       /* brass */
+  --pri2: #daa958;
+  --pri-ink: #191207;   /* text on brass */
+  --ok: #4dab83;
+  --warn: #d99a3d;
+  --danger: #d96a5d;
+  --deck: #22262c;      /* the proof table the pages rest on */
+  --r: 8px;
+  --sans: "DocForge Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --serif: "DocForge Serif", Georgia, serif;
+  --mono: "DocForge Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 }
+:root[data-light] {
+  --bg: #f1f0ee;
+  --bg2: #faf9f8;
+  --bg3: #ffffff;
+  --line: #ddd9d3;
+  --tx: #23262b;
+  --tx2: #5d636c;
+  --tx3: #8d929a;
+  --pri: #a2762f;
+  --pri2: #8a6425;
+  --pri-ink: #fffdf8;
+  --deck: #dedbd5;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+  font-family: var(--sans);
   background: var(--bg);
   color: var(--tx);
   overflow: hidden;
   font-size: 13.5px;
+  letter-spacing: 0.004em;
 }
 button, select, input, textarea { font: inherit; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--pri); outline-offset: 1px; border-radius: 4px; }
+
+/* quiet scrollbars that match the surface they live on */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--tx3); border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------------- top bar ---------------- */
 #topbar {
   height: 52px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
+  gap: 9px;
+  padding: 0 16px;
   background: var(--bg2);
   border-bottom: 1px solid var(--line);
+  position: relative;
 }
-.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; letter-spacing: 0.01em; }
-.brand svg { width: 22px; height: 22px; }
-.brand .b2 { color: var(--tx3); font-weight: 500; font-size: 12px; margin-left: 2px; }
+/* the signature: a brass foil rule, like the spine of a clothbound book */
+#topbar::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pri) 0%, color-mix(in srgb, var(--pri) 35%, transparent) 38%, transparent 72%);
+  pointer-events: none;
+}
+.brand {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.005em;
+}
+.brand svg { width: 21px; height: 21px; align-self: center; }
+.brand .b2 {
+  font-family: var(--sans);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 10.5px;
+  color: var(--tx3);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 #topbar .grow { flex: 1; }
 
 .btn {
-  background: var(--bg3);
+  background: transparent;
   border: 1px solid var(--line);
   border-radius: var(--r);
   padding: 7px 13px;
@@ -62,49 +121,60 @@ button, select, input, textarea { font: inherit; color: inherit; }
   align-items: center;
   gap: 7px;
   white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.btn:hover { background: #262d3d; border-color: #39415466; }
+.btn:hover { background: var(--bg3); border-color: var(--tx3); }
+.btn:active { transform: translateY(0.5px) scale(0.985); }
 .btn svg { width: 15px; height: 15px; flex: none; }
-.btn.icon { padding: 7px 9px; }
-.btn.pri { background: var(--pri); border-color: var(--pri); font-weight: 600; }
-.btn.pri:hover { background: var(--pri2); }
-.btn.ghost { background: transparent; }
-.btn.small { padding: 4px 9px; font-size: 12.5px; border-radius: 7px; }
+.btn.icon { padding: 7px 9px; color: var(--tx2); }
+.btn.icon:hover { color: var(--tx); }
+.btn.pri {
+  background: var(--pri);
+  border-color: var(--pri);
+  color: var(--pri-ink);
+  font-weight: 600;
+}
+.btn.pri:hover { background: var(--pri2); border-color: var(--pri2); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--bg3); }
+.btn.small { padding: 4px 9px; font-size: 12.5px; border-radius: 6px; }
 
-select.btn { appearance: none; padding-right: 26px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239aa3b5' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>");
+select.btn { appearance: none; padding-right: 26px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239aa1ab' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>");
   background-repeat: no-repeat; background-position: right 9px center; }
-select.btn option { background: var(--bg2); }
+select.btn option { background: var(--bg2); color: var(--tx); }
 
 /* ---------------- layout ---------------- */
 #main { display: flex; height: calc(100% - 52px); }
 
 /* settings drawer */
 #settings {
-  width: 265px;
+  width: 268px;
   flex: none;
   background: var(--bg2);
   border-right: 1px solid var(--line);
   overflow-y: auto;
-  padding: 14px 14px 30px;
+  padding: 16px 16px 34px;
   display: none;
 }
 #settings.open { display: block; }
 #settings h3 {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--tx3); margin: 18px 0 8px; font-weight: 700;
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--pri); margin: 22px 0 9px; font-weight: 700;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
 }
 #settings h3:first-child { margin-top: 2px; }
-.field { margin-bottom: 9px; }
+.field { margin-bottom: 10px; }
 .field label { display: block; font-size: 11.5px; color: var(--tx2); margin-bottom: 4px; }
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 6px;
   padding: 7px 9px;
   color: var(--tx);
   outline: none;
+  transition: border-color 0.12s;
 }
 .field input:focus, .field select:focus { border-color: var(--pri); }
 .frow { display: flex; gap: 8px; }
@@ -113,21 +183,23 @@ select.btn option { background: var(--bg2); }
 .toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; user-select: none; }
 .toggle span.lbl { font-size: 12.8px; color: var(--tx); }
 .tg {
-  width: 34px; height: 19px; border-radius: 10px; background: #333c50;
-  position: relative; transition: background 0.15s; flex: none;
+  width: 34px; height: 19px; border-radius: 10px; background: var(--bg3);
+  border: 1px solid var(--line);
+  position: relative; transition: background 0.15s, border-color 0.15s; flex: none;
 }
 .tg::after {
-  content: ""; position: absolute; top: 2.5px; left: 3px;
-  width: 14px; height: 14px; border-radius: 50%; background: #cfd6e4;
-  transition: left 0.15s;
+  content: ""; position: absolute; top: 2px; left: 2.5px;
+  width: 13px; height: 13px; border-radius: 50%; background: var(--tx3);
+  transition: left 0.15s, background 0.15s;
 }
 .toggle input { display: none; }
-.toggle input:checked + .tg { background: var(--pri); }
-.toggle input:checked + .tg::after { left: 17px; background: #fff; }
+.toggle input:checked + .tg { background: var(--pri); border-color: var(--pri); }
+.toggle input:checked + .tg::after { left: 16.5px; background: var(--pri-ink); }
 
 .swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.sw { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-.sw.on { border-color: #fff; box-shadow: 0 0 0 2px var(--pri); }
+.sw { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+.sw:hover { transform: scale(1.12); }
+.sw.on { border-color: var(--bg2); box-shadow: 0 0 0 2px var(--pri); }
 .swatches input[type="color"] {
   width: 26px; height: 26px; border: none; background: none; padding: 0; cursor: pointer;
 }
@@ -140,11 +212,12 @@ select.btn option { background: var(--bg2); }
   flex-direction: column;
   border-right: 1px solid var(--line);
   background: var(--bg);
+  position: relative;
 }
 #toolbar {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
   padding: 6px 8px;
   border-bottom: 1px solid var(--line);
   background: var(--bg2);
@@ -154,18 +227,20 @@ select.btn option { background: var(--bg2); }
   background: transparent;
   border: 1px solid transparent;
   color: var(--tx2);
-  border-radius: 7px;
-  min-width: 30px; height: 30px;
-  padding: 0 7px;
+  border-radius: 6px;
+  min-width: 28px; height: 29px;
+  padding: 0 5px;
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-  font-size: 12.5px;
+  font-size: 12px;
+  transition: background 0.1s, color 0.1s;
 }
 .tb:hover { background: var(--bg3); color: var(--tx); }
+.tb:active { transform: scale(0.94); }
 .tb svg { width: 15px; height: 15px; }
 .tb b { font-size: 13px; }
 .tb .h { font-weight: 800; font-size: 12px; letter-spacing: 0; }
-.tbsep { width: 1px; height: 20px; background: var(--line); margin: 0 5px; flex: none; }
+.tbsep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; flex: none; }
 
 #editor {
   flex: 1;
@@ -174,15 +249,16 @@ select.btn option { background: var(--bg2); }
   border: 0;
   outline: none;
   background: var(--bg);
-  color: #d9deea;
-  padding: 16px 18px 40vh;
-  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, Menlo, monospace;
+  color: var(--tx);
+  padding: 18px 20px 40vh;
+  font-family: var(--mono);
   font-size: 13.2px;
-  line-height: 1.65;
+  line-height: 1.7;
   tab-size: 2;
   caret-color: var(--pri);
 }
-#editor::selection { background: #2f4269; }
+#editor::selection { background: color-mix(in srgb, var(--pri) 28%, transparent); }
+#editor::placeholder { color: var(--tx3); }
 
 #statusbar {
   display: flex;
@@ -193,18 +269,20 @@ select.btn option { background: var(--bg2); }
   background: var(--bg2);
   color: var(--tx3);
   font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
 }
 #statusbar .grow { flex: 1; }
 #saveState.saved { color: var(--ok); }
 #saveState.err { color: var(--warn); }
 
-/* ---------------- preview pane ---------------- */
+/* ---------------- preview pane: the proof table ---------------- */
 #previewPane {
   flex: 14;
   min-width: 380px;
   display: flex;
   flex-direction: column;
-  background: #2a2f3a;
+  background: var(--deck);
+  position: relative;
 }
 #previewBar {
   display: flex;
@@ -218,10 +296,11 @@ select.btn option { background: var(--bg2); }
 }
 #previewBar .grow { flex: 1; }
 #pgInfo { font-variant-numeric: tabular-nums; }
+#zoomPct { font-variant-numeric: tabular-nums; min-width: 38px; text-align: center; }
 #busy {
   display: none;
   width: 13px; height: 13px;
-  border: 2px solid #47506655;
+  border: 2px solid color-mix(in srgb, var(--tx3) 40%, transparent);
   border-top-color: var(--pri);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -232,16 +311,25 @@ select.btn option { background: var(--bg2); }
 #previewScroll {
   flex: 1;
   overflow: auto;
-  padding: 26px 10px 60px;
+  padding: 28px 12px 64px;
   scrollbar-gutter: stable;
 }
 #scaleWrap { transform-origin: top center; margin: 0 auto; width: fit-content; }
 
-/* Paged.js page cards on screen */
+/* Paged.js page cards: paper resting on felt */
 .pagedjs_page {
   background: #fff;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.42), 0 14px 42px rgba(0,0,0,0.28);
-  margin: 0 auto 26px;
+  box-shadow:
+    0 1px 2px rgba(8, 8, 6, 0.3),
+    0 6px 18px rgba(8, 8, 6, 0.22),
+    0 22px 52px rgba(8, 8, 6, 0.18);
+  margin: 0 auto 30px;
+}
+:root[data-light] .pagedjs_page {
+  box-shadow:
+    0 1px 2px rgba(60, 55, 45, 0.18),
+    0 6px 18px rgba(60, 55, 45, 0.14),
+    0 20px 46px rgba(60, 55, 45, 0.12);
 }
 .pagedjs_pages { display: block; }
 
@@ -253,14 +341,14 @@ select.btn option { background: var(--bg2); }
   position: absolute; top: 6pt; right: 6pt;
   background: #1a1f28d9; color: #fff;
   font-size: 8pt; padding: 3pt 7pt; border-radius: 20pt;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--sans);
 }
 .doc .shot:hover .shot-hint { display: block; }
 
 /* ---------------- modals ---------------- */
 .overlay {
   position: fixed; inset: 0;
-  background: #05070bb0;
+  background: rgba(5, 6, 8, 0.72);
   display: none;
   align-items: center; justify-content: center;
   z-index: 60;
@@ -269,31 +357,38 @@ select.btn option { background: var(--bg2); }
 .modal {
   background: var(--bg2);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 12px;
   width: min(680px, 92vw);
   max-height: 84vh;
   display: flex; flex-direction: column;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
 .modal header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px; border-bottom: 1px solid var(--line);
-  font-weight: 700; font-size: 14.5px;
+  font-family: var(--serif);
+  font-weight: 700; font-size: 15.5px;
 }
-.modal .mbody { padding: 16px 18px; overflow-y: auto; line-height: 1.65; color: #c9cfdd; }
+.modal .mbody { padding: 16px 18px; overflow-y: auto; line-height: 1.65; color: var(--tx2); }
 .modal .mfoot { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 9px; }
 .modal.small { width: min(430px, 92vw); }
-.mbody h4 { margin: 14px 0 6px; color: var(--tx); font-size: 13px; }
+.mbody h4 {
+  margin: 18px 0 7px; color: var(--pri); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;
+}
 .mbody h4:first-child { margin-top: 0; }
+.mbody b { color: var(--tx); }
 .mbody code, .mbody pre {
-  font-family: ui-monospace, Consolas, Menlo, monospace;
+  font-family: var(--mono);
   background: var(--bg); border: 1px solid var(--line);
-  border-radius: 6px; font-size: 12px;
+  border-radius: 5px; font-size: 12px;
+  color: var(--tx);
 }
 .mbody code { padding: 1.5px 6px; }
 .mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; }
 .mbody table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-.mbody td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.mbody td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .mbody td:first-child { white-space: nowrap; }
 
 /* image action mini-menu */
@@ -302,7 +397,7 @@ select.btn option { background: var(--bg2); }
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: 10px;
-  box-shadow: 0 12px 34px rgba(0,0,0,0.5);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
   z-index: 70;
   display: none;
   overflow: hidden;
@@ -315,59 +410,32 @@ select.btn option { background: var(--bg2); }
 #imgMenu button:hover { background: var(--bg3); }
 #imgMenu button.danger { color: var(--danger); }
 
-/* toasts */
+/* toasts — a slip of paper over the ink */
 #toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
-  background: #f2f4f8; color: #14181f;
+  background: #faf8f4; color: #23262b;
   padding: 9px 16px; border-radius: 30px;
   font-size: 13px; font-weight: 600;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   animation: pop 0.18s ease-out;
   max-width: 80vw;
+  border: 1px solid rgba(60, 55, 45, 0.12);
 }
-.toast.warn { background: #ffedcb; }
+.toast.warn { background: #f8e9cd; }
 @keyframes pop { from { transform: translateY(8px); opacity: 0; } }
 
 /* embedded hint bar */
 #embedHint {
   display: none;
-  background: #2c3a5c;
-  color: #dbe4ff;
+  background: var(--bg3);
+  color: var(--tx);
   padding: 7px 14px;
   font-size: 12.5px;
   text-align: center;
+  border-bottom: 1px solid var(--line);
 }
 #embedHint.on { display: block; }
-#embedHint a { color: #fff; }
-
-/* ---------------- responsive ---------------- */
-@media (max-width: 900px) {
-  #main { flex-direction: column; }
-  #editorPane { border-right: 0; border-bottom: 1px solid var(--line); min-height: 40%; }
-  #settings { position: absolute; z-index: 40; height: calc(100% - 52px); box-shadow: 20px 0 60px rgba(0,0,0,0.4); }
-}
-
-/* ---------------- PRINT: only the pages ---------------- */
-@media print {
-  body { overflow: visible; background: #fff; }
-  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, #embedHint { display: none !important; }
-  #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
-  #scaleWrap { transform: none !important; width: auto; margin: 0; }
-  .pagedjs_page { box-shadow: none; margin: 0; }
-  .doc .shot .shot-hint { display: none !important; }
-}
-
-/* ---------------- light chrome variant ---------------- */
-:root[data-light] {
-  --bg: #eef0f4;
-  --bg2: #f7f8fa;
-  --bg3: #ffffff;
-  --line: #d5dae3;
-  --tx: #1d2330;
-  --tx2: #5a6478;
-  --tx3: #8b93a5;
-}
-:root[data-light] .toast { background: #ffffff; color: #1d2330; border: 1px solid var(--line); }
+#embedHint a { color: var(--pri); }
 
 /* ---------------- find & replace ---------------- */
 #findBar {
@@ -381,14 +449,16 @@ select.btn option { background: var(--bg2); }
 #findBar input {
   flex: 1;
   min-width: 60px;
-  background: var(--bg3);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 5px 8px;
   outline: none;
+  font-family: var(--mono);
+  font-size: 12.5px;
 }
 #findBar input:focus { border-color: var(--pri); }
-#findCount { font-size: 12px; color: var(--tx3); white-space: nowrap; }
+#findCount { font-size: 12px; color: var(--tx3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ---------------- structure linter ---------------- */
 #lintBadge {
@@ -401,6 +471,7 @@ select.btn option { background: var(--bg2); }
   margin-left: 10px;
   cursor: pointer;
 }
+#lintBadge:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
 #lintPanel {
   position: absolute;
   bottom: 34px;
@@ -411,10 +482,12 @@ select.btn option { background: var(--bg2); }
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   padding: 6px;
   z-index: 40;
+  animation: rise 0.14s ease-out;
 }
+@keyframes rise { from { transform: translateY(6px); opacity: 0; } }
 .lint-item {
   display: block;
   width: 100%;
@@ -435,10 +508,8 @@ select.btn option { background: var(--bg2); }
   margin-right: 8px;
   font-size: 11.5px;
 }
-#editorPane { position: relative; }
 
 /* ---------------- outline navigator ---------------- */
-#previewPane { position: relative; }
 #outlinePanel {
   position: absolute;
   top: 44px;
@@ -449,9 +520,10 @@ select.btn option { background: var(--bg2); }
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   padding: 6px;
   z-index: 40;
+  animation: rise 0.14s ease-out;
 }
 .ol-item {
   display: block;
@@ -475,6 +547,31 @@ select.btn option { background: var(--bg2); }
 .ol-empty { color: var(--tx3); font-size: 12.5px; padding: 8px; }
 #btnOutline.on { background: var(--bg3); border-color: var(--pri); color: var(--pri); }
 
+/* ---------------- reduced motion ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  .toast, #lintPanel, #outlinePanel { animation: none; }
+  .btn, .tb, .tg, .tg::after, .sw, .field input, .field select { transition: none; }
+  .btn:active, .tb:active { transform: none; }
+}
+
+/* ---------------- responsive ---------------- */
+@media (max-width: 900px) {
+  #main { flex-direction: column; }
+  #editorPane { border-right: 0; border-bottom: 1px solid var(--line); min-height: 40%; }
+  #settings { position: absolute; z-index: 40; height: calc(100% - 52px); box-shadow: 20px 0 60px rgba(0, 0, 0, 0.4); }
+  .brand .b2 { display: none; }
+}
+
+/* ---------------- PRINT: only the pages ---------------- */
+@media print {
+  body { overflow: visible; background: #fff; }
+  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, #embedHint, #outlinePanel, #lintPanel { display: none !important; }
+  #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
+  #scaleWrap { transform: none !important; width: auto; margin: 0; }
+  .pagedjs_page { box-shadow: none; margin: 0; }
+  .doc .shot .shot-hint { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -483,7 +580,7 @@ select.btn option { background: var(--bg2); }
 
 <header id="topbar">
   <div class="brand">
-    <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="2.5" width="15" height="19" rx="2.5" fill="#4f7df9"/><rect x="6.5" y="7" width="8" height="1.7" rx="0.85" fill="#fff" opacity="0.95"/><rect x="6.5" y="10.5" width="8" height="1.2" rx="0.6" fill="#fff" opacity="0.7"/><rect x="6.5" y="13.2" width="5.5" height="1.2" rx="0.6" fill="#fff" opacity="0.7"/><path d="M16.5 15.5l4.2 1.6-1.9 1 1 1.9-1.6.8-1-1.9-1.6 1.5z" fill="#e6e9f0"/></svg>
+    <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="2.5" width="15" height="19" rx="2.5" fill="#c9974a"/><rect x="6.5" y="7" width="8" height="1.7" rx="0.85" fill="#171106" opacity="0.9"/><rect x="6.5" y="10.5" width="8" height="1.2" rx="0.6" fill="#171106" opacity="0.6"/><rect x="6.5" y="13.2" width="5.5" height="1.2" rx="0.6" fill="#171106" opacity="0.6"/><path d="M16.5 15.5l4.2 1.6-1.9 1 1 1.9-1.6.8-1-1.9-1.6 1.5z" fill="#e9ebee"/></svg>
     DocForge <span class="b2">document studio</span>
   </div>
   <div class="grow"></div>
@@ -561,6 +658,14 @@ select.btn option { background: var(--bg2); }
         <select id="sMargins"><option value="normal">Normal</option><option value="narrow">Narrow</option><option value="wide">Wide</option></select>
       </div>
     </div>
+    <div class="field"><label>Page border</label>
+      <select id="sPageBorder">
+        <option value="none">None</option>
+        <option value="rule">Rule — thin frame</option>
+        <option value="double">Double rule</option>
+        <option value="frame">Accent frame</option>
+      </select>
+    </div>
 
     <div class="field"><label>Citation style</label>
       <select id="sCiteStyle">
@@ -592,6 +697,7 @@ select.btn option { background: var(--bg2); }
       <button class="tb" data-act="ul" title="Bullet list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg></button>
       <button class="tb" data-act="ol" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1v4M3.6 11.4a1.4 1.4 0 0 1 2.6.8c0 1-2.4 1.4-2.4 2.6h2.7M3.7 16.8h1.6a1.2 1.2 0 0 1 0 2.4h-.7 .7a1.2 1.2 0 0 1 0 2.4H3.6" stroke-width="1.4"/></svg></button>
       <button class="tb" data-act="quote" title="Quote"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.6 6C6.9 7.6 5 10.2 5 13.4 5 16 6.6 18 9 18c2 0 3.4-1.5 3.4-3.4 0-1.8-1.3-3.2-3.1-3.2-.3 0-.7 0-.9.1.4-1.7 1.7-3.3 3.3-4.2zm9 0c-2.7 1.6-4.6 4.2-4.6 7.4 0 2.6 1.6 4.6 4 4.6 2 0 3.4-1.5 3.4-3.4 0-1.8-1.3-3.2-3.1-3.2-.3 0-.7 0-.9.1.4-1.7 1.7-3.3 3.3-4.2z" transform="scale(0.85) translate(2 1)"/></svg></button>
+      <button class="tb" data-act="hr" title="Divider">—</button>
       <button class="tb" data-act="link" title="Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
       <div class="tbsep"></div>
       <button class="tb" data-act="table" title="Table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15.5 4.5v15"/></svg></button>
@@ -603,7 +709,6 @@ select.btn option { background: var(--bg2); }
       <div class="tbsep"></div>
       <button class="tb" data-act="toc" title="Table of contents">TOC</button>
       <button class="tb" data-act="pagebreak" title="Page break"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h14M5 8h14"/><path d="M3 12h3m3 0h3m3 0h3m3 0h0" stroke-dasharray="3 3"/><path d="M5 16h14M5 20h14"/></svg></button>
-      <button class="tb" data-act="hr" title="Divider">—</button>
     </div>
     <div id="findBar">
       <input type="text" id="findInput" placeholder="Find…">
@@ -1543,6 +1648,29 @@ const Engine = (() => {
 }
 .doc .content h1 { string-set: sect content(text); }
 `;
+
+    // Decorative page border — an overlay drawn just inside the paper edge, so it
+    // frames the page without disturbing the margin boxes. The cover keeps its own
+    // full-bleed design and is exempt.
+    const BORDERS = {
+      rule:   `border: 0.9pt solid #3c434e;`,
+      double: `border: 2.4pt double #3c434e;`,
+      frame:  `border: 1.6pt solid ${t.a600}; outline: 0.6pt solid ${t.a600}; outline-offset: 1.6pt;`,
+    };
+    if (BORDERS[settings.pageBorder]) {
+      css += `
+.pagedjs_page { position: relative; }
+.pagedjs_page::after {
+  content: "";
+  position: absolute;
+  inset: 4.5mm;   /* between the paper edge and the running header */
+  ${BORDERS[settings.pageBorder]}
+  pointer-events: none;
+  z-index: 5;
+}
+.pagedjs_page:has(.cover)::after { content: none; }
+`;
+    }
     return css;
   }
 
@@ -3219,7 +3347,24 @@ const DocxExport = (() => {
           ],
         }],
       },
-      sections: [
+      sections: (() => {
+      /* Decorative page border, mirroring the PDF overlay: drawn a fixed distance in
+         from the paper edge on front-matter and body pages; the cover stays clean.
+         Word measures border size in eighth-points and offset in points (max 31). */
+      const PB = {
+        rule:   { style: BorderStyle.SINGLE, size: 7, color: "3C434E" },
+        double: { style: BorderStyle.DOUBLE, size: 6, color: "3C434E" },
+        frame:  { style: BorderStyle.THICK_THIN_SMALL_GAP, size: 18, color: hex(t.a600) },
+      }[settings.pageBorder];
+      const pageBorders = PB ? {
+        pageBorders: { display: D.PageBorderDisplay.ALL_PAGES, offsetFrom: D.PageBorderOffsetFrom.PAGE, zOrder: D.PageBorderZOrder.FRONT },
+        // 13 pt ≈ 4.6 mm from the paper edge — same standoff as the PDF overlay
+        pageBorderTop: { ...PB, space: 13 },
+        pageBorderRight: { ...PB, space: 13 },
+        pageBorderBottom: { ...PB, space: 13 },
+        pageBorderLeft: { ...PB, space: 13 },
+      } : undefined;
+      return [
         // Cover: its own section with every margin at zero so the band can bleed.
         // It deliberately declares NO headers/footers — even an empty Header reserves a
         // line box and pushes the band ~4 mm off the top edge.
@@ -3242,6 +3387,7 @@ const DocxExport = (() => {
               size: pageSize,
               margin: bodyMargin,
               pageNumbers: { start: 1, formatType: NumberFormat.LOWER_ROMAN },
+              borders: pageBorders,
             },
           },
           headers: { default: new Header({ children: frontHeaderChildren }) },
@@ -3256,13 +3402,15 @@ const DocxExport = (() => {
               margin: bodyMargin,
               // Body restarts at 1, so the first page of prose is page 1.
               pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
+              borders: pageBorders,
             },
           },
           headers: { default: new Header({ children: headerChildren }) },
           footers: { default: new Footer({ children: footerChildren }) },
           children: bodyBlocks,
         },
-      ],
+      ];
+      })(),
     });
 
     return DocxFonts.embed(await D.Packer.toBlob(doc), fp.families);
@@ -3299,7 +3447,7 @@ const DocxExport = (() => {
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
     cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
-    hardWrap: false, citeStyle: "ieee",
+    hardWrap: false, citeStyle: "ieee", pageBorder: "none",
   };
 
   const TEMPLATES = {
@@ -3601,6 +3749,14 @@ Start writing here.
   const scaleWrap = $("#scaleWrap");
   const DOC_CSS = Engine.fontFaceCss() + (window.__KATEX_CSS__ || "") + (window.__DOC_CSS__ || "");
 
+  /* The chrome wears the same faces as the document (see app.css) — register them
+     on the app document itself so the UI never waits for the first preview render. */
+  {
+    const st = document.createElement("style");
+    st.textContent = Engine.fontFaceCss();
+    document.head.appendChild(st);
+  }
+
   /* ---------------- toast & confirm ---------------- */
   function toast(msg, type) {
     const d = document.createElement("div");
@@ -3803,7 +3959,7 @@ Start writing here.
 
   /* ---------------- settings UI ---------------- */
   const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
-  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle" };
+  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle", sPageBorder: "pageBorder" };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
   function syncSettingsUI() {

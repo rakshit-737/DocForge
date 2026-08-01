@@ -704,7 +704,24 @@ const DocxExport = (() => {
           ],
         }],
       },
-      sections: [
+      sections: (() => {
+      /* Decorative page border, mirroring the PDF overlay: drawn a fixed distance in
+         from the paper edge on front-matter and body pages; the cover stays clean.
+         Word measures border size in eighth-points and offset in points (max 31). */
+      const PB = {
+        rule:   { style: BorderStyle.SINGLE, size: 7, color: "3C434E" },
+        double: { style: BorderStyle.DOUBLE, size: 6, color: "3C434E" },
+        frame:  { style: BorderStyle.THICK_THIN_SMALL_GAP, size: 18, color: hex(t.a600) },
+      }[settings.pageBorder];
+      const pageBorders = PB ? {
+        pageBorders: { display: D.PageBorderDisplay.ALL_PAGES, offsetFrom: D.PageBorderOffsetFrom.PAGE, zOrder: D.PageBorderZOrder.FRONT },
+        // 13 pt ≈ 4.6 mm from the paper edge — same standoff as the PDF overlay
+        pageBorderTop: { ...PB, space: 13 },
+        pageBorderRight: { ...PB, space: 13 },
+        pageBorderBottom: { ...PB, space: 13 },
+        pageBorderLeft: { ...PB, space: 13 },
+      } : undefined;
+      return [
         // Cover: its own section with every margin at zero so the band can bleed.
         // It deliberately declares NO headers/footers — even an empty Header reserves a
         // line box and pushes the band ~4 mm off the top edge.
@@ -727,6 +744,7 @@ const DocxExport = (() => {
               size: pageSize,
               margin: bodyMargin,
               pageNumbers: { start: 1, formatType: NumberFormat.LOWER_ROMAN },
+              borders: pageBorders,
             },
           },
           headers: { default: new Header({ children: frontHeaderChildren }) },
@@ -741,13 +759,15 @@ const DocxExport = (() => {
               margin: bodyMargin,
               // Body restarts at 1, so the first page of prose is page 1.
               pageNumbers: { start: 1, formatType: NumberFormat.DECIMAL },
+              borders: pageBorders,
             },
           },
           headers: { default: new Header({ children: headerChildren }) },
           footers: { default: new Footer({ children: footerChildren }) },
           children: bodyBlocks,
         },
-      ],
+      ];
+      })(),
     });
 
     return DocxFonts.embed(await D.Packer.toBlob(doc), fp.families);
