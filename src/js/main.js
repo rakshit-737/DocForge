@@ -24,7 +24,7 @@
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
     cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
-    hardWrap: false,
+    hardWrap: false, citeStyle: "ieee",
   };
 
   const TEMPLATES = {
@@ -324,7 +324,7 @@ Start writing here.
 
   const editor = $("#editor");
   const scaleWrap = $("#scaleWrap");
-  const DOC_CSS = Engine.fontFaceCss() + (window.__DOC_CSS__ || "");
+  const DOC_CSS = Engine.fontFaceCss() + (window.__KATEX_CSS__ || "") + (window.__DOC_CSS__ || "");
 
   /* ---------------- toast & confirm ---------------- */
   function toast(msg, type) {
@@ -482,6 +482,7 @@ Start writing here.
       URL.revokeObjectURL(url);
       $("#pgInfo").textContent = flow.total + (flow.total === 1 ? " page" : " pages");
       applyZoom();
+      refreshOutline();
     } catch (e) {
       console.error("[DocForge] render failed", e);
       toast("Preview error — check your markup", "warn");
@@ -518,6 +519,7 @@ Start writing here.
       else { el.textContent = "Autosave unavailable — use Save"; el.className = "err"; }
     }, 1100);
     updateCounts();
+    refreshLint();
   }
   function updateCounts() {
     const w = (state.source.trim().match(/\S+/g) || []).length;
@@ -526,7 +528,7 @@ Start writing here.
 
   /* ---------------- settings UI ---------------- */
   const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
-  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins" };
+  const SELECTS = { sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle" };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
   function syncSettingsUI() {
@@ -792,6 +794,205 @@ Start writing here.
   }
 
   /* ---------------- boot ---------------- */
+  /* ---------------- outline navigator ---------------- */
+  let outlineOpen = false;
+  function refreshOutline() {
+    if (!outlineOpen) return;
+    const panel = $("#outlinePanel");
+    const heads = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(h1,h2,h3)[id]")];
+    if (!heads.length) { panel.innerHTML = `<div class="ol-empty">No headings yet</div>`; return; }
+    panel.innerHTML = heads.map((h, i) =>
+      `<button class="ol-item l${h.tagName[1]}" data-i="${i}">${Engine.esc(h.textContent)}</button>`).join("");
+    panel.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
+      heads[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  /* ---------------- find & replace ---------------- */
+  const find = { open: false, at: -1 };
+  function findBar(show) {
+    find.open = show;
+    $("#findBar").style.display = show ? "flex" : "none";
+    if (show) { $("#findInput").focus(); $("#findInput").select(); findCount(); }
+    else editor.focus();
+  }
+  function findCount() {
+    const q = $("#findInput").value;
+    if (!q) { $("#findCount").textContent = ""; return 0; }
+    let n = 0, i = -1;
+    const hay = editor.value.toLowerCase(), needle = q.toLowerCase();
+    while ((i = hay.indexOf(needle, i + 1)) !== -1) n++;
+    $("#findCount").textContent = n ? n + " found" : "none";
+    return n;
+  }
+  function findStep(back) {
+    const q = $("#findInput").value;
+    if (!q) return;
+    const hay = editor.value.toLowerCase(), needle = q.toLowerCase();
+    let i;
+    if (back) {
+      i = hay.lastIndexOf(needle, Math.max(0, editor.selectionStart - 1));
+      if (i === -1) i = hay.lastIndexOf(needle);
+    } else {
+      i = hay.indexOf(needle, editor.selectionEnd);
+      if (i === -1) i = hay.indexOf(needle);
+    }
+    if (i === -1) return;
+    editor.focus();
+    editor.setSelectionRange(i, i + q.length);
+  }
+  function replaceOne() {
+    const q = $("#findInput").value;
+    if (!q) return;
+    const sel = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+    if (sel.toLowerCase() === q.toLowerCase()) {
+      editor.setRangeText($("#replInput").value, editor.selectionStart, editor.selectionEnd, "end");
+      state.source = editor.value; markDirty(); scheduleRender();
+    }
+    findStep(false); findCount();
+  }
+  function replaceAll() {
+    const q = $("#findInput").value;
+    if (!q) return;
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    const next = editor.value.replace(re, $("#replInput").value);
+    if (next === editor.value) return;
+    const n = (editor.value.match(re) || []).length;
+    editor.value = next;
+    state.source = next; markDirty(); scheduleRender();
+    toast(`Replaced ${n} occurrence${n === 1 ? "" : "s"}`);
+    findCount();
+  }
+
+  /* ---------------- paste cleanup ----------------
+     Word and web pages paste as HTML soup; convert the useful structure to the
+     app's own markdown instead of dumping tags or losing everything. */
+  function htmlToMd(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    doc.querySelectorAll("script,style,meta,link,head title").forEach(n => n.remove());
+    const cell = t => t.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
+    function inline(node) {
+      let s = "";
+      node.childNodes.forEach(ch => {
+        if (ch.nodeType === 3) { s += ch.textContent.replace(/\s+/g, " "); return; }
+        if (ch.nodeType !== 1) return;
+        const t = ch.tagName.toLowerCase(), inner = inline(ch);
+        if (t === "br") s += "\n";
+        else if ((t === "b" || t === "strong") && inner.trim()) s += `**${inner.trim()}**`;
+        else if ((t === "i" || t === "em") && inner.trim()) s += `*${inner.trim()}*`;
+        else if (t === "code" && inner.trim()) s += "`" + inner.trim() + "`";
+        else if (t === "a" && ch.getAttribute("href") && /^https?:/i.test(ch.getAttribute("href")))
+          s += `[${inner.trim() || ch.getAttribute("href")}](${ch.getAttribute("href")})`;
+        else s += inner;
+      });
+      return s;
+    }
+    function block(node, depth = 0) {
+      let out = "";
+      node.childNodes.forEach(ch => {
+        if (ch.nodeType === 3) { const t = ch.textContent.trim(); if (t) out += t + "\n\n"; return; }
+        if (ch.nodeType !== 1) return;
+        const t = ch.tagName.toLowerCase();
+        if (/^h[1-6]$/.test(t)) out += "#".repeat(Math.min(+t[1], 4)) + " " + inline(ch).trim() + "\n\n";
+        else if (t === "p" || t === "div" || t === "section" || t === "article") {
+          const kids = ch.querySelector("p,ul,ol,table,h1,h2,h3,h4,pre,blockquote,div");
+          if (kids && t !== "p") out += block(ch, depth);
+          else { const s = inline(ch).trim(); if (s) out += s + "\n\n"; }
+        }
+        else if (t === "ul" || t === "ol") {
+          [...ch.children].forEach((li, i) => {
+            if (li.tagName.toLowerCase() !== "li") return;
+            const mark = t === "ol" ? `${i + 1}. ` : "- ";
+            const sub = li.querySelector("ul,ol");
+            const own = inline(li).trim();
+            out += "  ".repeat(depth) + mark + own + "\n";
+            if (sub) out += block(li, depth + 1).replace(/^(?!\s*$)/gm, "");
+          });
+          if (!depth) out += "\n";
+        }
+        else if (t === "table") {
+          const rows = [...ch.querySelectorAll("tr")].map(tr =>
+            [...tr.children].map(td => cell(inline(td))));
+          if (rows.length) {
+            out += "| " + rows[0].join(" | ") + " |\n";
+            out += "| " + rows[0].map(() => "---").join(" | ") + " |\n";
+            rows.slice(1).forEach(r => { out += "| " + r.join(" | ") + " |\n"; });
+            out += "\n";
+          }
+        }
+        else if (t === "pre") out += "```\n" + ch.textContent.replace(/\n$/, "") + "\n```\n\n";
+        else if (t === "blockquote") out += block(ch, depth).trim().replace(/^/gm, "> ") + "\n\n";
+        else if (t === "img" && ch.getAttribute("alt")) out += `[screenshot: ${ch.getAttribute("alt")}]\n\n`;
+        else out += block(ch, depth);
+      });
+      return out;
+    }
+    return block(doc.body).replace(/\n{3,}/g, "\n\n").replace(/[ \t]+$/gm, "").trim();
+  }
+
+  /* ---------------- structure linter ----------------
+     Gentle warnings for the shapes that break exports; never blocks anything. */
+  function lintSource(src) {
+    const warns = [];
+    const lines = src.split("\n");
+    let fence = null, coDepth = 0, coLine = 0;
+    lines.forEach((line, i) => {
+      const n = i + 1;
+      const fm = line.match(/^(```+|~~~+)/);
+      if (fence) { if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; return; }
+      if (fm) { fence = fm[1]; return; }
+      if (/^:::(note|tip|warning|important)\b/i.test(line)) { coDepth++; coLine = n; }
+      else if (/^:::\s*$/.test(line)) coDepth = Math.max(0, coDepth - 1);
+      if (/^#{5,}\s/.test(line)) warns.push([n, "Heading level 5+ — styled plainly and never listed in the contents. Consider #### or bold text."]);
+      if (/^\s*<(?!\/?(b|i|em|strong|code|br)\b)[a-z][^>]*>/i.test(line)) warns.push([n, "Raw HTML — it will be ignored or printed as text. Use the toolbar marks instead."]);
+      const t = line.match(/^\s*\|(.+)\|\s*$/);
+      if (t && i && /^\s*\|.+\|\s*$/.test(lines[i - 1] || "")) {
+        const cols = r => (r.match(/(?<!\\)\|/g) || []).length;
+        if (cols(line) !== cols(lines[i - 1])) warns.push([n, "Table row has a different number of cells than the row above — the table will come out ragged."]);
+      }
+    });
+    if (fence) warns.push([lines.length, "Unclosed code fence ``` — everything after it is being treated as code."]);
+    if (coDepth > 0) warns.push([coLine, "Unclosed callout ::: — it swallows the rest of the document."]);
+    // Undefined footnotes / citations / cross-references
+    const defs = new Set(), cites = new Set(), ids = new Set();
+    src.replace(/^\[\^([^\]\s]+)\]:/gm, (m, id) => defs.add(id));
+    src.replace(/^\[@([^\]\s,]+)\]:/gm, (m, id) => cites.add(id));
+    src.replace(/\{#([\w:.-]+)\}/g, (m, id) => ids.add(id));
+    src.replace(/#([A-Za-z][\w:.-]*)/g, (m, id) => ids.add(id)); // figure/table ids declared inline
+    lines.forEach((line, i) => {
+      if (/^(```|~~~)/.test(line)) return;
+      line.replace(/\[\^([^\]\s]+)\](?!:)/g, (m, id) => { if (!defs.has(id)) warns.push([i + 1, `Footnote [^${id}] has no definition line ([^${id}]: …).`]); });
+      line.replace(/\[@([^\]\s,]+)(?:,[^\]]*)?\](?!:)/g, (m, id) => { if (!cites.has(id)) warns.push([i + 1, `Citation [@${id}] has no entry ([@${id}]: …).`]); });
+    });
+    return warns;
+  }
+  function refreshLint() {
+    const warns = lintSource(state.source);
+    const badge = $("#lintBadge"), panel = $("#lintPanel");
+    badge.hidden = !warns.length;
+    badge.textContent = warns.length === 1 ? "1 check" : warns.length + " checks";
+    if (!warns.length) { panel.hidden = true; return; }
+    panel.innerHTML = warns.slice(0, 40).map(([line, msg]) =>
+      `<button class="lint-item" data-line="${line}"><span class="ln">line ${line}</span>${Engine.esc(msg)}</button>`).join("");
+    panel.querySelectorAll(".lint-item").forEach(b => b.onclick = () => {
+      const ln = +b.dataset.line;
+      const pos = state.source.split("\n").slice(0, ln - 1).join("\n").length + (ln > 1 ? 1 : 0);
+      editor.focus();
+      editor.setSelectionRange(pos, pos);
+      const lineHeight = 21;
+      editor.scrollTop = Math.max(0, (ln - 6) * lineHeight);
+    });
+  }
+
+  /* ---------------- chrome theme ----------------
+     The chrome ships dark; this offers a light variant. App surfaces only — the
+     document pages stay paper-white in either. */
+  const UI_KEY = "docforge.ui";
+  function applyUiTheme(light) {
+    document.documentElement.toggleAttribute("data-light", !!light);
+    safeLS.set(UI_KEY, light ? "light" : "dark");
+  }
+
   function bindChrome() {
     $("#btnSettings").onclick = () => $("#settings").classList.toggle("open");
     $("#btnHelp").onclick = () => $("#helpOverlay").classList.add("open");
@@ -813,6 +1014,48 @@ Start writing here.
     $("#zoomFit").onclick = () => { zoomMode = "fit"; applyZoom(); };
 
     editor.addEventListener("input", () => { state.source = editor.value; markDirty(); scheduleRender(); });
+
+    /* outline */
+    $("#btnOutline").onclick = () => {
+      outlineOpen = !outlineOpen;
+      $("#outlinePanel").hidden = !outlineOpen;
+      $("#btnOutline").classList.toggle("on", outlineOpen);
+      refreshOutline();
+    };
+
+    /* find & replace */
+    $("#findClose").onclick = () => findBar(false);
+    $("#findNext").onclick = () => { findStep(false); };
+    $("#findPrev").onclick = () => { findStep(true); };
+    $("#replOne").onclick = replaceOne;
+    $("#replAll").onclick = replaceAll;
+    $("#findInput").addEventListener("input", findCount);
+    $("#findInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); findStep(e.shiftKey); }
+      if (e.key === "Escape") findBar(false);
+    });
+    $("#replInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); replaceOne(); }
+      if (e.key === "Escape") findBar(false);
+    });
+
+    /* structure linter */
+    $("#lintBadge").onclick = () => { $("#lintPanel").hidden = !$("#lintPanel").hidden; };
+
+    /* dark chrome */
+    $("#btnDark").onclick = () => applyUiTheme(!document.documentElement.hasAttribute("data-light"));
+
+    /* paste cleanup */
+    editor.addEventListener("paste", e => {
+      const html = e.clipboardData && e.clipboardData.getData("text/html");
+      if (!html || !/<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) return; // plain text pastes untouched
+      const md = htmlToMd(html);
+      if (!md) return;
+      e.preventDefault();
+      editor.setRangeText(md, editor.selectionStart, editor.selectionEnd, "end");
+      state.source = editor.value; markDirty(); scheduleRender();
+      toast("Pasted as Markdown — Ctrl+Z restores the raw text");
+    });
     editor.addEventListener("keydown", e => {
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); TOOL_ACTS.bold(); }
@@ -823,6 +1066,8 @@ Start writing here.
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); saveProject(); }
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
+      if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
+      if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
     window.addEventListener("beforeprint", () => {
@@ -864,7 +1109,8 @@ Start writing here.
       state.source = TEMPLATES.welcome.source;
     }
     editor.value = state.source;
-    syncSettingsUI(); updateCounts();
+    applyUiTheme(safeLS.get(UI_KEY) === "light");
+    syncSettingsUI(); updateCounts(); refreshLint();
     if (window.self !== window.top) $("#embedHint").classList.add("on");
     doRender();
   }

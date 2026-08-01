@@ -17,6 +17,24 @@ const DocxExport = (() => {
   };
   const MONO = "DocForge Mono";
 
+  /* Word-side mirror of the highlight theme in doc.css — keep the two in sync. */
+  const HL_WORD = [
+    [/\bhljs-(comment|quote)\b/, { color: "62717E", italics: true }],
+    [/\bhljs-(keyword|selector-tag|literal|type)\b/, { color: "8F3F9C" }],
+    [/\bhljs-(string|regexp|addition)\b/, { color: "1A7F37" }],
+    [/\bhljs-(number|symbol|bullet|meta)\b/, { color: "A05A00" }],
+    [/\bhljs-(title|section|name)\b/, { color: "1F56B3" }],
+    [/\bhljs-(attr|attribute|variable|template-variable|params)\b/, { color: "953800" }],
+    [/\bhljs-(built_in)\b/, { color: "0F6F74" }],
+    [/\bhljs-(deletion)\b/, { color: "BB2432" }],
+    [/\bhljs-(strong)\b/, { bold: true }],
+    [/\bhljs-(emphasis)\b/, { italics: true }],
+  ];
+  const hlFmt = cls => {
+    for (const [re, fmt] of HL_WORD) if (re.test(cls)) return fmt;
+    return null;
+  };
+
   function b64Bytes(b64) {
     const bin = atob(b64);
     const arr = new Uint8Array(bin.length);
@@ -127,6 +145,13 @@ const DocxExport = (() => {
         if (ch.nodeType !== 1) return;
         const tag = ch.tagName.toLowerCase();
         if (tag === "br") { out.push(new TextRun({ text: "", break: 1 })); return; }
+        if (tag === "span" && ch.classList.contains("math-inline")) {
+          const tex = ch.dataset.tex || "";
+          const omml = (typeof MathmlOmml !== "undefined") ? MathmlOmml.texToOmml(tex, false) : null;
+          if (omml) { try { out.push(D.ImportedXmlComponent.fromXmlString(omml).root[0]); return; } catch (e) {} }
+          out.push(new TextRun({ text: tex, font: MONO, size: HP(9.5) }));
+          return;
+        }
         if (tag === "span" && ch.classList.contains("footnote")) {
           const id = ++fnSeq;
           footnotes[id] = { children: [new Paragraph({
@@ -305,10 +330,35 @@ const DocxExport = (() => {
     }
 
     function codeBlock(el) {
-      const text = el.textContent.replace(/\n$/, "");
-      const paras = text.split("\n").map(line => new Paragraph({
+      const code = el.querySelector("code") || el;
+      // Flatten the highlight markup to [text, fmt] tokens, then split into lines.
+      const tokens = [];
+      (function harvest(node, fmt) {
+        node.childNodes.forEach(ch => {
+          if (ch.nodeType === 3) { if (ch.textContent) tokens.push([ch.textContent, fmt]); return; }
+          if (ch.nodeType !== 1) return;
+          harvest(ch, { ...fmt, ...(hlFmt(ch.className || "") || {}) });
+        });
+      })(code, {});
+      if (tokens.length && tokens[tokens.length - 1][0].endsWith("\n")) {
+        tokens[tokens.length - 1][0] = tokens[tokens.length - 1][0].replace(/\n$/, "");
+      }
+      const lines = [[]];
+      tokens.forEach(([text, fmt]) => {
+        const parts = text.split("\n");
+        parts.forEach((part, i) => {
+          if (i) lines.push([]);
+          if (part) lines[lines.length - 1].push([part, fmt]);
+        });
+      });
+      const paras = lines.map(line => new Paragraph({
         spacing: { after: 0, line: 240 },
-        children: [new TextRun({ text: line || " ", font: MONO, size: HP(9) })],
+        children: line.length
+          ? line.map(([text, fmt]) => new TextRun({
+              text, font: MONO, size: HP(9),
+              color: fmt.color, bold: fmt.bold, italics: fmt.italics,
+            }))
+          : [new TextRun({ text: " ", font: MONO, size: HP(9) })],
       }));
       boxTable(paras, { fill: "F6F8FA", border: "E2E5EA" });
     }
@@ -403,6 +453,41 @@ const DocxExport = (() => {
       const tag = el.tagName ? el.tagName.toLowerCase() : "";
       if (el.classList) {
         if (el.classList.contains("page-break")) return blocks.push(new Paragraph({ children: [new PageBreak()] }));
+        if (el.classList.contains("math-display")) {
+          const tex = el.dataset.tex || "";
+          const omml = (typeof MathmlOmml !== "undefined") ? MathmlOmml.texToOmml(tex, true) : null;
+          if (omml) {
+            try {
+              return blocks.push(new Paragraph({
+                spacing: { before: 120, after: 175 },
+                children: [D.ImportedXmlComponent.fromXmlString(MathmlOmml.oMathPara(omml)).root[0]],
+              }));
+            } catch (e) {}
+          }
+          return blocks.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: tex, font: MONO, size: HP(9.5) })],
+          }));
+        }
+        if (el.classList.contains("refs")) {
+          [...el.children].forEach(c => {
+            if (c.classList.contains("refs-title")) {
+              blocks.push(new Paragraph({
+                keepNext: true,
+                spacing: { before: 175, after: 132 },
+                children: [new TextRun({ text: c.textContent, bold: true, size: HP(14.5), color: hex(t.a800), font: f.head })],
+              }));
+            } else {
+              // hanging indent, the convention for reference lists
+              blocks.push(new Paragraph({
+                indent: { left: 440, hanging: 440 },
+                spacing: { after: 88 },
+                children: runs(c, { size: HP(10) }),
+              }));
+            }
+          });
+          return;
+        }
         // A list of figures/tables is a real list of entries, not Word's TOC field.
         if (el.classList.contains("list-wrap")) return captionList(el);
         if (el.classList.contains("toc-wrap")) return toc();

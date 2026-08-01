@@ -220,3 +220,41 @@ Prose that refers back to [#tbl:costs] and forward to [#fig:wide], and cites the
 [lof]
 
 [lot]
+
+# Mathematics {#sec:math}
+
+Inline math like $E = mc^2$ and $\alpha_i^2 + \beta_j$ sits in running text; currency like $50 or
+a$b stays untouched.
+
+$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+A display equation with an integral and limits:
+
+$$\int_0^\infty e^{-\lambda t}\,dt = \frac{1}{\lambda}$$
+
+# Citations
+
+The first claim rests on prior work [@knuth1984]. A second citation with a locator
+[@lamport1994, p. 210] and a repeat of the first [@knuth1984] must share one number. A missing
+key [@ghost2020] should be visibly flagged.
+
+[@knuth1984]: Knuth, D. E. (1984). *The TeXbook*. Addison-Wesley.
+[@lamport1994]: Lamport, L. (1994). *LaTeX: A Document Preparation System* (2nd ed.). Addison-Wesley.
+
+[references]
+
+# Highlighted code
+
+```javascript
+// A comment, a keyword, a string and a number
+export function greet(name = "world") {
+  const n = 42;
+  return `hello ${name} (${n})`;
+}
+```
+
+```python
+def mean(xs):
+    """Docstring survives highlighting."""
+    return sum(xs) / len(xs) if xs else 0.0
+```

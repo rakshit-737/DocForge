@@ -143,6 +143,29 @@ const Engine = (() => {
   const RE_CO_CLOSE = /^:::\s*$/;
   const CO_LABELS = { note: "Note", tip: "Tip", warning: "Warning", important: "Important" };
 
+  /* Run `fn` over the parts of a line that sit OUTSIDE `inline code` spans, so the
+     math and citation rewrites can never corrupt code. */
+  function outsideCode(line, fn) {
+    return line.split(/(`+[^`]*`+)/).map((seg, i) => (i % 2 ? seg : fn(seg))).join("");
+  }
+
+  /* ---------- math ----------
+     $…$ inline, $$…$$ display. Rewritten to empty spans carrying the TeX before marked
+     runs (markdown must never see the TeX — underscores inside it are emphasis to
+     marked); postprocess renders them with KaTeX for the page while the .docx path
+     reads the same data-tex and emits real Word equations. */
+  const RE_MATH_INLINE = /\$(?!\s)((?:\\.|[^$\\\n])+?)(?<![\s\\])\$/g;
+
+  function mathToSpans(seg) {
+    return seg.replace(RE_MATH_INLINE, (m, tex) => `<span class="math-inline" data-tex="${esc(tex)}"></span>`);
+  }
+
+  /* ---------- citations ----------
+     `[@key]: Full reference entry` defines; `[@key]` or `[@key, p. 3]` cites.
+     `[references]` places the list (appended automatically if omitted). */
+  const RE_CITE_DEF = /^\[@([^\]\s,]+)\]:[ \t]*(.*)$/;
+  const RE_REFS = /^\[references\]\s*$/i;
+
   /* ---------- footnotes ----------
      `[^id]` in the prose, `[^id]: text` anywhere in the document (conventionally at the
      end). The note text is emitted INLINE at the call site as <span class="footnote">,
@@ -154,31 +177,38 @@ const Engine = (() => {
 
   function extractFootnotes(lines) {
     const notes = {};
+    const cites = {};
     const out = [];
-    let fence = null, current = null;
+    let fence = null, current = null; // current: {store, key} while a definition continues
     for (const line of lines) {
       const fm = line.match(/^(```+|~~~+)/);
       if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
       if (fm) { fence = fm[1]; current = null; out.push(line); continue; }
 
       const def = line.match(RE_FN_DEF);
-      if (def) { current = def[1]; notes[current] = def[2]; continue; }
-      // an indented line directly under a definition continues that note
-      if (current && /^[ \t]+\S/.test(line)) { notes[current] += " " + line.trim(); continue; }
+      if (def) { current = { store: notes, key: def[1] }; notes[def[1]] = def[2]; continue; }
+      const cdef = line.match(RE_CITE_DEF);
+      if (cdef) { current = { store: cites, key: cdef[1] }; cites[cdef[1]] = cdef[2]; continue; }
+      // an indented line directly under a definition continues it
+      if (current && /^[ \t]+\S/.test(line)) { current.store[current.key] += " " + line.trim(); continue; }
       if (current && !line.trim()) { current = null; continue; }
       current = null;
       out.push(line);
     }
-    return { lines: out, notes };
+    return { lines: out, notes, cites };
   }
 
-  /* Pre-process custom tokens outside code fences. */
-  function preprocess(src, settings, notesIn) {
+  /* Pre-process custom tokens outside code fences. `inherited` carries footnote and
+     citation definitions down into callout recursion, and `inherited.citeDefs` collects
+     every citation entry back up for postprocess to build the references list from. */
+  function preprocess(src, settings, inherited) {
     const raw = String(src).replace(/\r\n?/g, "\n").split("\n");
     // Definitions are lifted out first so `[^1]:` never reaches marked as a link label.
     const fx = extractFootnotes(raw);
     // Notes defined outside a callout are still callable from inside it.
-    const notes = Object.assign({}, notesIn || {}, fx.notes);
+    const notes = Object.assign({}, inherited && inherited.notes, fx.notes);
+    const cites = Object.assign({}, inherited && inherited.cites, fx.cites);
+    if (inherited && inherited.citeDefs) Object.assign(inherited.citeDefs, fx.cites);
     const lines = fx.lines;
     const out = [];
     let fence = null;
@@ -188,17 +218,43 @@ const Engine = (() => {
       if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
       if (fm) { fence = fm[1]; out.push(line); continue; }
 
+      // Display math: a standalone $$ … $$ block, possibly spanning several lines.
+      if (/^\s*\$\$/.test(line)) {
+        let body = line.replace(/^\s*\$\$/, "");
+        if (/\$\$\s*$/.test(body)) body = body.replace(/\$\$\s*$/, "");
+        else {
+          let j = i + 1;
+          for (; j < lines.length && !/\$\$\s*$/.test(lines[j]); j++) body += "\n" + lines[j];
+          if (j < lines.length) body += "\n" + lines[j].replace(/\$\$\s*$/, "");
+          i = j;
+        }
+        out.push("", `<div class="math-display" data-tex="${esc(body.trim())}"></div>`, "");
+        continue;
+      }
+
       // Call sites become the note itself, inline, where the reader's eye is.
       if (line.includes("[^")) {
-        line = line.replace(/\[\^([^\]\s]+)\]/g, (m, id) =>
+        line = outsideCode(line, seg => seg.replace(/\[\^([^\]\s]+)\]/g, (m, id) =>
           notes[id] == null ? m
-            : `<span class="footnote">${marked.parseInline(notes[id], mdOpts(settings))}</span>`);
+            : `<span class="footnote">${marked.parseInline(notes[id], mdOpts(settings))}</span>`));
+      }
+
+      // Citations: [@key] / [@key, p. 3] become empty spans postprocess fills in.
+      if (line.includes("[@")) {
+        line = outsideCode(line, seg => seg.replace(/\[@([^\]\s,]+)(?:,\s*([^\]]+))?\]/g,
+          (m, key, loc) => `<span class="cite" data-key="${esc(key)}"${loc ? ` data-loc="${esc(loc)}"` : ""}></span>`));
       }
 
       // Cross-references: [#fig:setup] resolves to "Figure 3" once numbering is known.
       if (line.includes("[#")) {
-        line = line.replace(/\[#([A-Za-z][\w:.-]*)\]/g, (m, id) => `<a class="xref" href="#${esc(id)}"></a>`);
+        line = outsideCode(line, seg =>
+          seg.replace(/\[#([A-Za-z][\w:.-]*)\]/g, (m, id) => `<a class="xref" href="#${esc(id)}"></a>`));
       }
+
+      // Inline math, outside code spans.
+      if (line.includes("$")) line = outsideCode(line, mathToSpans);
+
+      if (RE_REFS.test(line)) { out.push("", `<div data-refs="1"></div>`, ""); continue; }
 
       if (RE_TOC.test(line)) { out.push("", `<div data-toc="1"></div>`, ""); continue; }
       if (RE_LOF.test(line)) { out.push("", `<div data-list="fig"></div>`, ""); continue; }
@@ -235,7 +291,9 @@ const Engine = (() => {
         i = j; // skip past close (or EOF)
         // Flatten to one line so the block survives re-parsing, but keep the newlines
         // inside <pre> as character references — a code block must stay a code block.
-        const innerHtml = marked.parse(preprocess(inner.join("\n"), settings, notes), mdOpts(settings))
+        const innerHtml = marked.parse(
+          preprocess(inner.join("\n"), settings, { notes, cites, citeDefs: inherited && inherited.citeDefs }),
+          mdOpts(settings))
           .replace(/<pre[\s\S]*?<\/pre>/gi, m => m.replace(/\n/g, "&#10;"))
           .replace(/\n/g, " ");
         out.push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${innerHtml}</div></div>`, "");
@@ -283,9 +341,95 @@ const Engine = (() => {
     nodes.forEach(n => { const v = smartText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; });
   }
 
+  /* ---------- citations ---------- */
+  function apaLabel(entry, loc) {
+    // Surname = the entry up to the first comma; year = its first plausible 4-digit year.
+    const surname = (entry.split(",")[0] || "").trim().replace(/\s+[A-Z]\.?$/, "") || "Anon";
+    const year = (entry.match(/\b(19|20)\d{2}[a-z]?\b/) || ["n.d."])[0];
+    return `(${surname}, ${year}${loc ? ", " + loc : ""})`;
+  }
+
+  function resolveCitations(root, settings, defs) {
+    const spans = [...root.querySelectorAll("span.cite")];
+    const refsDiv = root.querySelector("div[data-refs]");
+    if (!spans.length && !refsDiv) return;
+
+    const apa = settings.citeStyle === "apa";
+    const order = [];               // keys in first-appearance order
+    spans.forEach(s => {
+      const key = s.dataset.key;
+      if (defs[key] != null && !order.includes(key)) order.push(key);
+    });
+
+    spans.forEach(s => {
+      const key = s.dataset.key, loc = s.dataset.loc || "";
+      if (defs[key] == null) {
+        s.textContent = `[@${key}?]`;
+        s.classList.add("cite-missing");
+        return;
+      }
+      s.textContent = apa
+        ? apaLabel(defs[key], loc)
+        : `[${order.indexOf(key) + 1}${loc ? ", " + loc : ""}]`;
+    });
+
+    // The references list: citation order for numeric style, alphabetical for APA.
+    const keys = apa ? [...order].sort((a, b) => defs[a].localeCompare(defs[b])) : order;
+    let host = refsDiv;
+    if (!host && keys.length) {
+      host = document.createElement("div");
+      host.setAttribute("data-refs", "1");
+      root.appendChild(host);
+    }
+    if (!host) return;
+    if (!keys.length) { host.remove(); return; }
+
+    // Labels are baked in as text, not list markers, so the PDF and the .docx print
+    // exactly the same thing.
+    const wrap = document.createElement("section");
+    wrap.className = "refs";
+    wrap.innerHTML = `<div class="refs-title">References</div>` + keys.map((k, i) =>
+      `<p class="ref">${apa ? "" : `<span class="ref-n">[${i + 1}]</span> `}${marked.parseInline(smartText(defs[k]))}</p>`
+    ).join("");
+    host.replaceWith(wrap);
+  }
+
   /* ---------- post-processing of rendered DOM ---------- */
-  function postprocess(root, settings, attachments) {
+  function postprocess(root, settings, attachments, citeDefs) {
     smartTypography(root);
+
+    /* 0a. mathematics — KaTeX renders the page copy; the TeX itself stays on the node
+       for the Word exporter, which turns it into a real editable equation. */
+    if (typeof katex !== "undefined") {
+      root.querySelectorAll(".math-inline, .math-display").forEach(el => {
+        const display = el.classList.contains("math-display");
+        try {
+          el.innerHTML = katex.renderToString(el.dataset.tex || "", {
+            output: "html", displayMode: display, throwOnError: false, strict: "ignore",
+          });
+        } catch (e) {
+          el.textContent = el.dataset.tex || "";
+          el.classList.add("math-error");
+        }
+      });
+    }
+
+    /* 0b. syntax highlighting — only when the fence names a language hljs knows;
+       an unlabelled block stays plain, which prints better than a wrong guess. */
+    if (typeof hljs !== "undefined") {
+      root.querySelectorAll("pre > code[class*='language-']").forEach(code => {
+        const lang = (code.className.match(/language-([\w+-]+)/) || [])[1];
+        if (!lang || !hljs.getLanguage(lang)) return;
+        try {
+          code.innerHTML = hljs.highlight(code.textContent, { language: lang, ignoreIllegals: true }).value;
+          code.classList.add("hljs");
+        } catch (e) { /* leave plain */ }
+      });
+    }
+
+    /* 0c. citations — numbers assigned in reading order (numeric style) or author–year
+       labels (APA-ish), plus the references list itself. */
+    resolveCitations(root, settings, citeDefs || {});
     // 1. heading ids. An explicit `{#sec:method}` label wins over the slug, so a
     //    cross-reference keeps working when the wording of the heading changes.
     const seen = {};
@@ -499,7 +643,8 @@ const Engine = (() => {
 
   /* ---------- main render ---------- */
   function render(source, settings, attachments) {
-    const body = marked.parse(preprocess(source, settings), mdOpts(settings));
+    const citeDefs = {};
+    const body = marked.parse(preprocess(source, settings, { citeDefs }), mdOpts(settings));
     const doc = document.createElement("div");
     doc.className = "doc" +
       (settings.justify ? " justify" : "") +
@@ -512,7 +657,7 @@ const Engine = (() => {
     content.className = "content";
     content.innerHTML = body;
     doc.appendChild(content);
-    const meta = postprocess(content, settings, attachments);
+    const meta = postprocess(content, settings, attachments, citeDefs);
     return { doc, meta };
   }
 

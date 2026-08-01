@@ -348,3 +348,121 @@ select.btn option { background: var(--bg2); }
   .pagedjs_page { box-shadow: none; margin: 0; }
   .doc .shot .shot-hint { display: none !important; }
 }
+
+/* ---------------- light chrome variant ---------------- */
+:root[data-light] {
+  --bg: #eef0f4;
+  --bg2: #f7f8fa;
+  --bg3: #ffffff;
+  --line: #d5dae3;
+  --tx: #1d2330;
+  --tx2: #5a6478;
+  --tx3: #8b93a5;
+}
+:root[data-light] .toast { background: #ffffff; color: #1d2330; border: 1px solid var(--line); }
+
+/* ---------------- find & replace ---------------- */
+#findBar {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+}
+#findBar input {
+  flex: 1;
+  min-width: 60px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  outline: none;
+}
+#findBar input:focus { border-color: var(--pri); }
+#findCount { font-size: 12px; color: var(--tx3); white-space: nowrap; }
+
+/* ---------------- structure linter ---------------- */
+#lintBadge {
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  background: none;
+  border-radius: 20px;
+  font-size: 11.5px;
+  padding: 1px 9px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+#lintPanel {
+  position: absolute;
+  bottom: 34px;
+  left: 8px;
+  right: 8px;
+  max-height: 40%;
+  overflow: auto;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  padding: 6px;
+  z-index: 40;
+}
+.lint-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  color: var(--tx2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.lint-item:hover { background: var(--bg3); color: var(--tx); }
+.lint-item .ln {
+  color: var(--warn);
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+  font-size: 11.5px;
+}
+#editorPane { position: relative; }
+
+/* ---------------- outline navigator ---------------- */
+#previewPane { position: relative; }
+#outlinePanel {
+  position: absolute;
+  top: 44px;
+  left: 8px;
+  width: 250px;
+  max-height: calc(100% - 60px);
+  overflow: auto;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  padding: 6px;
+  z-index: 40;
+}
+.ol-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  color: var(--tx2);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ol-item:hover { background: var(--bg3); color: var(--tx); }
+.ol-item.l1 { font-weight: 600; color: var(--tx); }
+.ol-item.l2 { padding-left: 20px; }
+.ol-item.l3 { padding-left: 34px; font-size: 12px; }
+.ol-empty { color: var(--tx3); font-size: 12.5px; padding: 8px; }
+#btnOutline.on { background: var(--bg3); border-color: var(--pri); color: var(--pri); }

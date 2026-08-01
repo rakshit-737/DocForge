@@ -34,6 +34,9 @@
   <button class="btn icon" id="btnHelp" title="Help & syntax">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.8"/><circle cx="12" cy="17.2" r="0.4" fill="currentColor"/></svg>
   </button>
+  <button class="btn icon" id="btnDark" title="Toggle dark interface (document stays white)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
+  </button>
   <button class="btn" id="btnSettings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
     Settings
@@ -91,6 +94,13 @@
       </div>
     </div>
 
+    <div class="field"><label>Citation style</label>
+      <select id="sCiteStyle">
+        <option value="ieee">Numeric — [1], IEEE-style</option>
+        <option value="apa">Author–year — (Smith, 2020)</option>
+      </select>
+    </div>
+
     <h3>Layout</h3>
     <label class="toggle"><span class="lbl">Cover page</span><input type="checkbox" id="tCover"><span class="tg"></span></label>
     <label class="toggle"><span class="lbl">Header (running title)</span><input type="checkbox" id="tHeader"><span class="tg"></span></label>
@@ -127,18 +137,31 @@
       <button class="tb" data-act="pagebreak" title="Page break"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h14M5 8h14"/><path d="M3 12h3m3 0h3m3 0h3m3 0h0" stroke-dasharray="3 3"/><path d="M5 16h14M5 20h14"/></svg></button>
       <button class="tb" data-act="hr" title="Divider">—</button>
     </div>
+    <div id="findBar">
+      <input type="text" id="findInput" placeholder="Find…">
+      <input type="text" id="replInput" placeholder="Replace with…">
+      <span id="findCount"></span>
+      <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)">↑</button>
+      <button class="btn small ghost" id="findNext" title="Next (Enter)">↓</button>
+      <button class="btn small ghost" id="replOne" title="Replace current">Replace</button>
+      <button class="btn small ghost" id="replAll" title="Replace all">All</button>
+      <button class="btn small ghost" id="findClose" title="Close (Esc)">✕</button>
+    </div>
     <textarea id="editor" spellcheck="false" placeholder="# Start with a heading
 
 Then just write…"></textarea>
     <div id="statusbar">
       <span id="wordCount">0 words</span>
+      <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
       <span id="saveState"></span>
     </div>
+    <div id="lintPanel" hidden></div>
   </section>
 
   <section id="previewPane">
     <div id="previewBar">
+      <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section">☰</button>
       <span id="busy"></span>
       <span id="pgInfo">—</span>
       <span class="grow"></span>
@@ -148,6 +171,7 @@ Then just write…"></textarea>
       <button class="btn small" id="zoomFit">Fit</button>
     </div>
     <div id="previewScroll"><div id="scaleWrap"></div></div>
+    <nav id="outlinePanel" hidden></nav>
   </section>
 </div>
 
@@ -187,11 +211,19 @@ Then just write…"></textarea>
       </table>
       <h4>DocForge extras</h4>
       <table>
-        <tr><td><code>[screenshot: caption]</code></td><td>Screenshot placeholder — prints as a neat labelled box, or click it in the preview to attach the real image. Numbered as “Figure N” either way.</td></tr>
-        <tr><td><code>[toc]</code></td><td>Table of contents with real page numbers</td></tr>
+        <tr><td><code>[screenshot: caption]</code></td><td>Screenshot placeholder — prints as a neat labelled box, or click it in the preview to attach the real image. Numbered as “Figure N” either way. Options after <code>|</code>: <code>w:60%</code> width, <code>noborder</code>, <code>#fig:name</code> for cross-referencing.</td></tr>
+        <tr><td><code>[table: caption]</code></td><td>Caption for the table that follows — numbered “Table N”. Add <code>| #tbl:name</code> to reference it.</td></tr>
+        <tr><td><code>[toc]</code> · <code>[lof]</code> · <code>[lot]</code></td><td>Table of contents / list of figures / list of tables, with real page numbers</td></tr>
         <tr><td><code>[pagebreak]</code></td><td>Start a new page</td></tr>
         <tr><td><code>:::note Title</code> … <code>:::</code></td><td>Callout box — also <code>:::tip</code>, <code>:::warning</code>, <code>:::important</code></td></tr>
+        <tr><td><code>[^1]</code> and <code>[^1]: note text</code></td><td>Footnote — placed at the foot of the right page in the PDF and as a real Word footnote</td></tr>
+        <tr><td><code>[#fig:name]</code> <code>[#tbl:name]</code> <code>[#sec:name]</code></td><td>Cross-reference — prints as “Figure 3”, “Table 1”, “Section 2.1”. Label a heading with <code>## Title {#sec:name}</code>.</td></tr>
+        <tr><td><code>[@key]</code> and <code>[@key]: Full reference</code></td><td>Citation and its entry; <code>[references]</code> places the list. Style (numeric [1] or Author–year) in Settings. Locators work: <code>[@key, p. 33]</code>.</td></tr>
+        <tr><td><code>$x^2$</code> and <code>$$ … $$</code></td><td>Mathematics (LaTeX) — inline or display. Exports as a real editable equation in Word.</td></tr>
+        <tr><td><code>```python</code></td><td>Name a language on a code fence for syntax colouring (36 common languages)</td></tr>
       </table>
+      <h4>Editor</h4>
+      <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
       <p><b>PDF</b> — click <b>PDF</b>, then choose <i>Save as PDF</i> as the destination in the print dialog. Best in Chrome or Edge. If the dialog shows “Headers and footers”, untick it (DocForge prints its own).</p>
       <p><b>Word</b> — click <b>Word</b> for a real <code>.docx</code>. If Word asks to <i>update fields</i> when opening, click <b>Yes</b> — that fills in the table of contents page numbers.</p>
@@ -204,8 +236,15 @@ Then just write…"></textarea>
 <div id="toasts"></div>
 
 <script>window.__DOC_CSS__ = "@DOCCSS@";</script>
+<script>window.__KATEX_CSS__ = "@KATEXCSS@";</script>
 <script>
 /*@FONTDATA@*/
+</script>
+<script>
+/*@HLJS@*/
+</script>
+<script>
+/*@KATEX@*/
 </script>
 <script>
 /*@MARKED@*/
@@ -218,6 +257,9 @@ Then just write…"></textarea>
 </script>
 <script>
 /*@ENGINE@*/
+</script>
+<script>
+/*@MATHMLOMML@*/
 </script>
 <script>
 /*@DOCXFONTS@*/

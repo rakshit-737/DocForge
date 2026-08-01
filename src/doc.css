@@ -265,6 +265,52 @@
 .doc .toc a.l3 { padding-left: 28pt; font-size: 9.5pt; color: #3d434d; }
 .doc .toc a .hnum { margin-right: 4pt; }
 
+/* ---------- mathematics ---------- */
+.doc .math-display {
+  margin: 8.75pt 0 13.1pt;
+  text-align: center;
+  break-inside: avoid;
+}
+.doc .math-display .katex-display { margin: 0; }
+.doc .math-inline .katex { font-size: 1.02em; }
+.doc .math-error { color: #bb2432; font-family: "DocForge Mono", monospace; font-size: 0.86em; }
+
+/* ---------- syntax highlighting ----------
+   A quiet light theme tuned for paper: darker inks than screen themes, no background
+   fills, so it prints crisply and photocopies legibly. Word colours mirror these —
+   keep HL_WORD in docx-export.js in sync. */
+.doc .hljs-comment, .doc .hljs-quote { color: #62717e; font-style: italic; }
+.doc .hljs-keyword, .doc .hljs-selector-tag, .doc .hljs-literal, .doc .hljs-type { color: #8f3f9c; }
+.doc .hljs-string, .doc .hljs-regexp, .doc .hljs-addition { color: #1a7f37; }
+.doc .hljs-number, .doc .hljs-symbol, .doc .hljs-bullet, .doc .hljs-meta { color: #a05a00; }
+.doc .hljs-title, .doc .hljs-section, .doc .hljs-name, .doc .hljs-function .hljs-title { color: #1f56b3; }
+.doc .hljs-attr, .doc .hljs-attribute, .doc .hljs-variable, .doc .hljs-template-variable, .doc .hljs-params { color: #953800; }
+.doc .hljs-built_in, .doc .hljs-class .hljs-title { color: #0f6f74; }
+.doc .hljs-deletion { color: #bb2432; }
+.doc .hljs-emphasis { font-style: italic; }
+.doc .hljs-strong { font-weight: 700; }
+
+/* ---------- references ---------- */
+.doc .refs { break-before: auto; }
+.doc .refs-title {
+  font-family: var(--font-head);
+  font-size: 14.5pt;
+  font-weight: 700;
+  letter-spacing: -0.008em;
+  margin: 17.5pt 0 6.6pt;
+  color: var(--a800);
+}
+.doc .ref {
+  margin: 0 0 4.4pt;
+  padding-left: 22pt;
+  text-indent: -22pt;   /* hanging indent, the convention for reference lists */
+  font-size: 10pt;
+  line-height: 1.5;
+}
+.doc .ref .ref-n { font-variant-numeric: tabular-nums; color: var(--a800); font-weight: 700; }
+.doc .cite { color: var(--a700); }
+.doc .cite-missing { color: #bb2432; font-family: "DocForge Mono", monospace; font-size: 0.86em; }
+
 /* ---------- footnotes ----------
    The note text sits inline at the call site; Paged.js moves it to the foot of whatever
    page the call lands on and numbers both ends with CSS counters. Never give @footnote a
