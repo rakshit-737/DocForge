@@ -91,9 +91,15 @@ const Engine = (() => {
     garamond:  { name: "DocForge Garamond",   kind: "serif", label: "Garamond — classic book" },
     crimson:   { name: "DocForge Crimson",    kind: "serif", label: "Crimson — scholarly" },
   };
-  const faceStack = key => FACES[key]
-    ? `"${FACES[key].name}", ${FACES[key].kind === "serif" ? "Georgia, serif" : "Arial, sans-serif"}`
-    : null;
+  const faceStack = key => {
+    if (FACES[key]) return `"${FACES[key].name}", ${FACES[key].kind === "serif" ? "Georgia, serif" : "Arial, sans-serif"}`;
+    if (typeof key === "string" && key.startsWith("sys:")) return sysStack(key.slice(4));
+    return null;
+  };
+  /* The .docx writes fonts by name; embedded faces map to their real family,
+     `sys:` keys pass the system family name straight through. */
+  const faceName = key => FACES[key] ? FACES[key].name
+    : (typeof key === "string" && key.startsWith("sys:") ? key.slice(4) : null);
   const CUT_STYLE = {
     regular:    { weight: 400, style: "normal" },
     bold:       { weight: 700, style: "normal" },
@@ -130,6 +136,163 @@ const Engine = (() => {
     minimal:   { head: SANS,  body: SANS },
   };
 
+  /* ---------- the Word font menu ----------
+     The classic Office families. None of these can travel inside the file (they are
+     proprietary), so the preview uses the locally installed face and the .docx names
+     the family — Word supplies its own copy, which is exact parity on any machine
+     with Office. `kind` only drives the CSS fallback when the face is missing. */
+  const WORD_CATALOG = [
+    ["Aptos", "sans"], ["Calibri", "sans"], ["Calibri Light", "sans"], ["Candara", "sans"],
+    ["Corbel", "sans"], ["Segoe UI", "sans"], ["Arial", "sans"], ["Arial Black", "sans"],
+    ["Arial Narrow", "sans"], ["Tahoma", "sans"], ["Verdana", "sans"], ["Trebuchet MS", "sans"],
+    ["Century Gothic", "sans"], ["Franklin Gothic Medium", "sans"], ["Gill Sans MT", "sans"],
+    ["Tw Cen MT", "sans"], ["Bahnschrift", "sans"], ["Berlin Sans FB", "sans"],
+    ["Lucida Sans Unicode", "sans"], ["Comic Sans MS", "sans"],
+    ["Cambria", "serif"], ["Constantia", "serif"], ["Times New Roman", "serif"],
+    ["Georgia", "serif"], ["Garamond", "serif"], ["Book Antiqua", "serif"],
+    ["Palatino Linotype", "serif"], ["Bookman Old Style", "serif"],
+    ["Baskerville Old Face", "serif"], ["Bell MT", "serif"], ["Bodoni MT", "serif"],
+    ["Calisto MT", "serif"], ["Century", "serif"], ["Century Schoolbook", "serif"],
+    ["Goudy Old Style", "serif"], ["High Tower Text", "serif"], ["Perpetua", "serif"],
+    ["Rockwell", "serif"], ["Sitka Text", "serif"], ["Elephant", "serif"],
+    ["Consolas", "mono"], ["Courier New", "mono"], ["Lucida Console", "mono"], ["Cascadia Code", "mono"],
+    ["Segoe Script", "script"], ["Segoe Print", "script"], ["Brush Script MT", "script"],
+    ["Lucida Handwriting", "script"], ["Bradley Hand ITC", "script"], ["Mistral", "script"],
+    ["Ink Free", "script"], ["Freestyle Script", "script"], ["French Script MT", "script"],
+    ["Edwardian Script ITC", "script"], ["Monotype Corsiva", "script"],
+    ["Impact", "display"], ["Papyrus", "display"], ["Copperplate Gothic Bold", "display"], ["Castellar", "display"],
+  ];
+  const GENERIC = {
+    sans: "Arial, sans-serif", serif: "Georgia, serif", mono: "Consolas, monospace",
+    script: '"Segoe Script", cursive', display: "Impact, sans-serif",
+  };
+  function sysStack(name) {
+    // A typed family name lands inside generated CSS — strip anything that could
+    // terminate the declaration, not just quotes.
+    const clean = String(name || "").replace(/["'{};\\]/g, "").trim();
+    if (!clean) return GENERIC.sans;
+    if (EMBEDDED.some(f => f.name === clean)) {
+      return `"${clean}", ${/Serif|Garamond|Crimson/i.test(clean) ? SERIF_FALLBACK : SANS_FALLBACK}`;
+    }
+    const cat = WORD_CATALOG.find(w => w[0].toLowerCase() === clean.toLowerCase());
+    return `"${clean}", ${GENERIC[cat ? cat[1] : "sans"]}`;
+  }
+
+  /* ---------- Word-ribbon inline marks ----------
+     Tokenizer extensions rather than preprocess regexes: an extension can never reach
+     inside HTML that preprocess injected, so a `^` in a formula's data-tex or a `~`
+     inside a code span stays untouched. Content is kept to one line — a stray `==` three
+     paragraphs later must not swallow everything in between. */
+
+  /* Word's fixed highlighter palette — the same names the .docx run property takes. */
+  const HL_COLORS = {
+    yellow: "FFFF00", green: "00FF00", cyan: "00FFFF", magenta: "FF00FF",
+    blue: "0000FF", red: "FF0000", darkBlue: "00008B", darkCyan: "008B8B",
+    darkGreen: "006400", darkMagenta: "8B008B", darkRed: "8B0000",
+    darkYellow: "808000", darkGray: "808080", lightGray: "D3D3D3", black: "000000",
+  };
+  const hlKey = name =>
+    Object.keys(HL_COLORS).find(k => k.toLowerCase() === String(name || "").toLowerCase());
+
+  /* `[text]{color=#e11 bg=#ff0 size=14 font="Georgia" u sc caps}` — hex colours only,
+     because that is what survives into the .docx unchanged. */
+  function parseSpanAttrs(str) {
+    const o = {};
+    const re = /([a-z]+)(?:=("[^"]*"|\S+))?/gi;
+    let m;
+    while ((m = re.exec(str))) {
+      const k = m[1].toLowerCase();
+      let v = m[2] || "";
+      if (v.startsWith('"')) v = v.slice(1, -1);
+      if (k === "color" || k === "bg") {
+        v = v.trim();
+        if (/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(v)) v = "#" + v;
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) o[k] = v.toLowerCase();
+      } else if (k === "size") {
+        const n = parseFloat(v);
+        if (n >= 5 && n <= 96) o.size = n;
+      } else if (k === "font") {
+        if (v.trim()) o.font = v.trim();
+      } else if (k === "u" || k === "sc" || k === "caps") o[k] = true;
+    }
+    return o;
+  }
+
+  const expand3 = h => h.length === 4 ? "#" + [...h.slice(1)].map(c => c + c).join("") : h;
+
+  marked.use({
+    extensions: [
+      {
+        name: "dfUnder", level: "inline",
+        start(src) { const i = src.indexOf("++"); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          // The closer must not run into a word — `i++ +j++` in prose stays literal.
+          const m = /^\+\+(\S(?:[^\n]*?\S)?)\+\+(?!\w)/.exec(src);
+          if (m) return { type: "dfUnder", raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(tok) { return `<u>${this.parser.parseInline(tok.tokens)}</u>`; },
+      },
+      {
+        name: "dfMark", level: "inline",
+        start(src) { const i = src.indexOf("=="); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          // The closer must end the phrase — `done==1 and i==n` in prose stays literal.
+          const m = /^==(?:\{([A-Za-z]+)\})?(\S(?:[^\n]*?\S)?)==(?![=\w])/.exec(src);
+          if (!m) return;
+          const key = hlKey(m[1]) || "yellow";
+          return { type: "dfMark", raw: m[0], hl: key, tokens: this.lexer.inlineTokens(m[2]) };
+        },
+        renderer(tok) {
+          return `<mark data-hl="${tok.hl}" style="background:#${HL_COLORS[tok.hl]}">` +
+            `${this.parser.parseInline(tok.tokens)}</mark>`;
+        },
+      },
+      {
+        name: "dfSup", level: "inline",
+        start(src) { const i = src.indexOf("^"); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          const m = /^\^([^\s^]+)\^/.exec(src);
+          if (m) return { type: "dfSup", raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(tok) { return `<sup>${this.parser.parseInline(tok.tokens)}</sup>`; },
+      },
+      {
+        name: "dfSub", level: "inline",
+        start(src) { const i = src.indexOf("~"); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          if (src.startsWith("~~")) return; // GFM strikethrough owns the doubled form
+          const m = /^~([^\s~]+)~(?!~)/.exec(src);
+          if (m) return { type: "dfSub", raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(tok) { return `<sub>${this.parser.parseInline(tok.tokens)}</sub>`; },
+      },
+      {
+        name: "dfSpan", level: "inline",
+        start(src) { const i = src.indexOf("["); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          const m = /^\[((?:\\.|[^\[\]\\])+)\]\{([^}\n]*)\}/.exec(src);
+          if (!m) return;
+          const attrs = parseSpanAttrs(m[2]);
+          if (!Object.keys(attrs).length) return; // not ours — the link tokenizer can have it
+          return { type: "dfSpan", raw: m[0], attrs, tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(tok) {
+          const a = tok.attrs;
+          let style = "", data = "";
+          if (a.color) { style += `color:${a.color};`; data += ` data-color="${expand3(a.color).slice(1)}"`; }
+          if (a.bg) { style += `background:${a.bg};`; data += ` data-bg="${expand3(a.bg).slice(1)}"`; }
+          if (a.size) { style += `font-size:${a.size}pt;`; data += ` data-size="${a.size}"`; }
+          if (a.font) { style += `font-family:${sysStack(a.font)};`; data += ` data-font="${esc(a.font)}"`; }
+          if (a.u) { style += "text-decoration:underline;"; data += ` data-u="1"`; }
+          if (a.sc) { style += "font-variant:small-caps;"; data += ` data-sc="1"`; }
+          if (a.caps) { style += "text-transform:uppercase;"; data += ` data-caps="1"`; }
+          // esc(): the font stack carries double quotes that would end the attribute.
+          return `<span class="dfspan"${data} style="${esc(style)}">${this.parser.parseInline(tok.tokens)}</span>`;
+        },
+      },
+    ],
+  });
+
   /* Printable width of the text column, in CSS px — the reference both exporters
      size images against, so a figure is the same size in the PDF and in Word. */
   const contentWidthPx = s => {
@@ -162,8 +325,29 @@ const Engine = (() => {
     return o;
   }
   const RE_CO_OPEN = /^:::(note|tip|warning|important)(?:\s+(.*))?$/i;
+  const RE_AL_OPEN = /^:::(center|right|left|justify)\s*$/i;
+  /* Any line the parser would actually open a container on — and only those.
+     `:::center trailing words` is plain text, so it must not count as nesting. */
+  const RE_BLOCK_OPEN = /^:::(note|tip|warning|important)\b|^:::(center|right|left|justify)\s*$/i;
   const RE_CO_CLOSE = /^:::\s*$/;
   const CO_LABELS = { note: "Note", tip: "Tip", warning: "Warning", important: "Important" };
+
+  /* Collect the lines of a ::: container starting after `i`; returns the body and the
+     index of the closing ::: (or EOF). Fences and nested containers are respected. */
+  function collectContainer(lines, i) {
+    const inner = [];
+    let j = i + 1, innerFence = null, depth = 0;
+    for (; j < lines.length; j++) {
+      const l2 = lines[j];
+      const f2 = l2.match(/^(```+|~~~+)/);
+      if (innerFence) { if (f2 && f2[1][0] === innerFence[0] && f2[1].length >= innerFence.length) innerFence = null; }
+      else if (f2) innerFence = f2[1];
+      else if (RE_BLOCK_OPEN.test(l2)) depth++;      // a nested container opens
+      else if (RE_CO_CLOSE.test(l2)) { if (!depth) break; depth--; }
+      inner.push(l2);
+    }
+    return { inner, end: j };
+  }
 
   /* Run `fn` over the parts of a line that sit OUTSIDE `inline code` spans, so the
      math and citation rewrites can never corrupt code. */
@@ -295,30 +479,29 @@ const Engine = (() => {
         out.push("", `<div data-tablecap="${esc(tm[1] || "")}"${o.id ? ` data-id="${esc(o.id)}"` : ""}></div>`, "");
         continue;
       }
+      // Flatten to one line so the block survives re-parsing, but keep the newlines
+      // inside <pre> as character references — a code block must stay a code block.
+      const flatten = inner => marked.parse(
+        preprocess(inner.join("\n"), settings, { notes, cites, citeDefs: inherited && inherited.citeDefs }),
+        mdOpts(settings))
+        .replace(/<pre[\s\S]*?<\/pre>/gi, m => m.replace(/\n/g, "&#10;"))
+        .replace(/\n/g, " ");
       const cm = line.match(RE_CO_OPEN);
       if (cm) {
         const type = cm[1].toLowerCase();
         const title = (cm[2] || "").trim() || CO_LABELS[type];
-        const inner = [];
-        let j = i + 1, innerFence = null, depth = 0;
-        for (; j < lines.length; j++) {
-          const l2 = lines[j];
-          const f2 = l2.match(/^(```+|~~~+)/);
-          if (innerFence) { if (f2 && f2[1][0] === innerFence[0] && f2[1].length >= innerFence.length) innerFence = null; }
-          else if (f2) innerFence = f2[1];
-          else if (RE_CO_OPEN.test(l2)) depth++;         // a nested callout opens
-          else if (RE_CO_CLOSE.test(l2)) { if (!depth) break; depth--; }
-          inner.push(l2);
-        }
-        i = j; // skip past close (or EOF)
-        // Flatten to one line so the block survives re-parsing, but keep the newlines
-        // inside <pre> as character references — a code block must stay a code block.
-        const innerHtml = marked.parse(
-          preprocess(inner.join("\n"), settings, { notes, cites, citeDefs: inherited && inherited.citeDefs }),
-          mdOpts(settings))
-          .replace(/<pre[\s\S]*?<\/pre>/gi, m => m.replace(/\n/g, "&#10;"))
-          .replace(/\n/g, " ");
-        out.push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${innerHtml}</div></div>`, "");
+        const { inner, end } = collectContainer(lines, i);
+        i = end; // skip past close (or EOF)
+        out.push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
+        continue;
+      }
+      // :::center / :::right / :::left / :::justify — Word's paragraph alignment group.
+      const am = line.match(RE_AL_OPEN);
+      if (am) {
+        const dir = am[1].toLowerCase();
+        const { inner, end } = collectContainer(lines, i);
+        i = end;
+        out.push("", `<div class="align-${dir}">${flatten(inner)}</div>`, "");
         continue;
       }
       out.push(line);
@@ -696,6 +879,13 @@ const Engine = (() => {
     const m = MARGINS[settings.margins] || MARGINS.normal;
     const title = cssStr(settings.title || "");
 
+    /* Word's document-wide knobs: base size in points; line spacing as Word multiples
+       (240 twips = single). ×1.18 is the single-space factor most faces get in Word,
+       so the preview's rhythm stays honest to the .docx. Absent/legacy settings keep
+       the original 11pt / 1.59 from doc.css. */
+    const baseSize = parseFloat(settings.baseSize) || 11;
+    const lineH = ({ "1": 1.18, "1.15": 1.36, "1.5": 1.77, "2": 2.36 })[settings.lineSpacing];
+
     let css = `
 .doc, .pagedjs_page{--a50:${t.a50};--a75:${t.a75};--a100:${t.a100};--a200:${t.a200};--a300:${t.a300};--a400:${t.a400};--a500:${t.a500};--a600:${t.a600};--a700:${t.a700};--a800:${t.a800};--a900:${t.a900};--font-head:${f.head};--font-body:${f.body};--page-w:${pg.w}mm;--page-h:${pg.h}mm;}
 @page {
@@ -729,6 +919,9 @@ const Engine = (() => {
 }
 .doc .content h1 { string-set: sect content(text); }
 `;
+    if (baseSize !== 11 || lineH) {
+      css += `.doc .content{${baseSize !== 11 ? `font-size:${baseSize}pt;` : ""}${lineH ? `line-height:${lineH};` : ""}}\n`;
+    }
 
     // Decorative page border — an overlay drawn just inside the paper edge (between
     // the edge and the running header), so it frames the page without disturbing the
@@ -767,5 +960,5 @@ const Engine = (() => {
     return css;
   }
 
-  return { render, dynamicCss, fontFaceCss, tints, PAGES, MARGINS, FONTS, FACES, EMBEDDED, CUT_FILE, fmtDate, esc, RE_SHOT };
+  return { render, dynamicCss, fontFaceCss, tints, PAGES, MARGINS, FONTS, FACES, EMBEDDED, CUT_FILE, fmtDate, esc, RE_SHOT, WORD_CATALOG, HL_COLORS, sysStack, faceName };
 })();

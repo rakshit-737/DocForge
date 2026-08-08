@@ -191,6 +191,7 @@ const DocxFonts = (() => {
    *                  where each cut value is the throwaway name passed to Document({fonts})
    */
   async function embed(blob, families) {
+    if (!families || !families.length) return blob; // nothing embedded — nothing to regroup
     if (typeof DecompressionStream === "undefined") return blob; // older browser: named fonts only
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const entries = readEntries(bytes);

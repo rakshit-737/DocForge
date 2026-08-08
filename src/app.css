@@ -233,6 +233,32 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 .tb b { font-size: 13px; }
 .tb .h { font-weight: 800; font-size: 12px; letter-spacing: 0; }
 .tbsep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; flex: none; }
+.tb .h small { font-size: 8px; vertical-align: super; }
+.ic-hl { box-shadow: inset 0 -4px 0 #f5d90a; padding: 0 2px; border-radius: 1px; }
+.ic-fc { box-shadow: inset 0 -4px 0 #c73434; padding: 0 2px; border-radius: 1px; }
+.tbsel {
+  background: var(--bg); color: var(--tx2);
+  border: 1px solid var(--line); border-radius: 6px;
+  font-size: 11.5px; padding: 3px 4px; max-width: 132px; height: 26px;
+}
+.tbsel.narrow { max-width: 64px; }
+.tbsel:hover { color: var(--tx); }
+
+/* toolbar colour pop-menus */
+.popmenu {
+  position: fixed; z-index: 60; display: none;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35); padding: 10px;
+}
+.popmenu .pm-title { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3, var(--tx2)); margin-bottom: 8px; }
+.popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
+.popmenu .pm-sw {
+  width: 22px; height: 22px; border-radius: 4px; cursor: pointer;
+  border: 1px solid rgba(128,128,128,0.35);
+}
+.popmenu .pm-sw:hover { transform: scale(1.12); }
+.popmenu .pm-custom { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--tx2); }
+.popmenu .pm-custom input[type="color"] { width: 40px; height: 24px; border: 0; background: none; padding: 0; cursor: pointer; }
 
 #editor {
   flex: 1;
@@ -557,7 +583,7 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 /* ---------------- PRINT: only the pages ---------------- */
 @media print {
   body { overflow: visible; background: #fff; }
-  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, #embedHint, #outlinePanel, #lintPanel { display: none !important; }
+  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, .popmenu, #embedHint, #outlinePanel, #lintPanel { display: none !important; }
   #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
   #scaleWrap { transform: none !important; width: auto; margin: 0; }
   .pagedjs_page { box-shadow: none; margin: 0; }

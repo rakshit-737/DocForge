@@ -432,3 +432,15 @@
 
 /* letter-style block (no cover): tighter top */
 .doc .content > .letter-head { margin-bottom: 14pt; }
+
+/* ---------- Word-ribbon marks ---------- */
+.doc mark { background: #ffff00; color: inherit; padding: 0 0.08em; border-radius: 1px; }
+.doc u { text-underline-offset: 0.12em; }
+.doc sub, .doc sup { font-size: 0.72em; line-height: 0; }
+.doc .dfspan { border-radius: 1px; }
+/* Alignment containers. Same specificity as the justify rule above but declared later,
+   so an explicit :::center wins inside a justified document. */
+.doc .content .align-center, .doc .content .align-center p { text-align: center; }
+.doc .content .align-right,  .doc .content .align-right p  { text-align: right; }
+.doc .content .align-left,   .doc .content .align-left p   { text-align: left; }
+.doc .content .align-justify, .doc .content .align-justify p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }

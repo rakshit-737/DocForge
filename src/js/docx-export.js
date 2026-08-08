@@ -86,10 +86,11 @@ const DocxExport = (() => {
 
     const t = Engine.tints(settings.accent);
     const themeF = WORD_FONTS[settings.theme] || WORD_FONTS.modern;
-    const face = k => (Engine.FACES[k] || {}).name;
+    // faceName resolves embedded keys to their real family and `sys:` keys to the
+    // bare system family name, which the .docx carries un-embedded.
     const f = {
-      head: face(settings.fontHead) || themeF.head,
-      body: face(settings.fontBody) || themeF.body,
+      head: Engine.faceName(settings.fontHead) || themeF.head,
+      body: Engine.faceName(settings.fontBody) || themeF.body,
     };
     const pg = Engine.PAGES[settings.page] || Engine.PAGES.A4;
     const mg = Engine.MARGINS[settings.margins] || Engine.MARGINS.normal;
@@ -143,10 +144,14 @@ const DocxExport = (() => {
           if (txt) out.push(new TextRun({
             text: txt,
             bold: fmt.bold, italics: fmt.italics, strike: fmt.strike,
-            font: fmt.code ? MONO : undefined,
+            underline: fmt.underline ? {} : undefined,
+            highlight: fmt.highlight,
+            subScript: fmt.sub || undefined, superScript: fmt.sup || undefined,
+            smallCaps: fmt.sc || undefined, allCaps: fmt.caps || undefined,
+            font: fmt.code ? MONO : fmt.font,
             size: fmt.code ? HP(9.5) : fmt.size,
             color: fmt.color,
-            shading: fmt.code ? { fill: "F0F2F5" } : undefined,
+            shading: fmt.code ? { fill: "F0F2F5" } : (fmt.bg ? { fill: fmt.bg } : undefined),
           }));
           return;
         }
@@ -174,8 +179,23 @@ const DocxExport = (() => {
         if (tag === "strong" || tag === "b") nf.bold = true;
         else if (tag === "em" || tag === "i") nf.italics = true;
         else if (tag === "del" || tag === "s") nf.strike = true;
+        else if (tag === "u") nf.underline = true;
+        else if (tag === "sub") nf.sub = true;
+        else if (tag === "sup") nf.sup = true;
+        else if (tag === "mark") nf.highlight = Engine.HL_COLORS[ch.dataset.hl] ? ch.dataset.hl : "yellow";
         else if (tag === "code") nf.code = true;
         else if (tag === "span" && ch.classList.contains("hnum")) { nf.color = hex(t.a600); nf.bold = true; }
+        else if (tag === "span" && ch.classList.contains("dfspan")) {
+          // The attribute span — the ribbon's colour / size / face / caps knobs.
+          const d = ch.dataset;
+          if (d.color) nf.color = d.color.toUpperCase();
+          if (d.bg) nf.bg = d.bg.toUpperCase();
+          if (d.size) nf.size = HP(parseFloat(d.size));
+          if (d.font) nf.font = d.font;
+          if (d.u) nf.underline = true;
+          if (d.sc) nf.sc = true;
+          if (d.caps) nf.caps = true;
+        }
         if (tag === "a" && ch.getAttribute("href") && /^https?:/i.test(ch.getAttribute("href"))) {
           out.push(new ExternalHyperlink({ link: ch.getAttribute("href"), children: runs(ch, { ...nf, color: hex(t.a700) }) }));
           return;
@@ -200,6 +220,7 @@ const DocxExport = (() => {
         // A heading must never be the last line on a page, orphaned from its own text.
         keepNext: true,
         keepLines: true,
+        alignment: ctx.align,
         children: runs(el),
         border: lvl === 1 ? { bottom: { style: BorderStyle.SINGLE, size: 8, color: hex(t.a600), space: 3 } } : undefined,
       }));
@@ -223,6 +244,7 @@ const DocxExport = (() => {
           children: runs(clone, ctx.fmt),
           numbering: ordered ? { reference: "ol-num", level: lvl, instance: olInstance } : undefined,
           bullet: ordered ? undefined : { level: lvl },
+          alignment: ctx.align,
           spacing: { after: 60 },
         }));
         // Block content owned by the item keeps its own formatting, indented under the marker.
@@ -500,13 +522,22 @@ const DocxExport = (() => {
         if (el.classList.contains("list-wrap")) return captionList(el);
         if (el.classList.contains("toc-wrap")) return toc();
         if (el.classList.contains("callout")) return callout(el);
+        // :::center / :::right / :::left / :::justify — alignment rides the context down.
+        const alClass = [...el.classList].find(c => c.startsWith("align-"));
+        if (alClass) {
+          const al = {
+            "align-center": AlignmentType.CENTER, "align-right": AlignmentType.RIGHT,
+            "align-left": AlignmentType.LEFT, "align-justify": AlignmentType.JUSTIFIED,
+          }[alClass];
+          if (al) return withCtx({ align: al }, () => [...el.children].forEach(c => walk(c, false)));
+        }
       }
       if (/^h[1-6]$/.test(tag)) return heading(el, first);
       if (tag === "p") {
         if (!el.textContent.trim() && !el.querySelector("img")) return;
         return blocks.push(mkPara({
           children: runs(el, ctx.fmt),
-          alignment: settings.justify ? AlignmentType.JUSTIFIED : undefined,
+          alignment: ctx.align || (settings.justify ? AlignmentType.JUSTIFIED : undefined),
         }));
       }
       if (tag === "ul" || tag === "ol") return list(el, 0);
@@ -666,9 +697,16 @@ const DocxExport = (() => {
     const pageSize = { width: mm2t(pg.w), height: mm2t(pg.h) };
 
     // Mono rides along only when the document actually sets code in it.
+    // System families (`sys:` keys, attribute spans naming Word fonts) simply don't
+    // match any EMBEDDED entry, so fontPayload skips them — Word resolves them by name.
     const usedFonts = new Set([f.head, f.body]);
     if (contentEl.querySelector("pre, code, kbd, samp")) usedFonts.add(MONO);
+    contentEl.querySelectorAll("span.dfspan[data-font]").forEach(s => usedFonts.add(s.dataset.font));
     const fp = fontPayload(usedFonts);
+
+    /* Word's Home-ribbon document knobs, mirrored from Engine.dynamicCss. */
+    const baseSize = parseFloat(settings.baseSize) || 11;
+    const lineTw = ({ "1": 240, "1.15": 276, "1.5": 360, "2": 480 })[settings.lineSpacing];
 
     const doc = new Document({
       creator: settings.author || "DocForge",
@@ -682,7 +720,8 @@ const DocxExport = (() => {
       features: { updateFields: true },
       styles: {
         default: {
-          document: { run: { font: f.body, size: HP(11), color: "1C2128", language: { value: settings.lang || "en-GB" } }, paragraph: { spacing: { after: 175, line: 350, lineRule: "atLeast" } } },
+          // Default leading scales with the base size, as the preview's unitless 1.59 does.
+          document: { run: { font: f.body, size: HP(baseSize), color: "1C2128", language: { value: settings.lang || "en-GB" } }, paragraph: { spacing: lineTw ? { after: 175, line: lineTw, lineRule: "auto" } : { after: 175, line: Math.round(350 * baseSize / 11), lineRule: "atLeast" } } },
           heading1: { run: { font: f.head, size: HP(20.5), bold: true, color: "12161C" }, paragraph: { spacing: { before: 263, after: 175 } } },
           heading2: { run: { font: f.head, size: HP(14.5), bold: true, color: hex(t.a800) }, paragraph: { spacing: { before: 175, after: 132 } } },
           heading3: { run: { font: f.head, size: HP(12), bold: true, color: "12161C" }, paragraph: { spacing: { before: 87, after: 88 } } },
@@ -790,7 +829,10 @@ const DocxExport = (() => {
       })(),
     });
 
-    return DocxFonts.embed(await D.Packer.toBlob(doc), fp.families);
+    // A document set entirely in system faces embeds nothing — and the library then
+    // writes a self-closing <w:fonts/> that the regroup rewrite must not touch.
+    const blob = await D.Packer.toBlob(doc);
+    return fp.families.length ? DocxFonts.embed(blob, fp.families) : blob;
   }
 
   return { build };

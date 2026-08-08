@@ -35,6 +35,23 @@ const fontData = Object.fromEntries(
 );
 const fontBytes = Object.values(fontData).reduce((n, b) => n + b.length, 0);
 
+// Import libraries — mammoth (.docx) and pdf.js (lib + worker). Carried as plain JS
+// strings and eval'd on first use, so startup never pays for features only an import
+// needs. The worker bundle's IIFE global is `pdfjsWorker`, which is exactly the global
+// pdf.js probes for its main-thread "fake worker" path — no real Worker, no Blob URL.
+const mammoth = read("node_modules/mammoth/mammoth.browser.min.js");
+const bundleIife = (entry, globalName) => buildSync({
+  entryPoints: [entry],
+  bundle: true, minify: true, write: false,
+  format: "iife", globalName, platform: "browser",
+}).outputFiles[0].text;
+const pdfLib = bundleIife("node_modules/pdfjs-dist/build/pdf.min.mjs", "pdfjsLib");
+const pdfWorker = bundleIife("node_modules/pdfjs-dist/build/pdf.worker.min.mjs", "pdfjsWorker");
+const importLibs =
+  "window.__MAMMOTH_SRC__=" + JSON.stringify(mammoth) + ";\n" +
+  "window.__PDFJS_SRC__=" + JSON.stringify(pdfLib) + ";\n" +
+  "window.__PDFJS_WORKER_SRC__=" + JSON.stringify(pdfWorker) + ";";
+
 // app sources
 const appCss = read("src/app.css");
 const docCss = read("src/doc.css");
@@ -42,6 +59,8 @@ const engine = read("src/js/engine.js");
 const docxFonts = read("src/js/docx-fonts.js");
 const mathmlOmml = read("src/js/mathml-omml.js");
 const docxExport = read("src/js/docx-export.js");
+const docxImport = read("src/js/docx-import.js");
+const pdfImport = read("src/js/pdf-import.js");
 const main = read("src/js/main.js");
 
 let html = read("src/index.html");
@@ -56,10 +75,13 @@ put("/*@FONTDATA@*/", "window.__FONT_DATA__=" + JSON.stringify(fontData) + ";");
 put("/*@HLJS@*/", guard(hljs));
 put("/*@KATEX@*/", guard(katex));
 put('"@KATEXCSS@"', JSON.stringify(katexCss));
+put("/*@IMPORTLIBS@*/", guard(importLibs));
 put("/*@ENGINE@*/", guard(engine));
 put("/*@MATHMLOMML@*/", guard(mathmlOmml));
 put("/*@DOCXFONTS@*/", guard(docxFonts));
 put("/*@DOCXEXPORT@*/", guard(docxExport));
+put("/*@DOCXIMPORT@*/", guard(docxImport));
+put("/*@PDFIMPORT@*/", guard(pdfImport));
 put("/*@MAIN@*/", guard(main));
 
 mkdirSync("dist", { recursive: true });

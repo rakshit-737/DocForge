@@ -25,7 +25,7 @@
   <button class="btn icon" id="btnNew" title="New document">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg>
   </button>
-  <button class="btn icon" id="btnOpen" title="Open project file">
+  <button class="btn icon" id="btnOpen" title="Open project — or import a Word (.docx), PDF or Markdown file">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-8L9 4H5a2 2 0 0 0-2 2z"/></svg>
   </button>
   <button class="btn icon" id="btnSaveProj" title="Save project file (Ctrl+S)">
@@ -115,6 +115,27 @@
         <option value="crimson">Crimson — scholarly</option>
       </select>
     </div>
+    <div class="frow">
+      <div class="field"><label>Base font size</label>
+        <select id="sBaseSize">
+          <option value="10">10 pt</option>
+          <option value="10.5">10.5 pt</option>
+          <option value="11">11 pt</option>
+          <option value="11.5">11.5 pt</option>
+          <option value="12">12 pt</option>
+          <option value="13">13 pt</option>
+        </select>
+      </div>
+      <div class="field"><label>Line spacing</label>
+        <select id="sLineSpacing">
+          <option value="default">Default</option>
+          <option value="1">Single</option>
+          <option value="1.15">1.15</option>
+          <option value="1.5">1.5</option>
+          <option value="2">Double</option>
+        </select>
+      </div>
+    </div>
     <div class="field"><label>Page border</label>
       <select id="sBorderStyle">
         <option value="none">None</option>
@@ -168,7 +189,24 @@
       <div class="tbsep"></div>
       <button class="tb" data-act="bold" title="Bold (Ctrl+B)"><b>B</b></button>
       <button class="tb" data-act="italic" title="Italic (Ctrl+I)"><i style="font-family:Georgia,serif">I</i></button>
+      <button class="tb" data-act="underline" title="Underline (Ctrl+U)"><span class="h" style="text-decoration:underline;text-underline-offset:2px">U</span></button>
+      <button class="tb" data-act="strike" title="Strikethrough"><span class="h" style="text-decoration:line-through">S</span></button>
       <button class="tb" data-act="code" title="Inline code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg></button>
+      <button class="tb" data-act="sub" title="Subscript (~x~)"><span class="h">x₂</span></button>
+      <button class="tb" data-act="sup" title="Superscript (^x^)"><span class="h">x²</span></button>
+      <div class="tbsep"></div>
+      <button class="tb" id="tbHl" title="Highlight — click for colours"><span class="h ic-hl">A</span></button>
+      <button class="tb" id="tbFc" title="Text colour"><span class="h ic-fc">A</span></button>
+      <button class="tb" data-act="case" title="Change case (UPPER → lower → Title)"><span class="h">Aa</span></button>
+      <button class="tb" data-act="clearfmt" title="Clear formatting"><span class="h">T<small>✕</small></span></button>
+      <div class="tbsep"></div>
+      <button class="tb" data-act="alignleft" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
+      <button class="tb" data-act="aligncenter" title="Centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
+      <button class="tb" data-act="alignright" title="Align right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
+      <button class="tb" data-act="alignjustify" title="Justify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
+      <div class="tbsep"></div>
+      <select id="tbFont" class="tbsel" title="Typeface for the selected text"></select>
+      <select id="tbSize" class="tbsel narrow" title="Size for the selected text"></select>
       <div class="tbsep"></div>
       <button class="tb" data-act="ul" title="Bullet list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg></button>
       <button class="tb" data-act="ol" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1v4M3.6 11.4a1.4 1.4 0 0 1 2.6.8c0 1-2.4 1.4-2.4 2.6h2.7M3.7 16.8h1.6a1.2 1.2 0 0 1 0 2.4h-.7 .7a1.2 1.2 0 0 1 0 2.4H3.6" stroke-width="1.4"/></svg></button>
@@ -225,12 +263,22 @@ Then just write…"></textarea>
 </div>
 
 <input type="file" id="imgInput" hidden accept="image/png,image/jpeg,image/gif,image/webp">
-<input type="file" id="projInput" hidden accept=".json,application/json">
+<input type="file" id="projInput" hidden accept=".json,.docforge.json,.docx,.pdf,.md,.markdown,.txt,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 
 <div id="imgMenu">
   <button id="imAttach">📎 Attach image…</button>
   <button id="imReplace">🔁 Replace image…</button>
   <button id="imRemove" class="danger">✕ Remove image</button>
+</div>
+
+<div id="hlMenu" class="popmenu">
+  <div class="pm-title">Highlight</div>
+  <div class="pm-grid" id="hlGrid"></div>
+</div>
+<div id="fcMenu" class="popmenu">
+  <div class="pm-title">Text colour</div>
+  <div class="pm-grid" id="fcGrid"></div>
+  <label class="pm-custom">Custom <input type="color" id="fcCustom" value="#c00000"></label>
 </div>
 
 <div class="overlay" id="confirmOverlay">
@@ -257,6 +305,11 @@ Then just write…"></textarea>
         <tr><td><code>| A | B |</code> rows with <code>| --- | --- |</code></td><td>Tables — first row becomes the shaded header</td></tr>
         <tr><td><code>```</code> … <code>```</code></td><td>Code block</td></tr>
         <tr><td><code>[text](https://url)</code></td><td>Link</td></tr>
+        <tr><td><code>++underline++</code> · <code>~~strike~~</code></td><td>Underline / strikethrough</td></tr>
+        <tr><td><code>==highlight==</code> · <code>=={green}text==</code></td><td>Highlighter — Word's 15 colours by name (yellow, green, cyan, magenta, darkBlue…)</td></tr>
+        <tr><td><code>~sub~</code> · <code>^sup^</code></td><td>Subscript / superscript (no spaces inside)</td></tr>
+        <tr><td><code>[text]{color=#c00000}</code></td><td>Text colour — also <code>bg=#ffe28a</code> (shading), <code>size=14</code> (pt), <code>font="Georgia"</code>, <code>u</code>, <code>sc</code> (small caps), <code>caps</code>; combine freely</td></tr>
+        <tr><td><code>:::center</code> … <code>:::</code></td><td>Alignment block — also <code>:::right</code>, <code>:::left</code>, <code>:::justify</code></td></tr>
       </table>
       <h4>DocForge extras</h4>
       <table>
@@ -272,7 +325,9 @@ Then just write…"></textarea>
         <tr><td><code>```python</code></td><td>Name a language on a code fence for syntax colouring (36 common languages)</td></tr>
       </table>
       <h4>Typefaces & borders</h4>
-      <p>Settings offers six embedded typefaces (Source Sans, Source Serif, Inter, Montserrat, Garamond, Crimson) for headings and body independently — the same fonts travel inside the Word file, so it looks identical on any machine. Page borders come in seven styles with weight and colour options, drawn the same in the PDF and as real Word page borders.</p>
+      <p>Settings offers six embedded typefaces (Source Sans, Source Serif, Inter, Montserrat, Garamond, Crimson) for headings and body independently — the same fonts travel inside the Word file, so it looks identical on any machine. Below them sits the whole classic <b>Word font menu</b> (Calibri, Cambria, Times New Roman, Georgia, Garamond, Comic Sans MS and ~50 more): those are used from this device and written into the .docx by name — Word supplies its own copy, so the Word file is exact; on a machine without the font the preview falls back to a lookalike. The toolbar's typeface/size boxes restyle just the selected text. Page borders come in seven styles with weight and colour options, drawn the same in the PDF and as real Word page borders.</p>
+      <h4>Importing Word & PDF files</h4>
+      <p><b>Open</b> (or drop a file on the editor) now also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code> and <code>.txt</code>. Word documents keep headings, lists, tables, images, footnote-ish structure and inline styling. PDFs are print-shaped, so they arrive as reflowed text — headings, lists and paragraphs are reconstructed, but exact layout (and any scanned page) cannot be; run OCR first if the PDF has no selectable text.</p>
       <h4>Editor</h4>
       <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
@@ -289,7 +344,7 @@ Then just write…"></textarea>
     <header>Keyboard shortcuts <button class="btn icon ghost" data-close>✕</button></header>
     <div class="mbody">
       <table>
-        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code></td><td>Bold / italic</td></tr>
+        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline</td></tr>
         <tr><td><code>Ctrl</code> <code>F</code> / <code>Ctrl</code> <code>H</code></td><td>Find / replace</td></tr>
         <tr><td><code>Ctrl</code> <code>S</code></td><td>Save project file</td></tr>
         <tr><td><code>Ctrl</code> <code>P</code></td><td>Export PDF</td></tr>
@@ -324,6 +379,9 @@ Then just write…"></textarea>
 /*@DOCX@*/
 </script>
 <script>
+/*@IMPORTLIBS@*/
+</script>
+<script>
 /*@ENGINE@*/
 </script>
 <script>
@@ -334,6 +392,12 @@ Then just write…"></textarea>
 </script>
 <script>
 /*@DOCXEXPORT@*/
+</script>
+<script>
+/*@DOCXIMPORT@*/
+</script>
+<script>
+/*@PDFIMPORT@*/
 </script>
 <script>
 /*@MAIN@*/

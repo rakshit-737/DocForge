@@ -21,6 +21,8 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 - **Cover page** — title, subtitle, author, date, course/company label; full-bleed accent band in the PDF *and* the Word file
 - **4 themes** (Modern, Executive, Academic, Minimal) × any accent colour × A4/Letter × 3 margin presets
 - **Callouts** — `:::note`, `:::tip`, `:::warning`, `:::important` — tables, lists and code inside them survive into Word intact
+- **Word's Home ribbon** — underline (`++u++`, Ctrl+U), strikethrough, highlighter in Word's 15 colours (`==text==`, `=={green}text==`), sub/superscript (`~x~` / `^x^`), text colour / shading / per-selection size and typeface (`[text]{color=#c00000 size=14 font="Georgia"}`), small caps and all caps, paragraph alignment blocks (`:::center` … `:::`), change-case and clear-formatting buttons, document-wide base font size and line spacing — every one of them lands identically in the PDF and as real run properties in the .docx
+- **Import Word & PDF** — Open (or drop onto the editor) a `.docx`, `.pdf`, `.md` or `.txt` and edit it: Word files keep headings, lists, tables, images and inline styling (mammoth.js); PDFs are reconstructed into editable Markdown — headings by size, lists, paragraphs, repeated page furniture stripped — with the honest caveat that a PDF's exact layout is a print artefact and is not preserved
 - **Editor comforts** — outline navigator (☰ above the preview), find & replace (Ctrl+F / Ctrl+H), pasted Word/web content auto-converted to Markdown, a gentle structure checker that flags anything that would break the export, and a light/dark switch for the app chrome (the document always prints on white)
 - **Export PDF** — via the browser print engine (choose *Save as PDF*), margins and headers pre-configured; text stays selectable and searchable
 - **Export Word** — a real `.docx` with the same fonts embedded, styled headings, cover, tables with true column widths, figures, footnotes, equations and an auto-updating TOC field
@@ -34,6 +36,11 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 | `# Title` / `## Section` / `### Sub` | Headings (feed the TOC automatically) |
 | `## Title {#sec:name}` | Heading with a referenceable label |
 | `**bold**` · `*italic*` · `` `code` `` | Inline styling |
+| `++underline++` · `~~strike~~` | Underline / strikethrough |
+| `==mark==` · `=={green}mark==` | Highlighter (Word's 15 colour names) |
+| `~sub~` · `^sup^` | Sub/superscript (no spaces inside) |
+| `[text]{color=#c00 bg=#ffe28a size=14 font="Georgia" u sc caps}` | Colour, shading, size, typeface, small caps… combine freely |
+| `:::center` … `:::` | Alignment block (also `right`, `left`, `justify`) |
 | `- item` / `1. item` | Bullet / numbered lists |
 | `> text` | Quotation |
 | `\| A \| B \|` rows | Table with shaded header (`:---:` / `---:` align columns) |
@@ -53,6 +60,8 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 
 The app embeds subsets of seven families — **Source Sans 3**, **Source Serif 4**, **Source Code Pro**, **Inter**, **Montserrat**, **EB Garamond** and **Crimson Pro** (all SIL Open Font License 1.1 — licence texts in `fonts/`). Pick the heading and body faces independently in Settings, or leave them on the theme's own pairing. The same TTF bytes serve the preview, the printed PDF and the `.docx` (only the families a document actually uses are embedded in its package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
 
+Below the embedded faces, the pickers carry the whole classic **Word font menu** — ~60 families from Aptos and Calibri through Garamond, Comic Sans MS and Edwardian Script (plus a *Custom family…* entry for anything else installed). These are proprietary, so they cannot travel inside the file: the preview uses the locally installed font and the `.docx` names the family, letting Word supply its own copy — exact parity on any machine with Office; a machine without the font sees a same-class fallback. Fonts not installed on the current device are labelled as such in the menu. The toolbar's typeface and size boxes apply a face to just the selected text via `[text]{font="…"}`.
+
 ## Page borders
 
 Settings → Page border offers seven styles (rule, double, triple, dashed, dotted, thick–thin, thin–thick) × three weights × ink or accent colour. The PDF draws the frame 4.5 mm inside the paper edge; the `.docx` gets real Word page borders (the same styles Word's own Design → Page Borders dialog produces) at the same standoff. The cover stays full-bleed and unframed in both.
@@ -65,6 +74,8 @@ Settings → Page border offers seven styles (rule, double, triple, dashed, dott
 - **Word cover band** uses a zero-margin first section; in very old Word versions (pre-2013) the band may print inset.
 - **Compound page borders in Word** (double, triple, thick–thin, thin–thick): Word's own renderer fills the gap between the component lines with a dark tone rather than leaving it white — a document built natively in Word's *Design → Page Borders* dialog prints the same way. The PDF draws the gaps crisply; at reading distance the Word version reads slightly heavier.
 - **Math in Word**: a handful of LaTeX constructs degrade gracefully (colours are dropped, `\\` line breaks outside environments become wide gaps, `\hline` in arrays is omitted). Everything exports as a real equation, never an image.
+- **PDF import is a reconstruction:** a PDF stores positioned glyphs, not paragraphs. Headings, lists and prose are rebuilt heuristically; tables and multi-column layouts flatten to running text, and scanned PDFs (no text layer) need OCR first. Word import is far more faithful — prefer the `.docx` when both exist.
+- **`~single tilde~` now means subscript** (Pandoc's convention), so a document that relied on marked's single-tilde strikethrough should use the standard `~~double~~` form.
 
 ## Host it free on GitHub Pages
 
@@ -73,9 +84,11 @@ This repo is ready for Pages: **Settings → Pages → Deploy from a branch → 
 ## Develop
 
 ```bash
-npm install        # marked, pagedjs, docx, katex, highlight.js (+ esbuild for the build)
-node build.mjs     # → dist/DocForge.html (single self-contained file, ~2.5 MB)
+npm install        # marked, pagedjs, docx, katex, highlight.js, mammoth, pdfjs-dist (+ esbuild)
+node build.mjs     # → dist/DocForge.html (single self-contained file, ~6 MB)
 ```
+
+The import libraries (mammoth for `.docx`, pdf.js for `.pdf`) ride inside the file as string constants and are eval'd on first use, so they cost nothing at startup and the file still works fully offline. pdf.js runs on the main thread via its fake-worker path — no real Worker, no network.
 
 Source lives in `src/` (`index.html`, `app.css`, `doc.css`, `js/engine.js`, `js/mathml-omml.js`, `js/docx-fonts.js`, `js/docx-export.js`, `js/main.js`). The build inlines everything — libraries, fonts, maths — into one file.
 

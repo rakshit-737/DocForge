@@ -27,6 +27,7 @@
     hardWrap: false, citeStyle: "ieee",
     borderStyle: "none", borderWeight: "medium", borderColor: "ink",
     fontHead: "theme", fontBody: "theme",
+    baseSize: "11", lineSpacing: "default",
   };
 
   /* Projects saved before the border system grew options carry a single
@@ -559,11 +560,54 @@ Start writing here.
     sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle",
     sBorderStyle: "borderStyle", sBorderWeight: "borderWeight", sBorderColor: "borderColor",
     sFontHead: "fontHead", sFontBody: "fontBody",
+    sBaseSize: "baseSize", sLineSpacing: "lineSpacing",
   };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
+  /* ---------------- font pickers ----------------
+     The two settings selects and the toolbar's selection box all carry the same
+     catalogue: the embedded faces (travel inside the file) and the classic Word
+     menu (used from this device, written into the .docx by name). */
+  const fontInstalled = name => { try { return document.fonts.check(`12px "${name}"`); } catch { return true; } };
+
+  function fontOptionsHtml(kind) {
+    let h = kind === "settings" ? `<option value="theme">Theme default</option>` : `<option value="">Typeface…</option>`;
+    h += `<optgroup label="Embedded — travel inside the file">`;
+    for (const [key, face] of Object.entries(Engine.FACES)) {
+      h += `<option value="${kind === "settings" ? key : face.name}">${face.label}</option>`;
+    }
+    h += `</optgroup><optgroup label="Word fonts — this device, named in the .docx">`;
+    for (const [name] of Engine.WORD_CATALOG) {
+      const miss = fontInstalled(name) ? "" : " · not on this device";
+      h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
+    }
+    h += `</optgroup>`;
+    if (kind === "settings") h += `<option value="custom">Custom family…</option>`;
+    return h;
+  }
+
+  /* A saved custom family ("sys:Whatever") must exist as an option or the select snaps
+     back to the first entry when syncSettingsUI assigns it. */
+  function ensureFontOption(sel, value) {
+    if (!value || [...sel.options].some(o => o.value === value)) return;
+    const o = document.createElement("option");
+    o.value = value;
+    o.textContent = value.replace(/^sys:/, "") + " (custom)";
+    sel.insertBefore(o, sel.lastElementChild);
+  }
+
+  function buildFontSelects() {
+    $("#sFontHead").innerHTML = fontOptionsHtml("settings");
+    $("#sFontBody").innerHTML = fontOptionsHtml("settings");
+    $("#tbFont").innerHTML = fontOptionsHtml("toolbar");
+    $("#tbSize").innerHTML = `<option value="">Size…</option>` +
+      [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48].map(n => `<option value="${n}">${n} pt</option>`).join("");
+  }
+
   function syncSettingsUI() {
     for (const [id, k] of Object.entries(FIELDS)) $("#" + id).value = state.settings[k] || "";
+    ensureFontOption($("#sFontHead"), state.settings.fontHead);
+    ensureFontOption($("#sFontBody"), state.settings.fontBody);
     for (const [id, k] of Object.entries(SELECTS)) $("#" + id).value = state.settings[k];
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
@@ -575,7 +619,14 @@ Start writing here.
       state.settings[k] = e.target.value; markDirty(); scheduleRender();
     });
     for (const [id, k] of Object.entries(SELECTS)) $("#" + id).addEventListener("change", e => {
-      state.settings[k] = e.target.value;
+      let v = e.target.value;
+      if ((k === "fontHead" || k === "fontBody") && v === "custom") {
+        const name = (window.prompt("Font family name, exactly as installed (e.g. Segoe UI Semibold):", "") || "").trim();
+        if (!name) { syncSettingsUI(); return; }
+        v = "sys:" + name;
+        ensureFontOption(e.target, v);
+      }
+      state.settings[k] = v;
       if (k === "theme" && !state.accentTouched) {
         state.settings.accent = THEME_ACCENT[e.target.value] || DEFAULTS.accent;
         syncSettingsUI();
@@ -634,9 +685,108 @@ Start writing here.
     state.source = editor.value; markDirty(); scheduleRender();
   }
 
+  /* Like surround(), but leading/trailing whitespace stays outside the marks —
+     `++text ++` would not tokenize. */
+  function wrapInline(pre, post, ph) {
+    const s = editor.selectionStart, e = editor.selectionEnd;
+    const raw = editor.value.slice(s, e);
+    const lead = (raw.match(/^\s*/) || [""])[0];
+    const trail = raw.slice(lead.length).match(/\s*$/)[0];
+    const core = raw.slice(lead.length, raw.length - trail.length) || ph;
+    editor.focus();
+    editor.setRangeText(lead + pre + core + post + trail, s, e, "select");
+    const at = s + lead.length + pre.length;
+    setSel(at, at + core.length);
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+
+  function scriptWrap(mark, ph) {
+    const sel = editor.value.slice(editor.selectionStart, editor.selectionEnd).trim();
+    if (/\s/.test(sel)) { toast("Sub/superscript can't contain spaces", "warn"); return; }
+    wrapInline(mark, mark, ph);
+  }
+
+  /* UPPER → lower → Title, judged from what the selection currently is.
+     Attachment keys and URLs are case-sensitive machinery, not prose — skip them. */
+  const CASE_SAFE = /(\|\s*img:[A-Za-z0-9]+|\]\([^)\n]*\)|https?:\/\/\S+)/g;
+  function mapProse(sel, fn) {
+    return sel.split(CASE_SAFE).map((part, i) => (i % 2 ? part : fn(part))).join("");
+  }
+  function cycleCase() {
+    const s = editor.selectionStart, e = editor.selectionEnd;
+    const sel = editor.value.slice(s, e);
+    if (!sel || !/[a-z]/i.test(sel)) { toast("Select some text first", "warn"); return; }
+    let next;
+    if (sel === mapProse(sel, t => t.toUpperCase())) next = mapProse(sel, t => t.toLowerCase());
+    else if (sel === mapProse(sel, t => t.toLowerCase())) {
+      next = mapProse(sel, t => t.replace(/([a-z])([a-z']*)/gi, (m, a, b) => a.toUpperCase() + b.toLowerCase()));
+    } else next = mapProse(sel, t => t.toUpperCase());
+    editor.focus();
+    editor.setRangeText(next, s, e, "select");
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+
+  /* Word's "clear formatting": peel every character-level mark off the selection.
+     Runs a few passes so nested marks unwrap fully. */
+  function clearFormatting() {
+    const s = editor.selectionStart, e = editor.selectionEnd;
+    let sel = editor.value.slice(s, e);
+    if (!sel) { toast("Select some text first", "warn"); return; }
+    for (let i = 0; i < 4; i++) {
+      sel = sel
+        .replace(/\[([^\[\]{}\n]+)\]\{[^}\n]*\}/g, "$1")
+        .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2")
+        .replace(/\+\+([^+\n]+)\+\+/g, "$1")
+        .replace(/~~([^~\n]+)~~/g, "$1")
+        .replace(/==(?:\{[A-Za-z]+\})?([^=\n]+)==/g, "$1")
+        .replace(/\^([^\s^]+)\^/g, "$1")
+        .replace(/(^|[^~])~([^\s~]+)~(?!~)/g, "$1$2")
+        .replace(/`([^`\n]+)`/g, "$1");
+    }
+    editor.focus();
+    editor.setRangeText(sel, s, e, "select");
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+
+  /* Wrap the selected lines in an alignment container; a second press unwraps it. */
+  function wrapAlign(dir) {
+    const v = editor.value;
+    const s = editor.selectionStart, e = editor.selectionEnd;
+    const ls = v.lastIndexOf("\n", s - 1) + 1;
+    let le = v.indexOf("\n", e); if (le === -1) le = v.length;
+    const prevLs = ls >= 2 ? v.lastIndexOf("\n", ls - 2) + 1 : -1;
+    const prevLine = prevLs >= 0 ? v.slice(prevLs, ls - 1) : "";
+    const nextLe0 = le < v.length ? v.indexOf("\n", le + 1) : -1;
+    const nextLe = nextLe0 === -1 ? v.length : nextLe0;
+    const nextLine = le < v.length ? v.slice(le + 1, nextLe) : "";
+    editor.focus();
+    if (new RegExp(`^:::${dir}\\s*$`, "i").test(prevLine) && /^:::\s*$/.test(nextLine)) {
+      // Replace up to (not past) the newline after ::: — the next paragraph keeps its break.
+      editor.setRangeText(v.slice(ls, le), prevLs, nextLe, "select");
+    } else {
+      editor.setRangeText(`:::${dir}\n${v.slice(ls, le)}\n:::`, ls, le, "select");
+    }
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+
+  const applyHl = name => wrapInline(name === "yellow" ? "==" : `=={${name}}`, "==", "highlighted text");
+  const applyColor = hexc => wrapInline("[", `]{color=${hexc}}`, "coloured text");
+  const applyFont = name => wrapInline("[", `]{font="${name}"}`, "text");
+
   const TOOL_ACTS = {
     bold: () => surround("**", "**", "bold text"),
     italic: () => surround("*", "*", "italic text"),
+    underline: () => wrapInline("++", "++", "underlined text"),
+    strike: () => wrapInline("~~", "~~", "struck-out text"),
+    sub: () => scriptWrap("~", "2"),
+    sup: () => scriptWrap("^", "2"),
+    case: cycleCase,
+    clearfmt: clearFormatting,
+    alignleft: () => wrapAlign("left"),
+    aligncenter: () => wrapAlign("center"),
+    alignright: () => wrapAlign("right"),
+    alignjustify: () => wrapAlign("justify"),
     code: () => surround("`", "`", "code"),
     h1: () => linePrefix("# "), h2: () => linePrefix("## "), h3: () => linePrefix("### "),
     ul: () => linePrefix("- "), ol: () => linePrefix("", true), quote: () => linePrefix("> "),
@@ -752,6 +902,33 @@ Start writing here.
     };
   }
 
+  /* ---------------- highlight & text-colour menus ---------------- */
+  function bindColorMenus() {
+    const hlMenu = $("#hlMenu"), fcMenu = $("#fcMenu");
+    const openAt = (menu, btn) => {
+      const r = btn.getBoundingClientRect();
+      menu.style.display = "block";
+      menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + "px";
+      menu.style.top = (r.bottom + 6) + "px";
+    };
+    const closeBoth = () => { hlMenu.style.display = "none"; fcMenu.style.display = "none"; };
+    $("#hlGrid").innerHTML = Object.entries(Engine.HL_COLORS).map(([k, v]) =>
+      `<div class="pm-sw" data-k="${k}" title="${k}" style="background:#${v}"></div>`).join("");
+    const FC = ["#c00000", "#e36c09", "#bf8f00", "#1a7f37", "#0f766e", "#2563eb", "#1f3a5f", "#6d28d9", "#c026d3", "#64748b", "#111827", "#000000"];
+    $("#fcGrid").innerHTML = FC.map(c => `<div class="pm-sw" data-c="${c}" title="${c}" style="background:${c}"></div>`).join("");
+    $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openAt(hlMenu, e.currentTarget); };
+    $("#tbFc").onclick = e => { e.stopPropagation(); hlMenu.style.display = "none"; openAt(fcMenu, e.currentTarget); };
+    $("#hlGrid").onclick = e => { const k = e.target.dataset.k; if (!k) return; closeBoth(); applyHl(k); };
+    $("#fcGrid").onclick = e => { const c = e.target.dataset.c; if (!c) return; closeBoth(); applyColor(c); };
+    $("#fcCustom").addEventListener("change", e => { closeBoth(); applyColor(e.target.value); });
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".popmenu") && !e.target.closest("#tbHl") && !e.target.closest("#tbFc")) closeBoth();
+    });
+    /* Selection typeface / size — the select snaps back to its placeholder after use. */
+    $("#tbFont").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) applyFont(v); });
+    $("#tbSize").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) wrapInline("[", `]{size=${v}}`, "text"); });
+  }
+
   /* ---------------- project save / open ---------------- */
   function downloadBlob(blob, name) {
     const a = document.createElement("a");
@@ -776,23 +953,102 @@ Start writing here.
     $("#projInput").addEventListener("change", e => {
       const f = e.target.files[0];
       e.target.value = "";
-      if (!f) return;
-      const fr = new FileReader();
-      fr.onload = () => {
-        try {
-          const d = JSON.parse(fr.result);
-          if (d.app !== "docforge") throw new Error("not a DocForge file");
-          state.settings = normalizeSettings(d.settings);
-          state.source = d.source || "";
-          state.attachments = d.attachments || {};
-          state.accentTouched = true;
-          editor.value = state.source;
-          syncSettingsUI(); markDirty(); doRender();
-          toast("Project opened");
-        } catch { toast("That doesn't look like a DocForge project file", "warn"); }
-      };
-      fr.readAsText(f);
+      if (f) importFile(f);
     });
+  }
+
+  /* ---------------- import: project / Word / PDF / Markdown ---------------- */
+  function openProjectFile(f) {
+    const fr = new FileReader();
+    fr.onload = () => {
+      try {
+        const d = JSON.parse(fr.result);
+        if (d.app !== "docforge") throw new Error("not a DocForge file");
+        state.settings = normalizeSettings(d.settings);
+        state.source = d.source || "";
+        state.attachments = d.attachments || {};
+        state.accentTouched = true;
+        editor.value = state.source;
+        syncSettingsUI(); markDirty(); doRender();
+        toast("Project opened");
+      } catch { toast("That doesn't look like a DocForge project file", "warn"); }
+    };
+    fr.readAsText(f);
+  }
+
+  /* An imported (non-project) image arrives as a data URL, not a File — same
+     downscale rules as processImageFile so attachments stay autosave-sized. */
+  function dataUrlAttachment(dataUrl) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        const MAX = 1600;
+        const { width: w, height: h } = img;
+        if (w > MAX || h > MAX) {
+          const k = MAX / Math.max(w, h);
+          const cv = document.createElement("canvas");
+          cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+          cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+          const isPng = /^data:image\/(png|gif)/i.test(dataUrl);
+          res({ dataUrl: cv.toDataURL(isPng ? "image/png" : "image/jpeg", 0.92), w: cv.width, h: cv.height });
+        } else res({ dataUrl, w, h });
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  async function importDocxFile(f) {
+    const { html, messages } = await DocxImport.toHtml(await f.arrayBuffer());
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const atts = {};
+    // Embedded pictures become numbered figures; formats the browser can't decode
+    // (EMF/WMF vector clips, mostly) are dropped rather than left as broken tags.
+    for (const img of [...doc.querySelectorAll('img[src^="data:"]')]) {
+      try {
+        const att = await dataUrlAttachment(img.src);
+        const key = newKey();
+        atts[key] = att;
+        img.dataset.dfKey = key;
+      } catch { img.remove(); }
+    }
+    const md = htmlToMd(doc.body.innerHTML);
+    if (!md.trim()) throw new Error("That Word file appears to be empty");
+    // Images that didn't survive the conversion (table cells, undecodable formats)
+    // must not ride along as orphaned bytes in every autosave.
+    for (const key of Object.keys(atts)) if (!md.includes("img:" + key)) delete atts[key];
+    state.source = md;
+    state.attachments = atts;
+    if (messages && messages.length) console.warn("[DocForge] docx import notes:", messages);
+  }
+
+  async function importPdfFile(f) {
+    toast("Reading PDF — a large file can take a few seconds…");
+    const { source, warnings } = await PdfImport.toMarkdown(await f.arrayBuffer());
+    state.source = source;
+    state.attachments = {};
+    (warnings || []).slice(0, 2).forEach(w => toast(w, "warn"));
+  }
+
+  async function importFile(f) {
+    const ext = ((f.name.match(/\.([a-z0-9]+)$/i) || [])[1] || "").toLowerCase();
+    if (ext === "json") return openProjectFile(f);
+    if (ext === "doc") return toast("Old binary .doc — open it in Word and save as .docx first", "warn");
+    if (!["docx", "pdf", "md", "markdown", "txt"].includes(ext)) return toast("Can't import that file type", "warn");
+    if (!await confirmModal(`Import “${f.name}”?`,
+      "The imported document will replace the editor contents. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) return;
+    try {
+      if (ext === "docx") await importDocxFile(f);
+      else if (ext === "pdf") await importPdfFile(f);
+      else { state.source = await f.text(); state.attachments = {}; }
+      state.settings.title = f.name.replace(/\.[a-z0-9]+$/i, "");
+      editor.value = state.source;
+      syncSettingsUI(); markDirty(); doRender();
+      toast(`Imported ${f.name} — now fully editable`);
+    } catch (err) {
+      console.error("[DocForge] import failed", err);
+      toast(err && err.message ? err.message : "Import failed — check the console", "warn");
+    }
   }
 
   function applyTemplate(id) {
@@ -910,7 +1166,9 @@ Start writing here.
   function htmlToMd(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     doc.querySelectorAll("script,style,meta,link,head title").forEach(n => n.remove());
-    const cell = t => t.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
+    // A [screenshot] token is line-anchored and can never parse inside a table
+    // cell — strip it there rather than printing the marker literally.
+    const cell = t => t.replace(/\[screenshot:[^\]]*\]/gi, " ").replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
     function inline(node) {
       let s = "";
       node.childNodes.forEach(ch => {
@@ -920,9 +1178,37 @@ Start writing here.
         if (t === "br") s += "\n";
         else if ((t === "b" || t === "strong") && inner.trim()) s += `**${inner.trim()}**`;
         else if ((t === "i" || t === "em") && inner.trim()) s += `*${inner.trim()}*`;
+        else if (t === "u" && inner.trim()) s += `++${inner.trim()}++`;
+        else if ((t === "s" || t === "del" || t === "strike") && inner.trim()) s += `~~${inner.trim()}~~`;
+        else if (t === "mark" && inner.trim()) {
+          const hl = ch.getAttribute("data-hl");
+          s += `==${hl && hl !== "yellow" ? `{${hl}}` : ""}${inner.trim()}==`;
+        }
+        else if (t === "span" && ch.classList.contains("dfspan") && inner.trim()) {
+          // Rebuild the attribute span so colour/size/face survive a round trip.
+          const d = ch.dataset, parts = [];
+          if (d.color) parts.push("color=#" + d.color.toLowerCase());
+          if (d.bg) parts.push("bg=#" + d.bg.toLowerCase());
+          if (d.size) parts.push("size=" + d.size);
+          if (d.font) parts.push(`font="${d.font}"`);
+          if (d.u) parts.push("u");
+          if (d.sc) parts.push("sc");
+          if (d.caps) parts.push("caps");
+          s += parts.length ? `[${inner.trim()}]{${parts.join(" ")}}` : inner;
+        }
+        // The sub/sup marks take no spaces; a multi-word script stays plain text.
+        else if (t === "sub" && inner.trim() && !/\s/.test(inner.trim())) s += `~${inner.trim()}~`;
+        else if (t === "sup" && inner.trim() && !/\s/.test(inner.trim())) s += `^${inner.trim()}^`;
         else if (t === "code" && inner.trim()) s += "`" + inner.trim() + "`";
         else if (t === "a" && ch.getAttribute("href") && /^https?:/i.test(ch.getAttribute("href")))
           s += `[${inner.trim() || ch.getAttribute("href")}](${ch.getAttribute("href")})`;
+        else if (t === "img") {
+          // On its own line so the [screenshot] token parses; imported keys attach the bytes.
+          const key = ch.getAttribute("data-df-key");
+          const alt = (ch.getAttribute("alt") || "").replace(/[|\[\]]/g, " ").replace(/\s+/g, " ").trim();
+          if (key) s += `\n[screenshot: ${alt || "Imported image"} | img:${key}]\n`;
+          else if (alt) s += `\n[screenshot: ${alt}]\n`;
+        }
         else s += inner;
       });
       return s;
@@ -962,7 +1248,12 @@ Start writing here.
         }
         else if (t === "pre") out += "```\n" + ch.textContent.replace(/\n$/, "") + "\n```\n\n";
         else if (t === "blockquote") out += block(ch, depth).trim().replace(/^/gm, "> ") + "\n\n";
-        else if (t === "img" && ch.getAttribute("alt")) out += `[screenshot: ${ch.getAttribute("alt")}]\n\n`;
+        else if (t === "img") {
+          const key = ch.getAttribute("data-df-key");
+          const alt = (ch.getAttribute("alt") || "").replace(/[|\[\]]/g, " ").replace(/\s+/g, " ").trim();
+          if (key) out += `[screenshot: ${alt || "Imported image"} | img:${key}]\n\n`;
+          else if (alt) out += `[screenshot: ${alt}]\n\n`;
+        }
         else out += block(ch, depth);
       });
       return out;
@@ -981,7 +1272,7 @@ Start writing here.
       const fm = line.match(/^(```+|~~~+)/);
       if (fence) { if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; return; }
       if (fm) { fence = fm[1]; return; }
-      if (/^:::(note|tip|warning|important)\b/i.test(line)) { coDepth++; coLine = n; }
+      if (/^:::(note|tip|warning|important|center|right|left|justify)\b/i.test(line)) { coDepth++; coLine = n; }
       else if (/^:::\s*$/.test(line)) coDepth = Math.max(0, coDepth - 1);
       if (/^#{5,}\s/.test(line)) warns.push([n, "Heading level 5+ — styled plainly and never listed in the contents. Consider #### or bold text."]);
       if (/^\s*<(?!\/?(b|i|em|strong|code|br)\b)[a-z][^>]*>/i.test(line)) warns.push([n, "Raw HTML — it will be ignored or printed as text. Use the toolbar marks instead."]);
@@ -1100,6 +1391,7 @@ Start writing here.
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); TOOL_ACTS.bold(); }
       if (mod && e.key.toLowerCase() === "i") { e.preventDefault(); TOOL_ACTS.italic(); }
+      if (mod && e.key.toLowerCase() === "u") { e.preventDefault(); TOOL_ACTS.underline(); }
       if (e.key === "Tab") { e.preventDefault(); replaceRange(editor.selectionStart, editor.selectionEnd, "  "); }
     });
     document.addEventListener("keydown", e => {
@@ -1125,9 +1417,12 @@ Start writing here.
     $("#zoomPct").title = "Reset to fit";
     $("#zoomPct").onclick = () => { zoomMode = "fit"; applyZoom(); };
 
-    /* Drop an image file anywhere on the editor to insert it as a figure */
+    /* Drop an image file anywhere on the editor to insert it as a figure;
+       a document file (.docx / .pdf / .md / project) routes through import. */
     editor.addEventListener("dragover", e => { e.preventDefault(); });
     editor.addEventListener("drop", async e => {
+      const docFile = [...(e.dataTransfer?.files || [])].find(f => /\.(docx|doc|pdf|md|markdown|txt|json)$/i.test(f.name));
+      if (docFile) { e.preventDefault(); importFile(docFile); return; }
       const file = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type));
       if (!file) return; // let plain text drops behave natively
       e.preventDefault();
@@ -1160,7 +1455,8 @@ Start writing here.
       o.value = id; o.textContent = t.label;
       sel.appendChild(o);
     }
-    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput();
+    buildFontSelects();
+    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus();
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;
