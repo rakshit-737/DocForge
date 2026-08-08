@@ -89,6 +89,16 @@ const PdfEditor = (() => {
       const [fontFamily, fontWeight, fontStyle] = CSS_FONT[ed.font] || CSS_FONT.helv;
       Object.assign(el.style, { height: "auto", fontFamily, fontWeight, fontStyle,
         fontSize: ed.size * zoom + "px", color: ed.color });
+      if (ed.cover) {
+        // On screen the white grows with the text (like the export cover will),
+        // instead of blanking the whole margin-wide editing box.
+        const pad = Math.max(0, -ed.cover.dy) * zoom;
+        el.style.background = "#fff";
+        el.style.boxShadow = `0 0 0 ${pad}px #fff`;
+        el.style.width = "auto";
+        el.style.minWidth = ed.cover.w * zoom + "px";
+        el.style.maxWidth = ed.w * zoom + "px";
+      }
     } else {
       el.style.height = ed.h * zoom + "px";
     }
@@ -191,6 +201,104 @@ const PdfEditor = (() => {
     if (sel === ed) { sel = null; selPage = -1; }
     dirty = true;
     syncLayer(i);
+  }
+
+  /* ---------- the original text, as editable lines ----------
+     Double-clicking a printed line rewrites it in place: the line's runs are
+     clustered from pdf.js's text layer, a white cover hides the original at
+     export, and a prefilled text edit sits at the exact same baseline (yTop is
+     derived from the run's baseline with the same 0.83 ascent the export uses,
+     so the redrawn text lands where the original stood). The original font is
+     mapped to the nearest standard face by family/weight cues. Lines are
+     extracted lazily per page — by first double-click the page has painted, so
+     commonObjs already knows the real font names. */
+  async function ensureLines(i) {
+    const p = pages[i];
+    if (p.lines) return p.lines;
+    const tc = await p.pg.getTextContent();
+    const runs = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.str.trim()) continue;
+      const size = Math.hypot(it.transform[0], it.transform[1]) || 1;
+      let face = "";
+      try { const f = p.pg.commonObjs.get(it.fontName); face = (f && f.name) || ""; } catch { /* not resolved */ }
+      runs.push({ str: it.str, x: it.transform[4], f: it.transform[5], w: it.width || 0, size, face });
+    }
+    runs.sort((a, b) => b.f - a.f || a.x - b.x);
+    const clusters = [];
+    let cur = null;
+    for (const r of runs) {
+      if (cur && Math.abs(r.f - cur.f) <= 0.35 * Math.max(r.size, cur.size)) cur.runs.push(r);
+      else clusters.push(cur = { f: r.f, runs: [r] });
+    }
+    p.lines = clusters.map((L) => {
+      L.runs.sort((a, b) => a.x - b.x);
+      const x0 = L.runs[0].x;
+      const x1 = Math.max(...L.runs.map((r) => r.x + r.w));
+      const size = Math.max(...L.runs.map((r) => r.size));
+      let text = "";
+      for (let k = 0; k < L.runs.length; k++) {
+        const r = L.runs[k], prev = L.runs[k - 1];
+        if (prev && !text.endsWith(" ") && !r.str.startsWith(" ") &&
+            r.x - (prev.x + prev.w) > 0.2 * size) text += " ";
+        text += r.str;
+      }
+      const faces = L.runs.map((r) => r.face).join(" ");
+      const bold = /bold|black|heavy/i.test(faces);
+      const italic = /italic|oblique/i.test(faces);
+      const mono = /mono|courier|consol|code/i.test(faces);
+      const serif = !mono && /times|georgia|serif|garamond|book|roman|crimson|cambria|constantia/i.test(faces) && !/sans/i.test(faces);
+      const font = mono ? "courier"
+        : serif ? (bold ? "timesB" : italic ? "timesI" : "times")
+        : (bold ? "helvB" : "helv");
+      return { x: x0, yTop: p.h - L.f - size * 0.83, w: x1 - x0, size, text, font };
+    });
+    return p.lines;
+  }
+
+  async function editLineAt(i, px, py) {
+    const p = pages[i];
+    if (!p) return null;
+    const lines = await ensureLines(i);
+    const hit = lines.find((L) =>
+      px >= L.x - 2 && px <= L.x + L.w + 2 &&
+      py >= L.yTop - 2 && py <= L.yTop + L.size * 1.24 + 2);
+    if (!hit) {
+      api.hooks.toast("No text there — double-click a printed line to rewrite it", "warn");
+      return null;
+    }
+    const pad = Math.max(1.5, hit.size * 0.12);
+    const ed = {
+      type: "text",
+      x: hit.x, y: hit.yTop,
+      // room to the right margin so a longer rewrite doesn't wrap early;
+      // the export cover sizes itself to the text actually typed, not to this box
+      w: Math.max(60, p.w - hit.x - 24),
+      text: hit.text,
+      size: Math.round(hit.size * 10) / 10,
+      color: "#111111",
+      font: hit.font,
+      // offsets, not absolutes, so the cover travels when the box is dragged
+      cover: { dx: -pad, dy: -pad, w: hit.w + pad * 2, h: hit.size * 1.24 + pad * 2 },
+    };
+    pushEdit(i, ed);
+    select(ed, i);
+    const el = nodeOf.get(ed);
+    if (el) {
+      el.focus();
+      const s = window.getSelection();
+      s.selectAllChildren(el);
+      s.collapseToEnd();
+    }
+    return ed;
+  }
+
+  function onDblClick(e) {
+    const pageEl = e.target.closest(".pe-page");
+    if (!pageEl || e.target.closest(".pe-edit")) return;
+    const i = +pageEl.dataset.n, p = pages[i];
+    const r = p.layer.getBoundingClientRect();
+    editLineAt(i, (e.clientX - r.left) / zoom, (e.clientY - r.top) / zoom);
   }
 
   /* ---------- pointer interactions (delegated on #peDeck) ---------- */
@@ -400,6 +508,7 @@ const PdfEditor = (() => {
     els.deck.addEventListener("pointermove", onMove);
     els.deck.addEventListener("pointerup", onUp);
     els.deck.addEventListener("pointercancel", onUp);
+    els.deck.addEventListener("dblclick", onDblClick);
     document.addEventListener("keydown", onKey);
   }
 
@@ -538,6 +647,28 @@ const PdfEditor = (() => {
       for (const ed of list.filter((x) => x.type === "whiteout")) {
         page.drawRectangle({ x: ed.x, y: H - ed.y - ed.h, width: ed.w, height: ed.h, color: rgb(1, 1, 1) });
       }
+      // Rewritten lines: the cover hides the original print before any new ink
+      // lands. It spans the original line's extent or the new text's measured
+      // width, whichever is wider — never the whole editing box, which reaches
+      // to the margin and would wipe a second column.
+      const wrapped = new Map();
+      for (const ed of list.filter((x) => x.type === "text" && x.cover)) {
+        const c = ed.cover;
+        const font = await getFont(ed.font);
+        const lines = wrapLines(ed.text, font, ed.size, ed.w);
+        wrapped.set(ed, lines);
+        let needW = 0;
+        for (const ln of lines) {
+          try { needW = Math.max(needW, font.widthOfTextAtSize(ln, ed.size)); }
+          catch { needW = Math.max(needW, font.widthOfTextAtSize(ln.replace(/[^\x20-\xFF]/g, "?"), ed.size)); }
+        }
+        page.drawRectangle({
+          x: ed.x + c.dx, y: H - (ed.y + c.dy) - Math.max(c.h, lines.length * ed.size * 1.25),
+          width: Math.max(c.w, needW + 3),
+          height: Math.max(c.h, lines.length * ed.size * 1.25 + (ed.y - (ed.y + c.dy)) * 2),
+          color: rgb(1, 1, 1),
+        });
+      }
       for (const ed of list.filter((x) => x.type === "image")) {
         let img = images.get(ed.dataUrl);
         if (!img) {
@@ -556,7 +687,7 @@ const PdfEditor = (() => {
       for (const ed of list.filter((x) => x.type === "text")) {
         const font = await getFont(ed.font);
         const color = hexRgb(ed.color, rgb);
-        const lines = wrapLines(ed.text, font, ed.size, ed.w);
+        const lines = wrapped.get(ed) || wrapLines(ed.text, font, ed.size, ed.w);
         for (let li = 0; li < lines.length; li++) {
           if (!lines[li]) continue;
           // 0.83 ≈ ascent fraction: drops the baseline so print lands where the screen box implied.
@@ -586,6 +717,8 @@ const PdfEditor = (() => {
     hasEdits: () => dirty && [...edits.values()].some((l) => l.length),
     addEdit: pushEdit, // programmatic path shares the interactive one (QA leans on this)
     getEdits: () => edits,
+    editLineAt,        // double-click path, callable directly (QA + power users)
+    getTextLines: ensureLines,
   };
   return api;
 })();

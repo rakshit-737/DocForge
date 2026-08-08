@@ -303,6 +303,7 @@
     <button class="btn small ghost" id="peClose" title="Back to the studio">← Studio</button>
     <span id="peName" class="pe-name"></span>
     <span id="pePages" class="pe-meta"></span>
+    <span class="pe-hint">double-click any text to rewrite it</span>
     <div class="grow"></div>
     <div id="peTools">
       <button class="pe-tool on" data-tool="select" title="Select / move">
@@ -422,7 +423,8 @@
       <h4>Typefaces & borders</h4>
       <p>Settings offers six embedded typefaces (Source Sans, Source Serif, Inter, Montserrat, Garamond, Crimson) for headings and body independently — the same fonts travel inside the Word file, so it looks identical on any machine. Below them sits the whole classic <b>Word font menu</b> (Calibri, Cambria, Times New Roman, Georgia, Garamond, Comic Sans MS and ~50 more): those are used from this device and written into the .docx by name — Word supplies its own copy, so the Word file is exact; on a machine without the font the preview falls back to a lookalike. The toolbar's typeface/size boxes restyle just the selected text. Page borders come in seven styles with weight and colour options, drawn the same in the PDF and as real Word page borders.</p>
       <h4>Importing Word & PDF files</h4>
-      <p><b>Open</b> (or drop a file on the editor) now also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code> and <code>.txt</code>. Word documents keep headings, lists, tables, images, footnote-ish structure and inline styling. PDFs are print-shaped, so they arrive as reflowed text — headings, lists and paragraphs are reconstructed, but exact layout (and any scanned page) cannot be; run OCR first if the PDF has no selectable text.</p>
+      <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code> and <code>.txt</code>. Word documents keep headings, lists, tables, images and inline styling.</p>
+      <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot and size in the nearest standard face — and the toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
       <h4>Editor</h4>
       <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>

@@ -46,6 +46,27 @@ ok("edit layer renders", await p.evaluate(() =>
   !!document.querySelector(".pe-layer .pe-hl") &&
   !!document.querySelector(".pe-layer .pe-text")));
 
+/* ---- rewrite a printed line in place (double-click path) ---- */
+const lineEdit = await p.evaluate(async () => {
+  const lines = await PdfEditor.getTextLines(0);
+  const hit = lines.find(L => L.text.includes("xanthium"));
+  if (!hit) return { found: false };
+  const ed = await PdfEditor.editLineAt(0, hit.x + 4, hit.yTop + 4);
+  if (!ed) return { found: true, edited: false };
+  ed.text = "The rewritten quibbleford paragraph now reads differently.";
+  return {
+    found: true, edited: true,
+    prefill: hit.text.includes("xanthium"),
+    sameX: Math.abs(ed.x - hit.x) < 0.5,
+    covered: !!ed.cover,
+    sizeMatch: Math.abs(ed.size - hit.size) < 0.6,
+  };
+});
+ok("text lines extracted", lineEdit.found);
+ok("double-click creates prefilled edit", lineEdit.edited && lineEdit.prefill);
+ok("edit sits at the original position/size", lineEdit.sameX && lineEdit.sizeMatch);
+ok("original line auto-covered", lineEdit.covered);
+
 /* export and inspect the produced PDF */
 const bytes = await p.evaluate(async () => {
   const { blob } = await PdfEditor.exportPdf();
@@ -67,8 +88,9 @@ const text = await p.evaluate(async (arr) => {
   await task.destroy();
   return t;
 }, bytes);
-ok("original text preserved", text.includes("xanthium") && text.includes("Original Heading Kept"));
+ok("untouched text preserved", text.includes("Original Heading Kept"));
 ok("overlay text present", text.includes("Replacement zebrawood line"));
+ok("rewritten line present", text.includes("quibbleford"));
 
 /* leaving the editor restores the studio */
 p.once("dialog", d => d.accept());

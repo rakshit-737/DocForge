@@ -618,6 +618,8 @@ body.pdf-mode #pdfEditor { display: flex; }
 }
 .pe-name { font-weight: 600; color: var(--tx); margin-left: 4px; }
 .pe-meta { color: var(--tx3); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.pe-hint { color: var(--tx3); font-size: 12px; margin-left: var(--sp3); font-style: italic; font-family: var(--display); }
+@media (max-width: 1024px) { .pe-hint { display: none; } }
 #peTools { display: flex; gap: 2px; background: var(--bg3); border-radius: var(--rc); padding: 2px; }
 .pe-tool {
   background: transparent; border: 0; color: var(--tx2);

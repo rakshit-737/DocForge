@@ -1074,7 +1074,7 @@ Land the piece: return to the opening image or question and say what it means no
         try {
           await PdfEditor.open(await f.arrayBuffer(), f.name);
           document.body.classList.add("pdf-mode");
-          toast("Editing in place — the original layout stays untouched underneath");
+          toast("Double-click any text to rewrite it — the layout stays exactly as printed");
         } catch (err) {
           console.error("[DocForge] pdf edit open failed", err);
           toast(err && err.message ? err.message : "Could not open that PDF", "warn");
