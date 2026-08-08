@@ -1412,7 +1412,10 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   function bindChrome() {
-    $("#btnSettings").onclick = () => $("#settings").classList.toggle("open");
+    $("#btnSettings").onclick = () => {
+      const open = $("#settings").classList.toggle("open");
+      $("#btnSettings").setAttribute("aria-expanded", String(open));
+    };
     $("#btnHelp").onclick = () => $("#helpOverlay").classList.add("open");
     $$("[data-close]").forEach(b => b.onclick = () => b.closest(".overlay").classList.remove("open"));
     $("#btnSaveProj").onclick = saveProject;
@@ -1462,6 +1465,7 @@ Land the piece: return to the opening image or question and say what it means no
       outlineOpen = !outlineOpen;
       $("#outlinePanel").hidden = !outlineOpen;
       $("#btnOutline").classList.toggle("on", outlineOpen);
+      $("#btnOutline").setAttribute("aria-expanded", String(outlineOpen));
       refreshOutline();
     };
 
@@ -1583,6 +1587,10 @@ Land the piece: return to the opening image or question and say what it means no
       state.source = TEMPLATES.welcome.source;
     }
     editor.value = state.source;
+    // Icon-only controls speak their tooltip to assistive tech too.
+    $$("button[title]:not([aria-label])").forEach(b => {
+      if (!b.textContent.trim()) b.setAttribute("aria-label", b.title);
+    });
     applyUiTheme(safeLS.get(UI_KEY) === "light");
     syncSettingsUI(); updateCounts(); refreshLint();
     if (window.self !== window.top) $("#embedHint").classList.add("on");

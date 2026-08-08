@@ -24,7 +24,7 @@
   --line: #322d24;
   --tx: #ece5d8;
   --tx2: #b0a795;
-  --tx3: #7d766a;
+  --tx3: #8a8375;   /* tertiary — still ≥4.5:1 on --bg for the mono micro-text */
   --pri: #c9974a;       /* brass — masthead rule + primary action only */
   --pri2: #e0b26a;
   --pri-ink: #191207;
@@ -51,7 +51,7 @@
   --line: #d9d0bc;
   --tx: #2a251c;
   --tx2: #5f5849;
-  --tx3: #8a8272;
+  --tx3: #6b6353;   /* tertiary — ≥4.5:1 on the daylit plaster */
   --pri: #a67833;
   --pri2: #8c6323;
   --pri-ink: #fffdf6;
@@ -799,15 +799,25 @@ body.pdf-mode #pdfEditor { display: flex; }
 }
 
 /* ---------------- responsive ---------------- */
-@media (max-width: 900px) {
-  #main { flex-direction: column; }
-  #editorPane { min-height: 40%; }
+/* below 1180px the drawer floats over the editor instead of squeezing it,
+   so the two toolbar rows stay composed with the drawer open */
+@media (max-width: 1180px) {
   #settings {
     position: absolute; z-index: 40; height: calc(100% - 52px);
     margin-left: 0;
     transform: translateX(-105%);
   }
   #settings.open { transform: none; box-shadow: var(--elev-l); }
+}
+@media (max-width: 1024px) {
+  .doc-id { max-width: 26vw; }
+  #btnDocx { margin-left: 4px; }
+}
+@media (max-width: 900px) {
+  #main { flex-direction: column; }
+  #editorPane { min-height: 40%; }
+  .doc-id { display: none; }
+  #topbar { padding: 0 10px 0 14px; gap: 6px; }
 }
 
 /* ---------------- PRINT: only the pages ---------------- */
