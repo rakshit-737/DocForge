@@ -15,10 +15,15 @@
 
 <header id="topbar">
   <div class="brand">DocForge</div>
+  <div class="doc-id">
+    <button id="docTitle" title="Rename — opens document settings">Untitled document</button>
+    <span id="saveState" role="status"></span>
+  </div>
   <div class="grow"></div>
-  <select id="templateSelect" class="btn">
-    <option value="">Templates…</option>
-  </select>
+  <button class="btn" id="templateSelect" aria-haspopup="menu" aria-expanded="false">
+    Templates
+    <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+  </button>
   <div class="grp" role="group" aria-label="File">
     <button class="btn icon" id="btnNew" title="New document">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg>
@@ -92,6 +97,8 @@
         <select id="sMargins"><option value="normal">Normal</option><option value="narrow">Narrow</option><option value="wide">Wide</option></select>
       </div>
     </div>
+    <details class="sgroup" open>
+    <summary>Typography</summary>
     <div class="field"><label>Headings typeface</label>
       <select id="sFontHead">
         <option value="theme">Theme default</option>
@@ -135,6 +142,10 @@
         </select>
       </div>
     </div>
+    </details>
+
+    <details class="sgroup">
+    <summary>Border &amp; citations</summary>
     <div class="field"><label>Page border</label>
       <select id="sBorderStyle">
         <option value="none">None</option>
@@ -169,6 +180,7 @@
         <option value="apa">Author–year — (Smith, 2020)</option>
       </select>
     </div>
+    </details>
 
     <h3>Layout</h3>
     <label class="toggle"><span class="lbl">Cover page</span><input type="checkbox" id="tCover"><span class="tg"></span></label>
@@ -181,7 +193,8 @@
   </aside>
 
   <section id="editorPane">
-    <div id="toolbar">
+    <div id="toolbar" role="toolbar" aria-label="Formatting">
+      <div class="tbrow">
       <div class="tbg">
         <button class="tb" data-act="h1" title="Heading 1"><span class="h">H1</span></button>
         <button class="tb" data-act="h2" title="Heading 2"><span class="h">H2</span></button>
@@ -192,22 +205,24 @@
         <button class="tb" data-act="italic" title="Italic (Ctrl+I)"><i>I</i></button>
         <button class="tb" data-act="underline" title="Underline (Ctrl+U)"><span class="h" style="text-decoration:underline;text-underline-offset:2px">U</span></button>
         <button class="tb" data-act="strike" title="Strikethrough"><span class="h" style="text-decoration:line-through">S</span></button>
-        <button class="tb" data-act="code" title="Inline code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg></button>
+        <button class="tb" data-act="code" title="Inline code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg></button>
         <button class="tb" data-act="sub" title="Subscript (~x~)"><span class="h">x₂</span></button>
         <button class="tb" data-act="sup" title="Superscript (^x^)"><span class="h">x²</span></button>
       </div>
       <div class="tbg">
-        <button class="tb" id="tbHl" title="Highlight — click for colours"><span class="h ic-hl">A</span></button>
-        <button class="tb" id="tbFc" title="Text colour"><span class="h ic-fc">A</span></button>
+        <button class="tb" id="tbHl" title="Highlight — click for colours" aria-haspopup="menu"><span class="h ic-hl">A</span></button>
+        <button class="tb" id="tbFc" title="Text colour" aria-haspopup="menu"><span class="h ic-fc">A</span></button>
         <button class="tb" data-act="case" title="Change case (UPPER → lower → Title)"><span class="h">Aa</span></button>
         <button class="tb" data-act="clearfmt" title="Clear formatting"><span class="h">T<small>✕</small></span></button>
       </div>
       <div class="tbg">
-        <button class="tb" data-act="alignleft" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
-        <button class="tb" data-act="aligncenter" title="Centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
-        <button class="tb" data-act="alignright" title="Align right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
-        <button class="tb" data-act="alignjustify" title="Justify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
+        <button class="tb" data-act="alignleft" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
+        <button class="tb" data-act="aligncenter" title="Centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
+        <button class="tb" data-act="alignright" title="Align right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
+        <button class="tb" data-act="alignjustify" title="Justify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
       </div>
+      </div>
+      <div class="tbrow">
       <div class="tbg">
         <select id="tbFont" class="tbsel" title="Typeface for the selected text"></select>
         <select id="tbSize" class="tbsel narrow" title="Size for the selected text"></select>
@@ -232,16 +247,17 @@
         <button class="tb" data-act="toc" title="Table of contents"><span class="h">TOC</span></button>
         <button class="tb" data-act="pagebreak" title="Page break"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h14M5 8h14"/><path d="M3 12h3m3 0h3m3 0h3m3 0h0" stroke-dasharray="3 3"/><path d="M5 16h14M5 20h14"/></svg></button>
       </div>
+      </div>
     </div>
     <div id="findBar">
       <input type="text" id="findInput" placeholder="Find…">
       <input type="text" id="replInput" placeholder="Replace with…">
       <span id="findCount"></span>
-      <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)">↑</button>
-      <button class="btn small ghost" id="findNext" title="Next (Enter)">↓</button>
+      <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
+      <button class="btn small ghost" id="findNext" title="Next (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>
       <button class="btn small ghost" id="replOne" title="Replace current">Replace</button>
       <button class="btn small ghost" id="replAll" title="Replace all">All</button>
-      <button class="btn small ghost" id="findClose" title="Close (Esc)">✕</button>
+      <button class="btn small ghost" id="findClose" title="Close (Esc)" aria-label="Close find bar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <textarea id="editor" spellcheck="false" placeholder="# Start with a heading
 
@@ -250,21 +266,25 @@ Then just write…"></textarea>
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
-      <span id="saveState"></span>
+      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
     </div>
     <div id="lintPanel" hidden></div>
   </section>
 
   <section id="previewPane">
     <div id="previewBar">
-      <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section">☰</button>
+      <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
       <span id="busy"></span>
-      <span id="pgInfo">—</span>
       <span class="grow"></span>
-      <button class="btn small ghost" id="zoomOut">−</button>
-      <span id="zoomPct">100%</span>
-      <button class="btn small ghost" id="zoomIn">+</button>
-      <button class="btn small" id="zoomFit">Fit</button>
+      <div id="pvCluster" aria-label="Pages and zoom">
+        <span id="pgInfo">—</span>
+        <span class="pv-sep"></span>
+        <button id="zoomOut" aria-label="Zoom out">−</button>
+        <span id="zoomPct" title="Reset to fit">100%</span>
+        <button id="zoomIn" aria-label="Zoom in">+</button>
+        <span class="pv-sep"></span>
+        <button id="zoomFit">Fit</button>
+      </div>
     </div>
     <div id="previewScroll"><div id="scaleWrap"></div></div>
     <nav id="outlinePanel" hidden></nav>
@@ -336,6 +356,8 @@ Then just write…"></textarea>
   <button id="imReplace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.9-3M4 13a8 8 0 0 0 14.9 3"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Replace image…</button>
   <button id="imRemove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Remove image</button>
 </div>
+
+<div id="tplMenu" class="popmenu" role="menu" aria-label="Templates"></div>
 
 <div id="hlMenu" class="popmenu">
   <div class="pm-title">Highlight</div>

@@ -7,8 +7,17 @@
    brass, on the hairline rule under the masthead and on the one
    primary action. The preview deck is a felt proof-table; the
    pages rest on it like proofs.
+
+   Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl;
+   elevation --recess/--elev-m/--elev-l; motion --dur/--ease
+   (reduced-motion kills all of it). Type roles: Garamond italic
+   masthead · Garamond titles · Sans 13px UI · Mono tabular data ·
+   one micro-caps role (settings group labels, brass).
    ============================================================ */
 :root {
+  --sp1: 4px; --sp2: 8px; --sp3: 12px; --sp4: 16px; --sp5: 24px;
+  --dur: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   --bg: #14120e;        /* pressroom ink */
   --bg2: #1b1813;       /* surface */
   --bg3: #23201a;       /* raised plate */
@@ -108,6 +117,25 @@ button, select, input, textarea { font: inherit; color: inherit; }
 }
 #topbar .grow { flex: 1; }
 
+/* the document announces itself in the masthead */
+.doc-id {
+  display: flex; align-items: baseline; gap: 10px;
+  min-width: 0; margin-left: var(--sp3);
+  padding-left: var(--sp4);
+  border-left: 1px solid var(--line);
+}
+#docTitle {
+  background: none; border: 0; padding: 2px 4px; cursor: pointer;
+  color: var(--tx); font-size: 13.5px; font-weight: 600;
+  max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-radius: var(--rc);
+}
+#docTitle:hover { color: var(--pri2); }
+#saveState { font-family: var(--mono); font-size: 11px; color: var(--tx3); white-space: nowrap; }
+#saveState.saved::before { content: "●  "; color: var(--ok); font-size: 8px; vertical-align: 1px; }
+#saveState.err { color: var(--warn); }
+body.pdf-mode .doc-id { display: none; }
+
 .btn {
   background: var(--bg3);
   border: 0;
@@ -194,6 +222,24 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   color: var(--pri); margin: 24px 0 12px; font-weight: 700;
 }
 #settings h3:first-child { margin-top: 4px; }
+/* collapsible detail groups share the same one micro-caps role */
+.sgroup { margin: var(--sp5) 0 var(--sp3); }
+.sgroup summary {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--pri); font-weight: 700;
+  cursor: pointer; user-select: none;
+  list-style: none;
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: var(--sp3);
+}
+.sgroup summary::-webkit-details-marker { display: none; }
+.sgroup summary::after {
+  content: ""; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--tx3); border-bottom: 1.5px solid var(--tx3);
+  transform: rotate(-45deg); margin-left: auto; margin-right: 4px;
+  transition: transform var(--dur) var(--ease);
+}
+.sgroup[open] summary::after { transform: rotate(45deg); }
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 12px; color: var(--tx2); margin-bottom: 4px; }
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {
@@ -245,15 +291,24 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   background: var(--bg);
   position: relative;
 }
-/* engraved plate rows: each group is a quiet raised plate */
+/* engraved plate rows: two composed cases, never a ragged wrap —
+   at narrow widths a row slides under the cursor instead of breaking */
 #toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp1);
+  padding: var(--sp2);
+  background: var(--bg);
+}
+.tbrow {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px;
-  background: var(--bg);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tbrow::-webkit-scrollbar { display: none; }
 .tbg {
   display: flex;
   align-items: center;
@@ -338,8 +393,13 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   font-variant-numeric: tabular-nums;
 }
 #statusbar .grow { flex: 1; }
-#saveState.saved { color: var(--ok); }
-#saveState.err { color: var(--warn); }
+.kbd-hint { color: var(--tx3); font-size: 11px; }
+.kbd-hint kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); border-radius: var(--rc);
+  padding: 1px 5px; margin-right: 2px;
+  box-shadow: var(--recess);
+}
 
 /* ---------------- preview pane: the felt proof-table ---------------- */
 #previewPane {
@@ -353,6 +413,39 @@ select.btn option { background: var(--bg2); color: var(--tx); }
     var(--deck);
   position: relative;
 }
+/* the instrument cluster: pages · zoom · fit, one machined strip */
+#pvCluster {
+  display: flex; align-items: center; gap: 2px;
+  background: var(--bg2);
+  border-radius: var(--rc);
+  box-shadow: var(--recess);
+  padding: 2px 6px;
+  height: 26px;
+}
+#pvCluster button {
+  background: none; border: 0; color: var(--tx2); cursor: pointer;
+  font-family: var(--mono); font-size: 12px;
+  min-width: 22px; height: 22px; border-radius: var(--rc);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+#pvCluster button:hover { color: var(--tx); background: var(--bg3); }
+#pvCluster #zoomFit { font-family: var(--sans); font-size: 11.5px; padding: 0 7px; }
+#pvCluster #zoomPct { cursor: pointer; }
+.pv-sep { width: 1px; height: 14px; background: var(--line); margin: 0 5px; }
+
+/* templates menu — labels with a reason to choose each */
+#tplMenu { min-width: 300px; padding: 6px; }
+.tpl-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  border-radius: var(--rc);
+  padding: 9px 12px;
+  color: var(--tx);
+}
+.tpl-item:hover { background: var(--bg2); }
+.tpl-item b { display: block; font-size: 13px; font-weight: 600; }
+.tpl-item span { display: block; font-size: 12px; color: var(--tx3); margin-top: 1px; line-height: 1.45; }
+
 /* quiet instrument row over the felt */
 #previewBar {
   display: flex;

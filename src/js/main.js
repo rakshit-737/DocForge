@@ -49,6 +49,7 @@
   const TEMPLATES = {
     welcome: {
       label: "Quick tour (start here)",
+      desc: "A five-minute working introduction to everything DocForge does.",
       patch: { title: "Welcome to DocForge", subtitle: "Type on the left — get a print-ready document on the right.", author: "Your Name", kicker: "Quick tour", theme: "modern", accent: "#2563eb" },
       source: `[toc]
 
@@ -106,6 +107,7 @@ Everything runs in this one file — no account, no internet, nothing to install
     },
     assignment: {
       label: "Assignment / academic report",
+      desc: "Numbered sections, cover page, references — ready for submission.",
       patch: { theme: "academic", accent: "#7f1d1d", numbered: true, justify: true, h1break: true, title: "Assignment Title", subtitle: "A concise one-line description of what this report covers", kicker: "Course Name · CS-101", metaExtra: "Roll No. 00 · Section A", cover: true },
       source: `[toc]
 
@@ -166,6 +168,7 @@ Summarise what was achieved against each objective, note limitations, and sugges
     },
     proposal: {
       label: "Business proposal",
+      desc: "Executive summary, scope, timeline and pricing tables for a client.",
       patch: { theme: "executive", accent: "#1f3a5f", title: "Project Proposal", subtitle: "Prepared for [Client] — scope, timeline and investment", kicker: "Your Company", metaExtra: "proposal@yourcompany.com", cover: true, h1break: false, numbered: false },
       source: `# Executive Summary
 
@@ -223,6 +226,7 @@ This proposal is valid for 30 days from the date on the cover.
     },
     report: {
       label: "Project / status report",
+      desc: "Progress, metrics, risks and decisions for a working team.",
       patch: { theme: "modern", accent: "#2563eb", title: "Project Report", subtitle: "Progress, decisions and next steps", kicker: "Team / Department", cover: true, h1break: true },
       source: `[toc]
 
@@ -269,6 +273,7 @@ Name the risk, its impact, and the mitigation you propose.
     },
     letter: {
       label: "Formal letter",
+      desc: "Address block, subject line and a clean sign-off — no cover, no numbers.",
       patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, title: "Letter", subtitle: "" },
       source: `**Your Name**
 Your address line
@@ -301,6 +306,7 @@ Yours faithfully,
     },
     article: {
       label: "Article / essay",
+      desc: "A quiet, minimal frame for a piece of writing that stands on its own.",
       patch: { theme: "minimal", accent: "#111827", title: "Article Title", subtitle: "A one-line standfirst that frames the piece", cover: true, header: true, pageNums: true, h1break: false },
       source: `# Opening
 
@@ -323,6 +329,7 @@ Land the piece: return to the opening image or question and say what it means no
     },
     blank: {
       label: "Blank document",
+      desc: "An empty page and nothing else.",
       patch: { title: "Untitled document", subtitle: "", kicker: "", metaExtra: "" },
       source: `# Heading
 
@@ -535,7 +542,14 @@ Start writing here.
   }
 
   /* ---------------- autosave & counts ---------------- */
+  /* The document announces itself in the masthead, next to its save state. */
+  function updateDocTitle() {
+    const el = $("#docTitle");
+    if (el) el.textContent = state.settings.title || "Untitled document";
+  }
+
   function markDirty() {
+    updateDocTitle();
     clearTimeout(autosaveTimer);
     $("#saveState").textContent = "…";
     $("#saveState").className = "";
@@ -612,6 +626,7 @@ Start writing here.
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
     $$(".sw").forEach(sw => sw.classList.toggle("on", sw.dataset.c === state.settings.accent));
+    updateDocTitle();
   }
 
   function bindSettings() {
@@ -1386,6 +1401,15 @@ Start writing here.
   function applyUiTheme(light) {
     document.documentElement.toggleAttribute("data-light", !!light);
     safeLS.set(UI_KEY, light ? "light" : "dark");
+    /* Paint workaround, not a mechanics change: Chromium sometimes leaves the
+       composited chrome bars (promoted by z-index + shadow) rendered with the
+       previous theme's custom-property values after the attribute flip — the
+       background survives as a stale solid-colour quad that even a resize
+       won't re-raster. Briefly toggling layer promotion forces a fresh raster
+       with the new values; visually a no-op. */
+    const els = [document.body, ...document.querySelectorAll("#topbar,#toolbar,#findBar,#settings,#editorPane,#embedHint,#peBar")];
+    for (const el of els) el.style.transform = "translateZ(0)";
+    requestAnimationFrame(() => requestAnimationFrame(() => { for (const el of els) el.style.transform = ""; }));
   }
 
   function bindChrome() {
@@ -1397,12 +1421,36 @@ Start writing here.
     $("#btnNew").onclick = async () => { if (await confirmModal("Start a new document?", "The editor will be replaced with a blank document. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) applyTemplate("blank"); };
     $("#btnPdf").onclick = exportPdf;
     $("#btnDocx").onclick = exportDocx;
-    $("#templateSelect").addEventListener("change", async e => {
-      const id = e.target.value;
-      e.target.value = "";
-      if (!id) return;
+    /* Templates: a designed menu, not a native select in a trenchcoat. */
+    const tplMenu = $("#tplMenu");
+    const tplBtn = $("#templateSelect");
+    const closeTpl = () => { tplMenu.style.display = "none"; tplBtn.setAttribute("aria-expanded", "false"); };
+    tplBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (tplMenu.style.display === "block") return closeTpl();
+      const r = tplBtn.getBoundingClientRect();
+      tplMenu.style.display = "block";
+      tplMenu.style.left = Math.min(r.left, innerWidth - tplMenu.offsetWidth - 8) + "px";
+      tplMenu.style.top = (r.bottom + 6) + "px";
+      tplBtn.setAttribute("aria-expanded", "true");
+    });
+    tplMenu.addEventListener("click", async e => {
+      const item = e.target.closest(".tpl-item");
+      if (!item) return;
+      closeTpl();
+      const id = item.dataset.id;
       if (await confirmModal("Load template?", "“" + TEMPLATES[id].label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
     });
+    document.addEventListener("click", e => {
+      if (!e.target.closest("#tplMenu") && !e.target.closest("#templateSelect")) closeTpl();
+    });
+
+    /* the masthead title opens the document's own settings */
+    $("#docTitle").onclick = () => {
+      $("#settings").classList.add("open");
+      $("#sTitle").focus();
+      $("#sTitle").select();
+    };
     $$("#toolbar .tb[data-act]").forEach(b => b.addEventListener("click", () => TOOL_ACTS[b.dataset.act]?.()));
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };
@@ -1512,13 +1560,10 @@ Start writing here.
   }
 
   function boot() {
-    // populate template select
-    const sel = $("#templateSelect");
-    for (const [id, t] of Object.entries(TEMPLATES)) {
-      const o = document.createElement("option");
-      o.value = id; o.textContent = t.label;
-      sel.appendChild(o);
-    }
+    // populate the templates menu (labels + one-line descriptions from TEMPLATES)
+    $("#tplMenu").innerHTML = Object.entries(TEMPLATES).map(([id, t]) =>
+      `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
+    ).join("");
     buildFontSelects();
     bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor();
 

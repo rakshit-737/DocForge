@@ -15,8 +15,17 @@
    brass, on the hairline rule under the masthead and on the one
    primary action. The preview deck is a felt proof-table; the
    pages rest on it like proofs.
+
+   Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl;
+   elevation --recess/--elev-m/--elev-l; motion --dur/--ease
+   (reduced-motion kills all of it). Type roles: Garamond italic
+   masthead · Garamond titles · Sans 13px UI · Mono tabular data ·
+   one micro-caps role (settings group labels, brass).
    ============================================================ */
 :root {
+  --sp1: 4px; --sp2: 8px; --sp3: 12px; --sp4: 16px; --sp5: 24px;
+  --dur: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   --bg: #14120e;        /* pressroom ink */
   --bg2: #1b1813;       /* surface */
   --bg3: #23201a;       /* raised plate */
@@ -116,6 +125,25 @@ button, select, input, textarea { font: inherit; color: inherit; }
 }
 #topbar .grow { flex: 1; }
 
+/* the document announces itself in the masthead */
+.doc-id {
+  display: flex; align-items: baseline; gap: 10px;
+  min-width: 0; margin-left: var(--sp3);
+  padding-left: var(--sp4);
+  border-left: 1px solid var(--line);
+}
+#docTitle {
+  background: none; border: 0; padding: 2px 4px; cursor: pointer;
+  color: var(--tx); font-size: 13.5px; font-weight: 600;
+  max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-radius: var(--rc);
+}
+#docTitle:hover { color: var(--pri2); }
+#saveState { font-family: var(--mono); font-size: 11px; color: var(--tx3); white-space: nowrap; }
+#saveState.saved::before { content: "●  "; color: var(--ok); font-size: 8px; vertical-align: 1px; }
+#saveState.err { color: var(--warn); }
+body.pdf-mode .doc-id { display: none; }
+
 .btn {
   background: var(--bg3);
   border: 0;
@@ -202,6 +230,24 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   color: var(--pri); margin: 24px 0 12px; font-weight: 700;
 }
 #settings h3:first-child { margin-top: 4px; }
+/* collapsible detail groups share the same one micro-caps role */
+.sgroup { margin: var(--sp5) 0 var(--sp3); }
+.sgroup summary {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--pri); font-weight: 700;
+  cursor: pointer; user-select: none;
+  list-style: none;
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: var(--sp3);
+}
+.sgroup summary::-webkit-details-marker { display: none; }
+.sgroup summary::after {
+  content: ""; width: 7px; height: 7px;
+  border-right: 1.5px solid var(--tx3); border-bottom: 1.5px solid var(--tx3);
+  transform: rotate(-45deg); margin-left: auto; margin-right: 4px;
+  transition: transform var(--dur) var(--ease);
+}
+.sgroup[open] summary::after { transform: rotate(45deg); }
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 12px; color: var(--tx2); margin-bottom: 4px; }
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {
@@ -253,15 +299,24 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   background: var(--bg);
   position: relative;
 }
-/* engraved plate rows: each group is a quiet raised plate */
+/* engraved plate rows: two composed cases, never a ragged wrap —
+   at narrow widths a row slides under the cursor instead of breaking */
 #toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp1);
+  padding: var(--sp2);
+  background: var(--bg);
+}
+.tbrow {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px;
-  background: var(--bg);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tbrow::-webkit-scrollbar { display: none; }
 .tbg {
   display: flex;
   align-items: center;
@@ -346,8 +401,13 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   font-variant-numeric: tabular-nums;
 }
 #statusbar .grow { flex: 1; }
-#saveState.saved { color: var(--ok); }
-#saveState.err { color: var(--warn); }
+.kbd-hint { color: var(--tx3); font-size: 11px; }
+.kbd-hint kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); border-radius: var(--rc);
+  padding: 1px 5px; margin-right: 2px;
+  box-shadow: var(--recess);
+}
 
 /* ---------------- preview pane: the felt proof-table ---------------- */
 #previewPane {
@@ -361,6 +421,39 @@ select.btn option { background: var(--bg2); color: var(--tx); }
     var(--deck);
   position: relative;
 }
+/* the instrument cluster: pages · zoom · fit, one machined strip */
+#pvCluster {
+  display: flex; align-items: center; gap: 2px;
+  background: var(--bg2);
+  border-radius: var(--rc);
+  box-shadow: var(--recess);
+  padding: 2px 6px;
+  height: 26px;
+}
+#pvCluster button {
+  background: none; border: 0; color: var(--tx2); cursor: pointer;
+  font-family: var(--mono); font-size: 12px;
+  min-width: 22px; height: 22px; border-radius: var(--rc);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+#pvCluster button:hover { color: var(--tx); background: var(--bg3); }
+#pvCluster #zoomFit { font-family: var(--sans); font-size: 11.5px; padding: 0 7px; }
+#pvCluster #zoomPct { cursor: pointer; }
+.pv-sep { width: 1px; height: 14px; background: var(--line); margin: 0 5px; }
+
+/* templates menu — labels with a reason to choose each */
+#tplMenu { min-width: 300px; padding: 6px; }
+.tpl-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  border-radius: var(--rc);
+  padding: 9px 12px;
+  color: var(--tx);
+}
+.tpl-item:hover { background: var(--bg2); }
+.tpl-item b { display: block; font-size: 13px; font-weight: 600; }
+.tpl-item span { display: block; font-size: 12px; color: var(--tx3); margin-top: 1px; line-height: 1.45; }
+
 /* quiet instrument row over the felt */
 #previewBar {
   display: flex;
@@ -722,10 +815,15 @@ body.pdf-mode #pdfEditor { display: flex; }
 
 <header id="topbar">
   <div class="brand">DocForge</div>
+  <div class="doc-id">
+    <button id="docTitle" title="Rename — opens document settings">Untitled document</button>
+    <span id="saveState" role="status"></span>
+  </div>
   <div class="grow"></div>
-  <select id="templateSelect" class="btn">
-    <option value="">Templates…</option>
-  </select>
+  <button class="btn" id="templateSelect" aria-haspopup="menu" aria-expanded="false">
+    Templates
+    <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 1l4 4 4-4"/></svg>
+  </button>
   <div class="grp" role="group" aria-label="File">
     <button class="btn icon" id="btnNew" title="New document">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/></svg>
@@ -799,6 +897,8 @@ body.pdf-mode #pdfEditor { display: flex; }
         <select id="sMargins"><option value="normal">Normal</option><option value="narrow">Narrow</option><option value="wide">Wide</option></select>
       </div>
     </div>
+    <details class="sgroup" open>
+    <summary>Typography</summary>
     <div class="field"><label>Headings typeface</label>
       <select id="sFontHead">
         <option value="theme">Theme default</option>
@@ -842,6 +942,10 @@ body.pdf-mode #pdfEditor { display: flex; }
         </select>
       </div>
     </div>
+    </details>
+
+    <details class="sgroup">
+    <summary>Border &amp; citations</summary>
     <div class="field"><label>Page border</label>
       <select id="sBorderStyle">
         <option value="none">None</option>
@@ -876,6 +980,7 @@ body.pdf-mode #pdfEditor { display: flex; }
         <option value="apa">Author–year — (Smith, 2020)</option>
       </select>
     </div>
+    </details>
 
     <h3>Layout</h3>
     <label class="toggle"><span class="lbl">Cover page</span><input type="checkbox" id="tCover"><span class="tg"></span></label>
@@ -888,7 +993,8 @@ body.pdf-mode #pdfEditor { display: flex; }
   </aside>
 
   <section id="editorPane">
-    <div id="toolbar">
+    <div id="toolbar" role="toolbar" aria-label="Formatting">
+      <div class="tbrow">
       <div class="tbg">
         <button class="tb" data-act="h1" title="Heading 1"><span class="h">H1</span></button>
         <button class="tb" data-act="h2" title="Heading 2"><span class="h">H2</span></button>
@@ -899,22 +1005,24 @@ body.pdf-mode #pdfEditor { display: flex; }
         <button class="tb" data-act="italic" title="Italic (Ctrl+I)"><i>I</i></button>
         <button class="tb" data-act="underline" title="Underline (Ctrl+U)"><span class="h" style="text-decoration:underline;text-underline-offset:2px">U</span></button>
         <button class="tb" data-act="strike" title="Strikethrough"><span class="h" style="text-decoration:line-through">S</span></button>
-        <button class="tb" data-act="code" title="Inline code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg></button>
+        <button class="tb" data-act="code" title="Inline code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg></button>
         <button class="tb" data-act="sub" title="Subscript (~x~)"><span class="h">x₂</span></button>
         <button class="tb" data-act="sup" title="Superscript (^x^)"><span class="h">x²</span></button>
       </div>
       <div class="tbg">
-        <button class="tb" id="tbHl" title="Highlight — click for colours"><span class="h ic-hl">A</span></button>
-        <button class="tb" id="tbFc" title="Text colour"><span class="h ic-fc">A</span></button>
+        <button class="tb" id="tbHl" title="Highlight — click for colours" aria-haspopup="menu"><span class="h ic-hl">A</span></button>
+        <button class="tb" id="tbFc" title="Text colour" aria-haspopup="menu"><span class="h ic-fc">A</span></button>
         <button class="tb" data-act="case" title="Change case (UPPER → lower → Title)"><span class="h">Aa</span></button>
         <button class="tb" data-act="clearfmt" title="Clear formatting"><span class="h">T<small>✕</small></span></button>
       </div>
       <div class="tbg">
-        <button class="tb" data-act="alignleft" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
-        <button class="tb" data-act="aligncenter" title="Centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
-        <button class="tb" data-act="alignright" title="Align right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
-        <button class="tb" data-act="alignjustify" title="Justify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
+        <button class="tb" data-act="alignleft" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
+        <button class="tb" data-act="aligncenter" title="Centre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
+        <button class="tb" data-act="alignright" title="Align right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
+        <button class="tb" data-act="alignjustify" title="Justify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
       </div>
+      </div>
+      <div class="tbrow">
       <div class="tbg">
         <select id="tbFont" class="tbsel" title="Typeface for the selected text"></select>
         <select id="tbSize" class="tbsel narrow" title="Size for the selected text"></select>
@@ -939,16 +1047,17 @@ body.pdf-mode #pdfEditor { display: flex; }
         <button class="tb" data-act="toc" title="Table of contents"><span class="h">TOC</span></button>
         <button class="tb" data-act="pagebreak" title="Page break"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h14M5 8h14"/><path d="M3 12h3m3 0h3m3 0h3m3 0h0" stroke-dasharray="3 3"/><path d="M5 16h14M5 20h14"/></svg></button>
       </div>
+      </div>
     </div>
     <div id="findBar">
       <input type="text" id="findInput" placeholder="Find…">
       <input type="text" id="replInput" placeholder="Replace with…">
       <span id="findCount"></span>
-      <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)">↑</button>
-      <button class="btn small ghost" id="findNext" title="Next (Enter)">↓</button>
+      <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
+      <button class="btn small ghost" id="findNext" title="Next (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>
       <button class="btn small ghost" id="replOne" title="Replace current">Replace</button>
       <button class="btn small ghost" id="replAll" title="Replace all">All</button>
-      <button class="btn small ghost" id="findClose" title="Close (Esc)">✕</button>
+      <button class="btn small ghost" id="findClose" title="Close (Esc)" aria-label="Close find bar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <textarea id="editor" spellcheck="false" placeholder="# Start with a heading
 
@@ -957,21 +1066,25 @@ Then just write…"></textarea>
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
-      <span id="saveState"></span>
+      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
     </div>
     <div id="lintPanel" hidden></div>
   </section>
 
   <section id="previewPane">
     <div id="previewBar">
-      <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section">☰</button>
+      <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
       <span id="busy"></span>
-      <span id="pgInfo">—</span>
       <span class="grow"></span>
-      <button class="btn small ghost" id="zoomOut">−</button>
-      <span id="zoomPct">100%</span>
-      <button class="btn small ghost" id="zoomIn">+</button>
-      <button class="btn small" id="zoomFit">Fit</button>
+      <div id="pvCluster" aria-label="Pages and zoom">
+        <span id="pgInfo">—</span>
+        <span class="pv-sep"></span>
+        <button id="zoomOut" aria-label="Zoom out">−</button>
+        <span id="zoomPct" title="Reset to fit">100%</span>
+        <button id="zoomIn" aria-label="Zoom in">+</button>
+        <span class="pv-sep"></span>
+        <button id="zoomFit">Fit</button>
+      </div>
     </div>
     <div id="previewScroll"><div id="scaleWrap"></div></div>
     <nav id="outlinePanel" hidden></nav>
@@ -1043,6 +1156,8 @@ Then just write…"></textarea>
   <button id="imReplace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.9-3M4 13a8 8 0 0 0 14.9 3"/><path d="M20 4v4h-4M4 20v-4h4"/></svg>Replace image…</button>
   <button id="imRemove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Remove image</button>
 </div>
+
+<div id="tplMenu" class="popmenu" role="menu" aria-label="Templates"></div>
 
 <div id="hlMenu" class="popmenu">
   <div class="pm-title">Highlight</div>
@@ -5228,6 +5343,7 @@ const PdfEditor = (() => {
   const TEMPLATES = {
     welcome: {
       label: "Quick tour (start here)",
+      desc: "A five-minute working introduction to everything DocForge does.",
       patch: { title: "Welcome to DocForge", subtitle: "Type on the left — get a print-ready document on the right.", author: "Your Name", kicker: "Quick tour", theme: "modern", accent: "#2563eb" },
       source: `[toc]
 
@@ -5285,6 +5401,7 @@ Everything runs in this one file — no account, no internet, nothing to install
     },
     assignment: {
       label: "Assignment / academic report",
+      desc: "Numbered sections, cover page, references — ready for submission.",
       patch: { theme: "academic", accent: "#7f1d1d", numbered: true, justify: true, h1break: true, title: "Assignment Title", subtitle: "A concise one-line description of what this report covers", kicker: "Course Name · CS-101", metaExtra: "Roll No. 00 · Section A", cover: true },
       source: `[toc]
 
@@ -5345,6 +5462,7 @@ Summarise what was achieved against each objective, note limitations, and sugges
     },
     proposal: {
       label: "Business proposal",
+      desc: "Executive summary, scope, timeline and pricing tables for a client.",
       patch: { theme: "executive", accent: "#1f3a5f", title: "Project Proposal", subtitle: "Prepared for [Client] — scope, timeline and investment", kicker: "Your Company", metaExtra: "proposal@yourcompany.com", cover: true, h1break: false, numbered: false },
       source: `# Executive Summary
 
@@ -5402,6 +5520,7 @@ This proposal is valid for 30 days from the date on the cover.
     },
     report: {
       label: "Project / status report",
+      desc: "Progress, metrics, risks and decisions for a working team.",
       patch: { theme: "modern", accent: "#2563eb", title: "Project Report", subtitle: "Progress, decisions and next steps", kicker: "Team / Department", cover: true, h1break: true },
       source: `[toc]
 
@@ -5448,6 +5567,7 @@ Name the risk, its impact, and the mitigation you propose.
     },
     letter: {
       label: "Formal letter",
+      desc: "Address block, subject line and a clean sign-off — no cover, no numbers.",
       patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, title: "Letter", subtitle: "" },
       source: `**Your Name**
 Your address line
@@ -5480,6 +5600,7 @@ Yours faithfully,
     },
     article: {
       label: "Article / essay",
+      desc: "A quiet, minimal frame for a piece of writing that stands on its own.",
       patch: { theme: "minimal", accent: "#111827", title: "Article Title", subtitle: "A one-line standfirst that frames the piece", cover: true, header: true, pageNums: true, h1break: false },
       source: `# Opening
 
@@ -5502,6 +5623,7 @@ Land the piece: return to the opening image or question and say what it means no
     },
     blank: {
       label: "Blank document",
+      desc: "An empty page and nothing else.",
       patch: { title: "Untitled document", subtitle: "", kicker: "", metaExtra: "" },
       source: `# Heading
 
@@ -5714,7 +5836,14 @@ Start writing here.
   }
 
   /* ---------------- autosave & counts ---------------- */
+  /* The document announces itself in the masthead, next to its save state. */
+  function updateDocTitle() {
+    const el = $("#docTitle");
+    if (el) el.textContent = state.settings.title || "Untitled document";
+  }
+
   function markDirty() {
+    updateDocTitle();
     clearTimeout(autosaveTimer);
     $("#saveState").textContent = "…";
     $("#saveState").className = "";
@@ -5791,6 +5920,7 @@ Start writing here.
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
     $$(".sw").forEach(sw => sw.classList.toggle("on", sw.dataset.c === state.settings.accent));
+    updateDocTitle();
   }
 
   function bindSettings() {
@@ -6565,6 +6695,15 @@ Start writing here.
   function applyUiTheme(light) {
     document.documentElement.toggleAttribute("data-light", !!light);
     safeLS.set(UI_KEY, light ? "light" : "dark");
+    /* Paint workaround, not a mechanics change: Chromium sometimes leaves the
+       composited chrome bars (promoted by z-index + shadow) rendered with the
+       previous theme's custom-property values after the attribute flip — the
+       background survives as a stale solid-colour quad that even a resize
+       won't re-raster. Briefly toggling layer promotion forces a fresh raster
+       with the new values; visually a no-op. */
+    const els = [document.body, ...document.querySelectorAll("#topbar,#toolbar,#findBar,#settings,#editorPane,#embedHint,#peBar")];
+    for (const el of els) el.style.transform = "translateZ(0)";
+    requestAnimationFrame(() => requestAnimationFrame(() => { for (const el of els) el.style.transform = ""; }));
   }
 
   function bindChrome() {
@@ -6576,12 +6715,36 @@ Start writing here.
     $("#btnNew").onclick = async () => { if (await confirmModal("Start a new document?", "The editor will be replaced with a blank document. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) applyTemplate("blank"); };
     $("#btnPdf").onclick = exportPdf;
     $("#btnDocx").onclick = exportDocx;
-    $("#templateSelect").addEventListener("change", async e => {
-      const id = e.target.value;
-      e.target.value = "";
-      if (!id) return;
+    /* Templates: a designed menu, not a native select in a trenchcoat. */
+    const tplMenu = $("#tplMenu");
+    const tplBtn = $("#templateSelect");
+    const closeTpl = () => { tplMenu.style.display = "none"; tplBtn.setAttribute("aria-expanded", "false"); };
+    tplBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (tplMenu.style.display === "block") return closeTpl();
+      const r = tplBtn.getBoundingClientRect();
+      tplMenu.style.display = "block";
+      tplMenu.style.left = Math.min(r.left, innerWidth - tplMenu.offsetWidth - 8) + "px";
+      tplMenu.style.top = (r.bottom + 6) + "px";
+      tplBtn.setAttribute("aria-expanded", "true");
+    });
+    tplMenu.addEventListener("click", async e => {
+      const item = e.target.closest(".tpl-item");
+      if (!item) return;
+      closeTpl();
+      const id = item.dataset.id;
       if (await confirmModal("Load template?", "“" + TEMPLATES[id].label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
     });
+    document.addEventListener("click", e => {
+      if (!e.target.closest("#tplMenu") && !e.target.closest("#templateSelect")) closeTpl();
+    });
+
+    /* the masthead title opens the document's own settings */
+    $("#docTitle").onclick = () => {
+      $("#settings").classList.add("open");
+      $("#sTitle").focus();
+      $("#sTitle").select();
+    };
     $$("#toolbar .tb[data-act]").forEach(b => b.addEventListener("click", () => TOOL_ACTS[b.dataset.act]?.()));
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };
@@ -6691,13 +6854,10 @@ Start writing here.
   }
 
   function boot() {
-    // populate template select
-    const sel = $("#templateSelect");
-    for (const [id, t] of Object.entries(TEMPLATES)) {
-      const o = document.createElement("option");
-      o.value = id; o.textContent = t.label;
-      sel.appendChild(o);
-    }
+    // populate the templates menu (labels + one-line descriptions from TEMPLATES)
+    $("#tplMenu").innerHTML = Object.entries(TEMPLATES).map(([id, t]) =>
+      `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
+    ).join("");
     buildFontSelects();
     bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor();
 
