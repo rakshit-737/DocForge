@@ -186,19 +186,9 @@ body.pdf-mode .doc-id { display: none; }
 #btnHelp:hover, #btnDark:hover { color: var(--tx); }
 #btnDocx { margin-left: 8px; }
 
-select.btn {
-  appearance: none;
-  padding-right: 28px;
-  background-color: var(--bg2);
-  box-shadow: var(--recess);
-  color: var(--tx2);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23b0a795' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-select.btn:hover { color: var(--tx); background-color: var(--bg2); }
-:root[data-light] select.btn { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%235f5849' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
-select.btn option { background: var(--bg2); color: var(--tx); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+#templateSelect svg { margin-left: 2px; color: var(--tx3); }
+#templateSelect:hover svg { color: var(--tx); }
 
 /* ---------------- layout ---------------- */
 #main { display: flex; height: calc(100% - 52px); }
@@ -360,7 +350,10 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   position: fixed; z-index: 60; display: none;
   background: var(--bg3); border-radius: var(--rm);
   box-shadow: var(--elev-m); padding: 12px;
+  transform-origin: top left;
+  animation: menuIn var(--dur) var(--ease);
 }
+@keyframes menuIn { from { transform: scale(0.97) translateY(-3px); opacity: 0; } }
 .popmenu .pm-title { font-family: var(--display); font-size: 14px; color: var(--tx); margin-bottom: 8px; }
 .popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
 .popmenu .pm-sw {
@@ -518,6 +511,38 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 }
 .doc .shot:hover .shot-hint { display: block; }
 
+/* ---------------- empty state: a blank sheet, not a blank stare ---------------- */
+#emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp3);
+  pointer-events: none;
+  text-align: center;
+  padding: var(--sp5);
+}
+#emptyState .es-title {
+  font-family: var(--display); font-style: italic;
+  font-size: 22px; color: var(--tx2);
+}
+#emptyState p { margin: 0; color: var(--tx3); font-size: 13px; max-width: 44ch; }
+#emptyState .es-grid {
+  display: grid; grid-template-columns: repeat(3, auto);
+  gap: 6px 18px; margin-top: var(--sp2);
+}
+#emptyState code {
+  font-family: var(--mono); font-size: 12px; color: var(--tx2);
+  background: var(--bg2); border-radius: var(--rc);
+  padding: 3px 8px; box-shadow: var(--recess);
+}
+#emptyState .es-more { font-size: 12px; margin-top: var(--sp3); }
+#emptyState kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); border-radius: var(--rc); padding: 1px 5px;
+}
+/* display:flex above would beat the hidden attribute's UA style */
+#emptyState[hidden] { display: none; }
+
 /* ---------------- modals ---------------- */
 .overlay {
   position: fixed; inset: 0;
@@ -526,7 +551,7 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   align-items: center; justify-content: center;
   z-index: 60;
 }
-.overlay.open { display: flex; animation: fade 0.16s ease-out; }
+.overlay.open { display: flex; animation: fade var(--dur) var(--ease); }
 @keyframes fade { from { opacity: 0; } }
 .modal {
   background: var(--bg2);
@@ -535,6 +560,7 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   max-height: 84vh;
   display: flex; flex-direction: column;
   box-shadow: var(--elev-l);
+  animation: modalIn var(--dur) var(--ease);
   overflow: hidden;
 }
 .modal header {
@@ -546,23 +572,29 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 .modal .mbody { padding: 16px 20px; overflow-y: auto; line-height: 1.65; color: var(--tx2); }
 .modal .mfoot { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
 .modal.small { width: min(430px, 92vw); }
+/* the help sheet: Garamond section heads, reference rows without table walls */
 .mbody h4 {
-  margin: 20px 0 8px; color: var(--tx);
-  font-family: var(--display); font-size: 15px; font-weight: 400;
+  margin: 26px 0 10px; color: var(--tx);
+  font-family: var(--display); font-size: 17px; font-weight: 400;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
 }
 .mbody h4:first-child { margin-top: 0; }
 .mbody b { color: var(--tx); }
 .mbody code, .mbody pre {
   font-family: var(--mono);
   background: var(--bg);
-  border-radius: 3px; font-size: 12px;
+  border-radius: var(--rc); font-size: 12px;
   color: var(--tx);
+  box-shadow: var(--recess);
 }
 .mbody code { padding: 1.5px 6px; }
-.mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; }
+.mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; box-shadow: none; }
 .mbody table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-.mbody td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.mbody td:first-child { white-space: nowrap; }
+.mbody td { padding: 7px 10px 7px 0; vertical-align: top; }
+.mbody tr + tr td { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.mbody td:first-child { white-space: nowrap; padding-right: 18px; }
+.mbody td:last-child { color: var(--tx2); }
 
 /* image action mini-menu */
 #imgMenu {
@@ -766,10 +798,11 @@ body.pdf-mode #pdfEditor { display: flex; }
 .ol-empty { color: var(--tx3); font-size: 12.5px; padding: 8px; }
 #btnOutline.on { background: var(--bg3); color: var(--tx); }
 
+@keyframes modalIn { from { transform: translateY(8px) scale(0.99); opacity: 0; } }
+
 /* ---------------- reduced motion ---------------- */
 @media (prefers-reduced-motion: reduce) {
-  .toast, #lintPanel, #outlinePanel, .overlay.open { animation: none; }
-  .btn, .tb, .tg, .tg::after, .sw, .field input, .field select, #settings { transition: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
   .btn:active, .tb:active { transform: none; }
 }
 
@@ -1028,20 +1061,20 @@ body.pdf-mode #pdfEditor { display: flex; }
         <select id="tbSize" class="tbsel narrow" title="Size for the selected text"></select>
       </div>
       <div class="tbg">
-        <button class="tb" data-act="ul" title="Bullet list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg></button>
-        <button class="tb" data-act="ol" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1v4M3.6 11.4a1.4 1.4 0 0 1 2.6.8c0 1-2.4 1.4-2.4 2.6h2.7M3.7 16.8h1.6a1.2 1.2 0 0 1 0 2.4h-.7 .7a1.2 1.2 0 0 1 0 2.4H3.6" stroke-width="1.4"/></svg></button>
+        <button class="tb" data-act="ul" title="Bullet list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg></button>
+        <button class="tb" data-act="ol" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1v4M3.6 11.4a1.4 1.4 0 0 1 2.6.8c0 1-2.4 1.4-2.4 2.6h2.7M3.7 16.8h1.6a1.2 1.2 0 0 1 0 2.4h-.7 .7a1.2 1.2 0 0 1 0 2.4H3.6" stroke-width="1.4"/></svg></button>
         <button class="tb" data-act="quote" title="Quote"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.6 6C6.9 7.6 5 10.2 5 13.4 5 16 6.6 18 9 18c2 0 3.4-1.5 3.4-3.4 0-1.8-1.3-3.2-3.1-3.2-.3 0-.7 0-.9.1.4-1.7 1.7-3.3 3.3-4.2zm9 0c-2.7 1.6-4.6 4.2-4.6 7.4 0 2.6 1.6 4.6 4 4.6 2 0 3.4-1.5 3.4-3.4 0-1.8-1.3-3.2-3.1-3.2-.3 0-.7 0-.9.1.4-1.7 1.7-3.3 3.3-4.2z" transform="scale(0.85) translate(2 1)"/></svg></button>
         <button class="tb" data-act="hr" title="Divider">—</button>
-        <button class="tb" data-act="link" title="Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+        <button class="tb" data-act="link" title="Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
       </div>
       <div class="tbg">
-        <button class="tb" data-act="table" title="Table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15.5 4.5v15"/></svg></button>
+        <button class="tb" data-act="table" title="Table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15.5 4.5v15"/></svg></button>
         <button class="tb" data-act="callout" title="Callout (note / tip / warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H12l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"/><path d="M12 7.5v3.5"/><circle cx="12" cy="13.2" r="0.4" fill="currentColor"/></svg></button>
-        <button class="tb" data-act="codeblock" title="Code block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 9.5L7 12l2.5 2.5M14.5 9.5L17 12l-2.5 2.5"/></svg></button>
+        <button class="tb" data-act="codeblock" title="Code block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 9.5L7 12l2.5 2.5M14.5 9.5L17 12l-2.5 2.5"/></svg></button>
       </div>
       <div class="tbg">
-        <button class="tb" data-act="shot" title="Screenshot placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.6l1.2-1.8a1.5 1.5 0 0 1 1.25-.7h4.9a1.5 1.5 0 0 1 1.25.7L16.9 6h1.6A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
-        <button class="tb" data-act="image" title="Insert image from file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 18.5l5-5 3.5 3.5 3-3 3.5 3.5"/></svg></button>
+        <button class="tb" data-act="shot" title="Screenshot placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.6l1.2-1.8a1.5 1.5 0 0 1 1.25-.7h4.9a1.5 1.5 0 0 1 1.25.7L16.9 6h1.6A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg></button>
+        <button class="tb" data-act="image" title="Insert image from file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 18.5l5-5 3.5 3.5 3-3 3.5 3.5"/></svg></button>
       </div>
       <div class="tbg">
         <button class="tb" data-act="toc" title="Table of contents"><span class="h">TOC</span></button>
@@ -1059,9 +1092,16 @@ body.pdf-mode #pdfEditor { display: flex; }
       <button class="btn small ghost" id="replAll" title="Replace all">All</button>
       <button class="btn small ghost" id="findClose" title="Close (Esc)" aria-label="Close find bar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <textarea id="editor" spellcheck="false" placeholder="# Start with a heading
-
-Then just write…"></textarea>
+    <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
+    <div id="emptyState" hidden>
+      <div class="es-title">A blank sheet</div>
+      <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
+      <div class="es-grid">
+        <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
+        <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
+      </div>
+      <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</p>
+    </div>
     <div id="statusbar">
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
@@ -5625,10 +5665,7 @@ Land the piece: return to the opening image or question and say what it means no
       label: "Blank document",
       desc: "An empty page and nothing else.",
       patch: { title: "Untitled document", subtitle: "", kicker: "", metaExtra: "" },
-      source: `# Heading
-
-Start writing here.
-`,
+      source: "",
     },
   };
 
@@ -5860,6 +5897,8 @@ Start writing here.
     const w = (state.source.trim().match(/\S+/g) || []).length;
     const mins = Math.max(1, Math.round(w / 200));
     $("#wordCount").textContent = w + (w === 1 ? " word" : " words") + (w > 60 ? ` · ${mins} min read` : "");
+    // A truly blank sheet gets a designed hint instead of a bare placeholder.
+    $("#emptyState").hidden = !!state.source.trim();
   }
 
   /* ---------------- settings UI ---------------- */

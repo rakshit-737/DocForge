@@ -331,10 +331,7 @@ Land the piece: return to the opening image or question and say what it means no
       label: "Blank document",
       desc: "An empty page and nothing else.",
       patch: { title: "Untitled document", subtitle: "", kicker: "", metaExtra: "" },
-      source: `# Heading
-
-Start writing here.
-`,
+      source: "",
     },
   };
 
@@ -566,6 +563,8 @@ Start writing here.
     const w = (state.source.trim().match(/\S+/g) || []).length;
     const mins = Math.max(1, Math.round(w / 200));
     $("#wordCount").textContent = w + (w === 1 ? " word" : " words") + (w > 60 ? ` · ${mins} min read` : "");
+    // A truly blank sheet gets a designed hint instead of a bare placeholder.
+    $("#emptyState").hidden = !!state.source.trim();
   }
 
   /* ---------------- settings UI ---------------- */

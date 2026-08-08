@@ -178,19 +178,9 @@ body.pdf-mode .doc-id { display: none; }
 #btnHelp:hover, #btnDark:hover { color: var(--tx); }
 #btnDocx { margin-left: 8px; }
 
-select.btn {
-  appearance: none;
-  padding-right: 28px;
-  background-color: var(--bg2);
-  box-shadow: var(--recess);
-  color: var(--tx2);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23b0a795' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-select.btn:hover { color: var(--tx); background-color: var(--bg2); }
-:root[data-light] select.btn { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%235f5849' fill='none' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
-select.btn option { background: var(--bg2); color: var(--tx); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+#templateSelect svg { margin-left: 2px; color: var(--tx3); }
+#templateSelect:hover svg { color: var(--tx); }
 
 /* ---------------- layout ---------------- */
 #main { display: flex; height: calc(100% - 52px); }
@@ -352,7 +342,10 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   position: fixed; z-index: 60; display: none;
   background: var(--bg3); border-radius: var(--rm);
   box-shadow: var(--elev-m); padding: 12px;
+  transform-origin: top left;
+  animation: menuIn var(--dur) var(--ease);
 }
+@keyframes menuIn { from { transform: scale(0.97) translateY(-3px); opacity: 0; } }
 .popmenu .pm-title { font-family: var(--display); font-size: 14px; color: var(--tx); margin-bottom: 8px; }
 .popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
 .popmenu .pm-sw {
@@ -510,6 +503,38 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 }
 .doc .shot:hover .shot-hint { display: block; }
 
+/* ---------------- empty state: a blank sheet, not a blank stare ---------------- */
+#emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp3);
+  pointer-events: none;
+  text-align: center;
+  padding: var(--sp5);
+}
+#emptyState .es-title {
+  font-family: var(--display); font-style: italic;
+  font-size: 22px; color: var(--tx2);
+}
+#emptyState p { margin: 0; color: var(--tx3); font-size: 13px; max-width: 44ch; }
+#emptyState .es-grid {
+  display: grid; grid-template-columns: repeat(3, auto);
+  gap: 6px 18px; margin-top: var(--sp2);
+}
+#emptyState code {
+  font-family: var(--mono); font-size: 12px; color: var(--tx2);
+  background: var(--bg2); border-radius: var(--rc);
+  padding: 3px 8px; box-shadow: var(--recess);
+}
+#emptyState .es-more { font-size: 12px; margin-top: var(--sp3); }
+#emptyState kbd {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); border-radius: var(--rc); padding: 1px 5px;
+}
+/* display:flex above would beat the hidden attribute's UA style */
+#emptyState[hidden] { display: none; }
+
 /* ---------------- modals ---------------- */
 .overlay {
   position: fixed; inset: 0;
@@ -518,7 +543,7 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   align-items: center; justify-content: center;
   z-index: 60;
 }
-.overlay.open { display: flex; animation: fade 0.16s ease-out; }
+.overlay.open { display: flex; animation: fade var(--dur) var(--ease); }
 @keyframes fade { from { opacity: 0; } }
 .modal {
   background: var(--bg2);
@@ -527,6 +552,7 @@ select.btn option { background: var(--bg2); color: var(--tx); }
   max-height: 84vh;
   display: flex; flex-direction: column;
   box-shadow: var(--elev-l);
+  animation: modalIn var(--dur) var(--ease);
   overflow: hidden;
 }
 .modal header {
@@ -538,23 +564,29 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 .modal .mbody { padding: 16px 20px; overflow-y: auto; line-height: 1.65; color: var(--tx2); }
 .modal .mfoot { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
 .modal.small { width: min(430px, 92vw); }
+/* the help sheet: Garamond section heads, reference rows without table walls */
 .mbody h4 {
-  margin: 20px 0 8px; color: var(--tx);
-  font-family: var(--display); font-size: 15px; font-weight: 400;
+  margin: 26px 0 10px; color: var(--tx);
+  font-family: var(--display); font-size: 17px; font-weight: 400;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
 }
 .mbody h4:first-child { margin-top: 0; }
 .mbody b { color: var(--tx); }
 .mbody code, .mbody pre {
   font-family: var(--mono);
   background: var(--bg);
-  border-radius: 3px; font-size: 12px;
+  border-radius: var(--rc); font-size: 12px;
   color: var(--tx);
+  box-shadow: var(--recess);
 }
 .mbody code { padding: 1.5px 6px; }
-.mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; }
+.mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; box-shadow: none; }
 .mbody table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-.mbody td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-.mbody td:first-child { white-space: nowrap; }
+.mbody td { padding: 7px 10px 7px 0; vertical-align: top; }
+.mbody tr + tr td { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.mbody td:first-child { white-space: nowrap; padding-right: 18px; }
+.mbody td:last-child { color: var(--tx2); }
 
 /* image action mini-menu */
 #imgMenu {
@@ -758,10 +790,11 @@ body.pdf-mode #pdfEditor { display: flex; }
 .ol-empty { color: var(--tx3); font-size: 12.5px; padding: 8px; }
 #btnOutline.on { background: var(--bg3); color: var(--tx); }
 
+@keyframes modalIn { from { transform: translateY(8px) scale(0.99); opacity: 0; } }
+
 /* ---------------- reduced motion ---------------- */
 @media (prefers-reduced-motion: reduce) {
-  .toast, #lintPanel, #outlinePanel, .overlay.open { animation: none; }
-  .btn, .tb, .tg, .tg::after, .sw, .field input, .field select, #settings { transition: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
   .btn:active, .tb:active { transform: none; }
 }
 
