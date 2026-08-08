@@ -1030,11 +1030,45 @@ Start writing here.
     (warnings || []).slice(0, 2).forEach(w => toast(w, "warn"));
   }
 
+  /* A PDF can be worked on two ways — edited in place (layout preserved, overlay
+     edits) or converted to a reflowed DocForge document. Ask which. */
+  function pdfChoice(name) {
+    return new Promise(res => {
+      const ov = $("#pdfChoiceOverlay");
+      $("#pcTitle").textContent = name;
+      ov.classList.add("open");
+      const done = v => {
+        ov.classList.remove("open");
+        $("#pcEdit").onclick = $("#pcConvert").onclick = $("#pcCancel").onclick = null;
+        res(v);
+      };
+      $("#pcEdit").onclick = () => done("edit");
+      $("#pcConvert").onclick = () => done("convert");
+      $("#pcCancel").onclick = () => done(null);
+    });
+  }
+
   async function importFile(f) {
     const ext = ((f.name.match(/\.([a-z0-9]+)$/i) || [])[1] || "").toLowerCase();
     if (ext === "json") return openProjectFile(f);
     if (ext === "doc") return toast("Old binary .doc — open it in Word and save as .docx first", "warn");
     if (!["docx", "pdf", "md", "markdown", "txt"].includes(ext)) return toast("Can't import that file type", "warn");
+    if (ext === "pdf") {
+      const mode = await pdfChoice(f.name);
+      if (!mode) return;
+      if (mode === "edit") {
+        try {
+          await PdfEditor.open(await f.arrayBuffer(), f.name);
+          document.body.classList.add("pdf-mode");
+          toast("Editing in place — the original layout stays untouched underneath");
+        } catch (err) {
+          console.error("[DocForge] pdf edit open failed", err);
+          toast(err && err.message ? err.message : "Could not open that PDF", "warn");
+        }
+        return;
+      }
+      // "convert" falls through to the replace-confirm below
+    }
     if (!await confirmModal(`Import “${f.name}”?`,
       "The imported document will replace the editor contents. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) return;
     try {
@@ -1062,13 +1096,43 @@ Start writing here.
     syncSettingsUI(); markDirty(); doRender();
   }
 
+  /* ---------------- PDF in-place editor chrome ---------------- */
+  function bindPdfEditor() {
+    PdfEditor.hooks = { toast, confirm: confirmModal };
+    $("#peClose").onclick = async () => {
+      if (PdfEditor.hasEdits() && !await confirmModal("Leave PDF editing?",
+        "Your overlay edits live only in this view — export the PDF first if you want to keep them.")) return;
+      await PdfEditor.close();
+      document.body.classList.remove("pdf-mode");
+    };
+    $("#peExport").onclick = async () => {
+      const btn = $("#peExport");
+      const label = btn.innerHTML;
+      btn.disabled = true; btn.classList.add("busy");
+      btn.innerHTML = `<span class="btnspin"></span> Exporting…`;
+      try {
+        const { blob, name } = await PdfEditor.exportPdf();
+        downloadBlob(blob, name);
+        toast("Edited PDF downloaded — original layout intact underneath");
+      } catch (e) {
+        console.error("[DocForge] pdf edit export failed", e);
+        toast("PDF export failed — check the console", "warn");
+      }
+      btn.disabled = false; btn.classList.remove("busy");
+      btn.innerHTML = label;
+    };
+  }
+  const inPdfMode = () => document.body.classList.contains("pdf-mode");
+
   /* ---------------- exports ---------------- */
   async function exportPdf() {
+    if (inPdfMode()) { toast("You're editing a PDF — use its Export button, or ← Studio to go back", "warn"); return; }
     await ensureFresh();
     toast("Choose “Save as PDF” in the print dialog");
     setTimeout(() => { try { window.print(); } catch { toast("Printing is blocked here — open this file directly in Chrome/Edge", "warn"); } }, 350);
   }
   async function exportDocx() {
+    if (inPdfMode()) { toast("You're editing a PDF — Word export needs the studio (← Studio)", "warn"); return; }
     await ensureFresh();
     if (!lastContentEl) return;
     const btn = $("#btnDocx");
@@ -1456,7 +1520,7 @@ Start writing here.
       sel.appendChild(o);
     }
     buildFontSelects();
-    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus();
+    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor();
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;

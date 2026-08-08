@@ -262,6 +262,63 @@ Then just write…"></textarea>
   </section>
 </div>
 
+<section id="pdfEditor" hidden>
+  <div id="peBar">
+    <button class="btn small ghost" id="peClose" title="Back to the studio">← Studio</button>
+    <span id="peName" class="pe-name"></span>
+    <span id="pePages" class="pe-meta"></span>
+    <div class="grow"></div>
+    <div id="peTools">
+      <button class="pe-tool on" data-tool="select" title="Select / move">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 8-6.5 1.5L16 19l-3 1.4-3.4-6.6L5 17z"/></svg>
+      </button>
+      <button class="pe-tool" data-tool="text" title="Add text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 6V4h14v2M12 4v16m-3 0h6"/></svg>
+      </button>
+      <button class="pe-tool" data-tool="whiteout" title="Whiteout — cover original content">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M7 10h10M7 13h6" opacity="0.45"/></svg>
+      </button>
+      <button class="pe-tool" data-tool="highlight" title="Highlight">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l-4 4H3v-2l4-4M8 12l7-7 4 4-7 7z"/></svg>
+      </button>
+      <button class="pe-tool" data-tool="image" title="Place image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 18.5l5-5 3.5 3.5 3-3 3.5 3.5"/></svg>
+      </button>
+    </div>
+    <div class="tbsep"></div>
+    <select id="peFont" class="tbsel" title="Text font (built into every PDF reader)">
+      <option value="helv">Helvetica</option>
+      <option value="helvB">Helvetica Bold</option>
+      <option value="times">Times</option>
+      <option value="timesB">Times Bold</option>
+      <option value="timesI">Times Italic</option>
+      <option value="courier">Courier</option>
+    </select>
+    <input type="number" id="peSize" class="tbsel narrow" value="12" min="6" max="72" step="1" title="Text size (pt)">
+    <input type="color" id="peColor" value="#111111" title="Text colour">
+    <div class="tbsep"></div>
+    <button class="btn small ghost" id="peZoomOut">−</button>
+    <span id="peZoomPct">100%</span>
+    <button class="btn small ghost" id="peZoomIn">+</button>
+    <div class="tbsep"></div>
+    <button class="btn pri" id="peExport" title="Download the edited PDF — original layout untouched underneath">Export PDF</button>
+  </div>
+  <div id="peScroll"><div id="peDeck"></div></div>
+</section>
+
+<div class="overlay" id="pdfChoiceOverlay">
+  <div class="modal small">
+    <header><span id="pcTitle">Open PDF</span></header>
+    <div class="mbody">
+      <p style="margin:0 0 12px">How do you want to work on this PDF?</p>
+      <button class="btn pchoice" id="pcEdit"><b>Edit in place</b> — keep the exact layout; add text, cover or highlight content, place images. Exports the same PDF with your changes on top.</button>
+      <button class="btn pchoice" id="pcConvert"><b>Convert to editable text</b> — rebuild the content as a DocForge document you can rewrite freely. Layout is reflowed, not preserved.</button>
+    </div>
+    <div class="mfoot"><button class="btn" id="pcCancel">Cancel</button></div>
+  </div>
+</div>
+
+<input type="file" id="peImgInput" hidden accept="image/png,image/jpeg">
 <input type="file" id="imgInput" hidden accept="image/png,image/jpeg,image/gif,image/webp">
 <input type="file" id="projInput" hidden accept=".json,.docforge.json,.docx,.pdf,.md,.markdown,.txt,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 
@@ -398,6 +455,9 @@ Then just write…"></textarea>
 </script>
 <script>
 /*@PDFIMPORT@*/
+</script>
+<script>
+/*@PDFEDITOR@*/
 </script>
 <script>
 /*@MAIN@*/

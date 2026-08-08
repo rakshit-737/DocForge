@@ -416,5 +416,5 @@ const PdfImport = (() => {
     }
   }
 
-  return { toMarkdown };
+  return { toMarkdown, ensureLib: lib };
 })();

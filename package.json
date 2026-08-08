@@ -16,6 +16,7 @@
     "mammoth": "^1.12.0",
     "marked": "^18.0.7",
     "pagedjs": "^0.4.3",
+    "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "playwright-core": "^1.62.1"
   }

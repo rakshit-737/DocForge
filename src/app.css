@@ -428,6 +428,53 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 #imgMenu button:hover { background: var(--bg3); }
 #imgMenu button.danger { color: var(--danger); }
 
+/* ---------------- PDF in-place editor ---------------- */
+#pdfEditor { display: none; flex-direction: column; height: 100%; min-height: 0; }
+body.pdf-mode #main { display: none; }
+body.pdf-mode #pdfEditor { display: flex; }
+#peBar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-bottom: 1px solid var(--line); background: var(--bg2);
+  flex-wrap: wrap;
+}
+.pe-name { font-weight: 600; color: var(--tx); margin-left: 4px; }
+.pe-meta { color: var(--tx2); font-size: 12px; }
+#peTools { display: flex; gap: 2px; }
+.pe-tool {
+  background: transparent; border: 1px solid transparent; color: var(--tx2);
+  border-radius: 6px; width: 30px; height: 28px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.pe-tool svg { width: 16px; height: 16px; }
+.pe-tool:hover { background: var(--bg3); color: var(--tx); }
+.pe-tool.on { background: var(--bg3); color: var(--tx); border-color: var(--line); }
+#peColor { width: 30px; height: 26px; padding: 1px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); cursor: pointer; }
+#peZoomPct { font-size: 12px; color: var(--tx2); min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
+#peScroll { flex: 1; overflow: auto; background: var(--deck, var(--bg)); padding: 26px 0 60px; }
+#peDeck { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.pe-page { position: relative; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.25); }
+.pe-page canvas { display: block; }
+.pe-layer { position: absolute; inset: 0; }
+.pe-edit { position: absolute; box-sizing: border-box; }
+.pe-text { outline: none; cursor: text; white-space: pre-wrap; overflow-wrap: break-word; }
+.pe-white { background: #fff; }
+.pe-hl { background: rgba(245, 213, 10, 0.42); mix-blend-mode: multiply; }
+.pe-img img { width: 100%; height: 100%; display: block; }
+.pe-edit:hover { outline: 1px dashed rgba(60, 100, 220, 0.55); }
+.pe-edit.sel { outline: 1.5px solid #3c64dc; }
+.pe-resize {
+  position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px;
+  background: #3c64dc; border: 2px solid #fff; border-radius: 3px; cursor: nwse-resize;
+}
+.pe-drawing { position: absolute; border: 1px dashed #3c64dc; background: rgba(60, 100, 220, 0.08); pointer-events: none; }
+
+/* PDF open chooser */
+.btn.pchoice {
+  display: block; width: 100%; text-align: left; white-space: normal;
+  line-height: 1.45; padding: 12px 14px; margin-bottom: 10px; height: auto;
+}
+.btn.pchoice b { display: block; margin-bottom: 2px; }
+
 /* toasts — a slip of paper over the ink */
 #toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
@@ -583,7 +630,8 @@ select.btn option { background: var(--bg2); color: var(--tx); }
 /* ---------------- PRINT: only the pages ---------------- */
 @media print {
   body { overflow: visible; background: #fff; }
-  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, .popmenu, #embedHint, #outlinePanel, #lintPanel { display: none !important; }
+  #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, .popmenu, #embedHint, #outlinePanel, #lintPanel, #pdfEditor { display: none !important; }
+  body.pdf-mode #main { display: block !important; }
   #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
   #scaleWrap { transform: none !important; width: auto; margin: 0; }
   .pagedjs_page { box-shadow: none; margin: 0; }

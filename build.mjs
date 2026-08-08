@@ -47,10 +47,12 @@ const bundleIife = (entry, globalName) => buildSync({
 }).outputFiles[0].text;
 const pdfLib = bundleIife("node_modules/pdfjs-dist/build/pdf.min.mjs", "pdfjsLib");
 const pdfWorker = bundleIife("node_modules/pdfjs-dist/build/pdf.worker.min.mjs", "pdfjsWorker");
+const pdfLibLib = read("node_modules/pdf-lib/dist/pdf-lib.min.js"); // UMD -> window.PDFLib
 const importLibs =
   "window.__MAMMOTH_SRC__=" + JSON.stringify(mammoth) + ";\n" +
   "window.__PDFJS_SRC__=" + JSON.stringify(pdfLib) + ";\n" +
-  "window.__PDFJS_WORKER_SRC__=" + JSON.stringify(pdfWorker) + ";";
+  "window.__PDFJS_WORKER_SRC__=" + JSON.stringify(pdfWorker) + ";\n" +
+  "window.__PDFLIB_SRC__=" + JSON.stringify(pdfLibLib) + ";";
 
 // app sources
 const appCss = read("src/app.css");
@@ -61,6 +63,7 @@ const mathmlOmml = read("src/js/mathml-omml.js");
 const docxExport = read("src/js/docx-export.js");
 const docxImport = read("src/js/docx-import.js");
 const pdfImport = read("src/js/pdf-import.js");
+const pdfEditor = read("src/js/pdf-editor.js");
 const main = read("src/js/main.js");
 
 let html = read("src/index.html");
@@ -82,6 +85,7 @@ put("/*@DOCXFONTS@*/", guard(docxFonts));
 put("/*@DOCXEXPORT@*/", guard(docxExport));
 put("/*@DOCXIMPORT@*/", guard(docxImport));
 put("/*@PDFIMPORT@*/", guard(pdfImport));
+put("/*@PDFEDITOR@*/", guard(pdfEditor));
 put("/*@MAIN@*/", guard(main));
 
 mkdirSync("dist", { recursive: true });

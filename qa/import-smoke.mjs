@@ -100,6 +100,8 @@ await drive.printPdf(p, pdfPath);
 ok("pdf printed", statSync(pdfPath).size > 5000);
 
 await p.setInputFiles("#projInput", pdfPath);
+await p.waitForSelector("#pdfChoiceOverlay.open", { timeout: 10000 });
+await p.click("#pcConvert");
 await p.waitForSelector("#confirmOverlay.open", { timeout: 10000 });
 await p.click("#cfYes");
 await p.waitForFunction(() => document.getElementById("editor").value.includes("Quartz"), null, { timeout: 120000 });
