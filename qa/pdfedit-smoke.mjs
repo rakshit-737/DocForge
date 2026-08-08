@@ -53,19 +53,23 @@ const lineEdit = await p.evaluate(async () => {
   if (!hit) return { found: false };
   const ed = await PdfEditor.editLineAt(0, hit.x + 4, hit.yTop + 4);
   if (!ed) return { found: true, edited: false };
-  ed.text = "The rewritten quibbleford paragraph now reads differently.";
+  // every character below already exists in the page's embedded subset,
+  // so the rewrite must keep the ORIGINAL font, not a lookalike
+  ed.text = "The revised xanthium paragraph continues to read as printed.";
   return {
     found: true, edited: true,
     prefill: hit.text.includes("xanthium"),
     sameX: Math.abs(ed.x - hit.x) < 0.5,
     covered: !!ed.cover,
     sizeMatch: Math.abs(ed.size - hit.size) < 0.6,
+    hasOrig: !!(ed.orig && ed.useOrig !== false),
   };
 });
 ok("text lines extracted", lineEdit.found);
 ok("double-click creates prefilled edit", lineEdit.edited && lineEdit.prefill);
 ok("edit sits at the original position/size", lineEdit.sameX && lineEdit.sizeMatch);
 ok("original line auto-covered", lineEdit.covered);
+ok("edit carries the original font", lineEdit.hasOrig);
 
 /* export and inspect the produced PDF */
 const bytes = await p.evaluate(async () => {
@@ -76,21 +80,30 @@ const outPath = join(dir, "edited.pdf");
 writeFileSync(outPath, Buffer.from(bytes));
 ok("edited pdf produced", statSync(outPath).size > 5000);
 
-const text = await p.evaluate(async (arr) => {
+const inspect = await p.evaluate(async (arr) => {
   const pdfjs = await PdfImport.ensureLib();
   const task = pdfjs.getDocument({ data: new Uint8Array(arr).buffer });
   const doc = await task.promise;
-  let t = "";
+  let t = "", rewrittenFace = null;
   for (let i = 1; i <= doc.numPages; i++) {
-    const tc = await (await doc.getPage(i)).getTextContent();
+    const page = await doc.getPage(i);
+    const tc = await page.getTextContent();
     t += tc.items.map(x => x.str).join(" ") + "\n";
+    const hit = tc.items.find(x => x.str.includes("revised"));
+    if (hit && rewrittenFace === null) {
+      await page.getOperatorList(); // fonts land in commonObjs only after ops run
+      try { rewrittenFace = page.commonObjs.get(hit.fontName).name; } catch { rewrittenFace = "?"; }
+    }
   }
   await task.destroy();
-  return t;
+  return { t, rewrittenFace };
 }, bytes);
+const text = inspect.t;
 ok("untouched text preserved", text.includes("Original Heading Kept"));
 ok("overlay text present", text.includes("Replacement zebrawood line"));
-ok("rewritten line present", text.includes("quibbleford"));
+ok("rewritten line present", text.includes("revised xanthium"));
+ok("rewritten line keeps the ORIGINAL embedded font",
+  /DocForgeSans/.test(inspect.rewrittenFace || "") && !/Helvetica/i.test(inspect.rewrittenFace || ""));
 
 /* leaving the editor restores the studio */
 p.once("dialog", d => d.accept());
