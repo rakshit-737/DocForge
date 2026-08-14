@@ -363,7 +363,7 @@ Land the piece: return to the opening image or question and say what it means no
     d.className = "toast" + (type ? " " + type : "");
     d.textContent = msg;
     $("#toasts").appendChild(d);
-    setTimeout(() => { d.style.opacity = "0"; d.style.transition = "opacity .3s"; }, 3400);
+    setTimeout(() => d.classList.add("out"), 3400);
     setTimeout(() => d.remove(), 3800);
   }
   function confirmModal(title, body) {

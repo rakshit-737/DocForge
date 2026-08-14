@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14120e">
 <title>DocForge — Document Studio</title>
 <meta name="description" content="Turn plain text into beautifully formatted PDFs and Word documents — cover pages, table of contents, screenshot placeholders. Single file, works offline.">
 <style>
@@ -41,13 +42,14 @@
   <button class="btn icon" id="btnDark" title="Toggle dark interface (document stays white)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
   </button>
+  <div class="tbbreak" aria-hidden="true"></div>
   <button class="btn" id="btnSettings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
-    Settings
+    <span class="bl">Settings</span>
   </button>
   <button class="btn" id="btnDocx" title="Download as Word (.docx)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><path d="M8.6 12.5l1.3 5 2.1-3.8 2.1 3.8 1.3-5"/></svg>
-    Word
+    <span class="bl">Word</span>
   </button>
   <button class="btn pri" id="btnPdf" title="Export as PDF (Ctrl+P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><path d="M12 11.5v6.5m0 0l-2.6-2.6M12 18l2.6-2.6"/></svg>
@@ -259,15 +261,17 @@
       <button class="btn small ghost" id="replAll" title="Replace all">All</button>
       <button class="btn small ghost" id="findClose" title="Close (Esc)" aria-label="Close find bar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
-    <div id="emptyState" hidden>
-      <div class="es-title">A blank sheet</div>
-      <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
-      <div class="es-grid">
-        <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
-        <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
+    <div id="editorWrap">
+      <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
+      <div id="emptyState" hidden>
+        <div class="es-title">A blank sheet</div>
+        <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
+        <div class="es-grid">
+          <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
+          <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
+        </div>
+        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
       </div>
-      <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</p>
     </div>
     <div id="statusbar">
       <span id="wordCount">0 words</span>

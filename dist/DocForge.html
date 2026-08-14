@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14120e">
 <title>DocForge — Document Studio</title>
 <meta name="description" content="Turn plain text into beautifully formatted PDFs and Word documents — cover pages, table of contents, screenshot placeholders. Single file, works offline.">
 <style>
@@ -17,7 +18,8 @@
    pages rest on it like proofs.
 
    Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl;
-   elevation --recess/--elev-m/--elev-l; motion --dur/--ease
+   elevation --recess/--elev-m/--elev-l; motion --dur (feedback) /
+   --dur2 (compositional: pages, mode swaps) / --ease
    (reduced-motion kills all of it). Type roles: Garamond italic
    masthead · Garamond titles · Sans 13px UI · Mono tabular data ·
    one micro-caps role (settings group labels, brass).
@@ -25,6 +27,7 @@
 :root {
   --sp1: 4px; --sp2: 8px; --sp3: 12px; --sp4: 16px; --sp5: 24px;
   --dur: 160ms;
+  --dur2: 340ms;    /* compositional moves: proofs settling, changing tables */
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --bg: #14120e;        /* pressroom ink */
   --bg2: #1b1813;       /* surface */
@@ -77,6 +80,9 @@
 html, body { height: 100%; }
 body {
   margin: 0;
+  height: 100dvh; /* mobile URL-bar collapse; falls back to the 100% above */
+  display: flex;
+  flex-direction: column;
   font-family: var(--sans);
   background: var(--bg);
   color: var(--tx);
@@ -97,6 +103,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
 /* ---------------- masthead ---------------- */
 #topbar {
   height: 52px;
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -105,6 +112,7 @@ button, select, input, textarea { font: inherit; color: inherit; }
   position: relative;
   z-index: 5;
 }
+.tbbreak { display: none; }
 /* the metal: one clean brass rule under the masthead */
 #topbar::after {
   content: "";
@@ -140,7 +148,14 @@ button, select, input, textarea { font: inherit; color: inherit; }
 }
 #docTitle:hover { color: var(--pri2); }
 #saveState { font-family: var(--mono); font-size: 11px; color: var(--tx3); white-space: nowrap; }
-#saveState.saved::before { content: "●  "; color: var(--ok); font-size: 8px; vertical-align: 1px; }
+/* the autosave dot lands like an ink stamp; the word arrives under it */
+#saveState.saved { animation: fade var(--dur2) var(--ease); }
+#saveState.saved::before {
+  content: "●  "; color: var(--ok); font-size: 8px; vertical-align: 1px;
+  display: inline-block; /* transformable for the stamp */
+  animation: press 0.4s var(--ease);
+}
+@keyframes press { from { transform: scale(2.2); opacity: 0; } }
 #saveState.err { color: var(--warn); }
 body.pdf-mode .doc-id { display: none; }
 
@@ -191,7 +206,10 @@ body.pdf-mode .doc-id { display: none; }
 #templateSelect:hover svg { color: var(--tx); }
 
 /* ---------------- layout ---------------- */
-#main { display: flex; height: calc(100% - 52px); }
+/* deskIn: sitting down at a table — the studio on load and on the
+   way back from the proofing bench, the bench on the way out */
+#main { display: flex; flex: 1; min-height: 0; position: relative; animation: deskIn var(--dur2) var(--ease); }
+@keyframes deskIn { from { opacity: 0; transform: translateY(8px); } }
 
 /* settings drawer — slides in from the composing room */
 #settings {
@@ -364,9 +382,18 @@ body.pdf-mode .doc-id { display: none; }
 .popmenu .pm-custom { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--tx2); }
 .popmenu .pm-custom input[type="color"] { width: 40px; height: 24px; border: 0; background: none; padding: 0; cursor: pointer; }
 
+/* the writing surface and its blank-sheet welcome share one frame,
+   so the welcome can never drift up over the toolbar */
+#editorWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
 #editor {
   flex: 1;
   width: 100%;
+  min-height: 0;
   resize: none;
   border: 0;
   outline: none;
@@ -482,7 +509,11 @@ body.pdf-mode .doc-id { display: none; }
 #scaleWrap { transform-origin: top center; margin: 0 auto; width: fit-content; }
 
 /* Paged.js page cards: proofs resting on the felt —
-   tight contact shadow plus a soft ambient one */
+   tight contact shadow plus a soft ambient one.
+   The focal motion: each freshly composed proof settles onto the
+   table. Paged.js appends pages as it lays them out, so long
+   documents stagger naturally; the nth-child delays only space the
+   first few when they all land in one frame. Delay is capped. */
 .pagedjs_page {
   background: #fff;
   box-shadow:
@@ -490,7 +521,12 @@ body.pdf-mode .doc-id { display: none; }
     0 3px 8px rgba(6, 8, 6, 0.24),
     0 18px 44px rgba(6, 8, 6, 0.22);
   margin: 0 auto 32px;
+  animation: proofIn var(--dur2) var(--ease) backwards;
 }
+.pagedjs_page:nth-child(n+2) { animation-delay: 60ms; }
+.pagedjs_page:nth-child(n+3) { animation-delay: 120ms; }
+.pagedjs_page:nth-child(n+4) { animation-delay: 180ms; }
+@keyframes proofIn { from { opacity: 0; transform: translateY(5px); } }
 :root[data-light] .pagedjs_page {
   box-shadow:
     0 1px 1px rgba(52, 56, 44, 0.28),
@@ -542,6 +578,13 @@ body.pdf-mode .doc-id { display: none; }
 }
 /* display:flex above would beat the hidden attribute's UA style */
 #emptyState[hidden] { display: none; }
+/* unhiding restarts these: the blank sheet is laid out line by line */
+#emptyState .es-title, #emptyState p, #emptyState .es-grid {
+  animation: rise var(--dur2) var(--ease) backwards;
+}
+#emptyState p { animation-delay: 60ms; }
+#emptyState .es-grid { animation-delay: 120ms; }
+#emptyState .es-more { animation-delay: 180ms; }
 
 /* ---------------- modals ---------------- */
 .overlay {
@@ -616,9 +659,9 @@ body.pdf-mode .doc-id { display: none; }
 #imgMenu button svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 8px; }
 
 /* ---------------- PDF in-place editor — a proofing bench in the same room ---------------- */
-#pdfEditor { display: none; flex-direction: column; height: 100%; min-height: 0; }
+#pdfEditor { display: none; flex-direction: column; flex: 1; min-height: 0; }
 body.pdf-mode #main { display: none; }
-body.pdf-mode #pdfEditor { display: flex; }
+body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ease); }
 #peBar {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 12px; background: var(--bg2);
@@ -641,7 +684,7 @@ body.pdf-mode #pdfEditor { display: flex; }
 #peZoomPct { font-family: var(--mono); font-size: 12px; color: var(--tx2); min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
 #peScroll { flex: 1; overflow: auto; background: var(--deck); padding: 28px 0 64px; }
 #peDeck { display: flex; flex-direction: column; align-items: center; gap: 24px; }
-.pe-page { position: relative; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.3); }
+.pe-page { position: relative; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.3); animation: proofIn var(--dur2) var(--ease) backwards; }
 .pe-page canvas { display: block; }
 .pe-layer { position: absolute; inset: 0; }
 .pe-edit { position: absolute; box-sizing: border-box; }
@@ -677,6 +720,8 @@ body.pdf-mode #pdfEditor { display: flex; }
 .toast.warn { background: var(--warn); color: var(--bg3); }
 :root[data-light] .toast.warn { color: var(--bg3); }
 @keyframes pop { from { transform: translateY(8px); opacity: 0; } }
+/* the slip is taken away — exits drop, faster than the entrance rose */
+.toast.out { opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease-in, transform 0.3s ease-in; }
 
 /* embedded hint bar */
 #embedHint {
@@ -813,7 +858,7 @@ body.pdf-mode #pdfEditor { display: flex; }
    so the two toolbar rows stay composed with the drawer open */
 @media (max-width: 1180px) {
   #settings {
-    position: absolute; z-index: 40; height: calc(100% - 52px);
+    position: absolute; top: 0; left: 0; height: 100%; z-index: 40;
     margin-left: 0;
     transform: translateX(-105%);
   }
@@ -825,9 +870,66 @@ body.pdf-mode #pdfEditor { display: flex; }
 }
 @media (max-width: 900px) {
   #main { flex-direction: column; }
-  #editorPane { min-height: 40%; }
+  #editorPane { flex: 1 1 48%; min-height: 0; min-width: 0; }
+  #previewPane { flex: 1 1 52%; min-width: 0; min-height: 0; }
   .doc-id { display: none; }
   #topbar { padding: 0 10px 0 14px; gap: 6px; }
+}
+
+/* phones: the masthead composes as two deliberate rows —
+   identity and utilities above, document actions below */
+@media (max-width: 720px) {
+  #topbar {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 6px max(10px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left));
+  }
+  .tbbreak { display: block; flex-basis: 100%; height: 0; order: 5; }
+  .brand { order: 0; }
+  #topbar .grow { order: 1; }
+  .grp { order: 2; }
+  #btnHelp { order: 3; }
+  #btnDark { order: 4; }
+  #templateSelect { order: 6; }
+  #btnSettings { order: 7; margin-left: auto; }
+  #btnDocx { order: 8; margin-left: 0; }
+  #btnPdf { order: 9; }
+  .btn .bl { display: none; }
+  #statusbar { padding-bottom: max(7px, env(safe-area-inset-bottom)); }
+  #previewScroll { padding: 16px 8px 48px; }
+  #findBar { flex-wrap: wrap; }
+  /* 16px text keeps mobile Safari from zooming into fields */
+  #editor { font-size: 16px; padding: 16px 16px 40vh; }
+  #findBar input, .field input, .field select, .tbsel { font-size: 16px; }
+  .tbsel { max-width: 118px; }
+}
+
+@media (max-width: 480px) {
+  #emptyState .es-grid { grid-template-columns: repeat(2, auto); }
+  #emptyState .es-title { font-size: 20px; }
+  .modal, .modal.small { width: 96vw; max-height: 88vh; max-height: 88dvh; }
+  .modal .mbody { padding: 14px 16px; }
+  .mbody td:first-child { white-space: normal; }
+}
+
+/* touch: press plates grow to finger size; hover-only hints surface */
+@media (pointer: coarse) {
+  .tb { min-width: 36px; height: 38px; }
+  .tbsel { height: 38px; }
+  .btn { height: 38px; }
+  .btn.icon { width: 38px; }
+  .grp .btn.icon { width: 34px; height: 34px; }
+  .btn.small { height: 30px; }
+  #pvCluster { height: 32px; }
+  #pvCluster button { min-width: 28px; height: 28px; }
+  .pe-tool { width: 38px; height: 34px; }
+  .sw { width: 26px; height: 26px; }
+  .toggle { padding: 8px 0; }
+  .kbd-hint, .es-kbd { display: none; }
+}
+@media (hover: none) {
+  .doc .shot .shot-hint { display: block; }
 }
 
 /* ---------------- PRINT: only the pages ---------------- */
@@ -837,7 +939,7 @@ body.pdf-mode #pdfEditor { display: flex; }
   body.pdf-mode #main { display: block !important; }
   #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
   #scaleWrap { transform: none !important; width: auto; margin: 0; }
-  .pagedjs_page { box-shadow: none; margin: 0; }
+  .pagedjs_page { box-shadow: none; margin: 0; animation: none; }
   .doc .shot .shot-hint { display: none !important; }
 }
 
@@ -886,13 +988,14 @@ body.pdf-mode #pdfEditor { display: flex; }
   <button class="btn icon" id="btnDark" title="Toggle dark interface (document stays white)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
   </button>
+  <div class="tbbreak" aria-hidden="true"></div>
   <button class="btn" id="btnSettings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
-    Settings
+    <span class="bl">Settings</span>
   </button>
   <button class="btn" id="btnDocx" title="Download as Word (.docx)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><path d="M8.6 12.5l1.3 5 2.1-3.8 2.1 3.8 1.3-5"/></svg>
-    Word
+    <span class="bl">Word</span>
   </button>
   <button class="btn pri" id="btnPdf" title="Export as PDF (Ctrl+P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><path d="M12 11.5v6.5m0 0l-2.6-2.6M12 18l2.6-2.6"/></svg>
@@ -1104,15 +1207,17 @@ body.pdf-mode #pdfEditor { display: flex; }
       <button class="btn small ghost" id="replAll" title="Replace all">All</button>
       <button class="btn small ghost" id="findClose" title="Close (Esc)" aria-label="Close find bar"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
-    <div id="emptyState" hidden>
-      <div class="es-title">A blank sheet</div>
-      <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
-      <div class="es-grid">
-        <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
-        <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
+    <div id="editorWrap">
+      <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
+      <div id="emptyState" hidden>
+        <div class="es-title">A blank sheet</div>
+        <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
+        <div class="es-grid">
+          <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
+          <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
+        </div>
+        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
       </div>
-      <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</p>
     </div>
     <div id="statusbar">
       <span id="wordCount">0 words</span>
@@ -6008,7 +6113,7 @@ Land the piece: return to the opening image or question and say what it means no
     d.className = "toast" + (type ? " " + type : "");
     d.textContent = msg;
     $("#toasts").appendChild(d);
-    setTimeout(() => { d.style.opacity = "0"; d.style.transition = "opacity .3s"; }, 3400);
+    setTimeout(() => d.classList.add("out"), 3400);
     setTimeout(() => d.remove(), 3800);
   }
   function confirmModal(title, body) {
