@@ -80,15 +80,15 @@
     </div>
     <div class="field"><label>Accent colour</label>
       <div class="swatches">
-        <div class="sw" data-c="#1f3a5f" style="background:#1f3a5f"></div>
-        <div class="sw" data-c="#2563eb" style="background:#2563eb"></div>
-        <div class="sw" data-c="#0f766e" style="background:#0f766e"></div>
-        <div class="sw" data-c="#15803d" style="background:#15803d"></div>
-        <div class="sw" data-c="#7f1d1d" style="background:#7f1d1d"></div>
-        <div class="sw" data-c="#6d28d9" style="background:#6d28d9"></div>
-        <div class="sw" data-c="#334155" style="background:#334155"></div>
-        <div class="sw" data-c="#111827" style="background:#111827"></div>
-        <input type="color" id="cAccent" title="Custom colour">
+        <button type="button" class="sw" data-c="#1f3a5f" style="background:#1f3a5f" aria-label="Accent: deep navy"></button>
+        <button type="button" class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Accent: blue"></button>
+        <button type="button" class="sw" data-c="#0f766e" style="background:#0f766e" aria-label="Accent: teal"></button>
+        <button type="button" class="sw" data-c="#15803d" style="background:#15803d" aria-label="Accent: green"></button>
+        <button type="button" class="sw" data-c="#7f1d1d" style="background:#7f1d1d" aria-label="Accent: maroon"></button>
+        <button type="button" class="sw" data-c="#6d28d9" style="background:#6d28d9" aria-label="Accent: violet"></button>
+        <button type="button" class="sw" data-c="#334155" style="background:#334155" aria-label="Accent: slate"></button>
+        <button type="button" class="sw" data-c="#111827" style="background:#111827" aria-label="Accent: ink black"></button>
+        <input type="color" id="cAccent" title="Custom colour" aria-label="Custom accent colour">
       </div>
     </div>
     <div class="frow">
@@ -254,7 +254,7 @@
     <div id="findBar">
       <input type="text" id="findInput" placeholder="Find…">
       <input type="text" id="replInput" placeholder="Replace with…">
-      <span id="findCount"></span>
+      <span id="findCount" role="status"></span>
       <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
       <button class="btn small ghost" id="findNext" title="Next (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>
       <button class="btn small ghost" id="replOne" title="Replace current">Replace</button>
@@ -285,10 +285,10 @@
   <section id="previewPane">
     <div id="previewBar">
       <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
-      <span id="busy"></span>
+      <span id="busy" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="grow"></span>
       <div id="pvCluster" aria-label="Pages and zoom">
-        <span id="pgInfo">—</span>
+        <span id="pgInfo" role="status">—</span>
         <span class="pv-sep"></span>
         <button id="zoomOut" aria-label="Zoom out">−</button>
         <span id="zoomPct" title="Reset to fit">100%</span>
@@ -349,7 +349,7 @@
 </section>
 
 <div class="overlay" id="pdfChoiceOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="pcTitle" tabindex="-1">
     <header><span id="pcTitle">Open PDF</span></header>
     <div class="mbody">
       <p style="margin:0 0 12px">How do you want to work on this PDF?</p>
@@ -383,7 +383,7 @@
 </div>
 
 <div class="overlay" id="confirmOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="cfTitle" tabindex="-1">
     <header><span id="cfTitle">Are you sure?</span></header>
     <div class="mbody" id="cfBody"></div>
     <div class="mfoot">
@@ -394,7 +394,7 @@
 </div>
 
 <div class="overlay" id="helpOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Help — writing and exporting" tabindex="-1">
     <header>Help — writing & exporting <button class="btn icon ghost" data-close>✕</button></header>
     <div class="mbody">
       <h4>Formatting (Markdown)</h4>
@@ -442,7 +442,7 @@
 </div>
 
 <div class="overlay" id="keysOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" tabindex="-1">
     <header>Keyboard shortcuts <button class="btn icon ghost" data-close>✕</button></header>
     <div class="mbody">
       <table>

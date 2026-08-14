@@ -149,6 +149,11 @@ button, select, input, textarea { font: inherit; color: inherit; }
 @keyframes press { from { transform: scale(2.2); opacity: 0; } }
 #saveState.err { color: var(--warn); }
 body.pdf-mode .doc-id { display: none; }
+/* the proofing bench keeps only its own controls — studio actions
+   (templates, file ops, settings, exports) would act on the hidden
+   studio document, so they leave the masthead with it */
+body.pdf-mode #templateSelect, body.pdf-mode .grp, body.pdf-mode .tbbreak,
+body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { display: none; }
 
 .btn {
   background: var(--bg3);
@@ -277,12 +282,18 @@ body.pdf-mode .doc-id { display: none; }
   width: 16px; height: 16px; border-radius: var(--rc); background: var(--tx3);
   transition: left 0.16s ease-out, background 0.16s ease-out;
 }
-.toggle input { display: none; }
+/* visually hidden, never display:none — the checkbox must stay in the
+   tab order and the accessibility tree; the plate wears its focus ring */
+.toggle input {
+  position: absolute; opacity: 0;
+  width: 1px; height: 1px; margin: 0; pointer-events: none;
+}
+.toggle input:focus-visible + .tg { outline: 2px solid var(--pri); outline-offset: 1px; }
 .toggle input:checked + .tg { background: var(--tx); }
 .toggle input:checked + .tg::after { left: 21px; background: var(--bg2); }
 
 .swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.sw { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
+.sw { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
 .sw:hover { transform: scale(1.12); }
 .sw.on { border-color: var(--bg2); box-shadow: 0 0 0 2px var(--tx); }
 .swatches input[type="color"] {
@@ -314,7 +325,18 @@ body.pdf-mode .doc-id { display: none; }
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+  /* clipped tools must announce themselves: a fade appears on whichever
+     edge hides more row (classes toggled by the scroll observer) */
+  --fadeL: 0px; --fadeR: 0px;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0, black var(--fadeL),
+    black calc(100% - var(--fadeR)), transparent 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0, black var(--fadeL),
+    black calc(100% - var(--fadeR)), transparent 100%);
 }
+.tbrow.scroll-l { --fadeL: 26px; }
+.tbrow.scroll-r { --fadeR: 26px; }
 .tbrow::-webkit-scrollbar { display: none; }
 .tbg {
   display: flex;
@@ -366,7 +388,7 @@ body.pdf-mode .doc-id { display: none; }
 .popmenu .pm-title { font-family: var(--display); font-size: 14px; color: var(--tx); margin-bottom: 8px; }
 .popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
 .popmenu .pm-sw {
-  width: 22px; height: 22px; border-radius: 3px; cursor: pointer;
+  width: 22px; height: 22px; padding: 0; border-radius: 3px; cursor: pointer;
   border: 1px solid rgba(128, 128, 128, 0.35);
 }
 .popmenu .pm-sw:hover { transform: scale(1.12); }
@@ -415,6 +437,7 @@ body.pdf-mode .doc-id { display: none; }
 .kbd-hint { color: var(--tx3); font-size: 11px; }
 .kbd-hint kbd {
   font-family: var(--mono); font-size: 10px;
+  color: var(--tx2); /* tx3 on the raised plate misses 4.5:1 */
   background: var(--bg3); border-radius: var(--rc);
   padding: 1px 5px; margin-right: 2px;
   box-shadow: var(--recess);
@@ -478,17 +501,34 @@ body.pdf-mode .doc-id { display: none; }
 #previewBar .grow { flex: 1; }
 #previewBar .btn.ghost { color: var(--tx2); }
 #previewBar .btn.ghost:hover { color: var(--tx); }
-#pgInfo { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* width floor: the composing ticker ("p. 4…" → "12 pages") must not
+   nudge the zoom controls as its label changes */
+#pgInfo { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 60px; text-align: center; }
 #zoomPct { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
+/* while composing, the compositor's hand: three type sorts picked up
+   and set in sequence (heights vary like letterforms). Reduced motion
+   leaves them standing — still a legible "setting type" mark. */
 #busy {
   display: none;
-  width: 13px; height: 13px;
-  border: 2px solid color-mix(in srgb, var(--tx3) 40%, transparent);
-  border-top-color: var(--tx2);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  padding-bottom: 1px;
 }
-#busy.on { display: inline-block; }
+#busy.on { display: inline-flex; }
+#busy i {
+  width: 3px;
+  border-radius: 0.5px;
+  background: var(--tx3);
+  animation: sortSet 0.72s var(--ease) infinite;
+}
+#busy i:nth-child(1) { height: 8px; }
+#busy i:nth-child(2) { height: 11px; animation-delay: 0.12s; }
+#busy i:nth-child(3) { height: 9px; animation-delay: 0.24s; }
+@keyframes sortSet {
+  0%, 55%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-3px); }
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 #previewScroll {
@@ -564,7 +604,7 @@ body.pdf-mode .doc-id { display: none; }
 }
 #emptyState .es-more { font-size: 12px; margin-top: var(--sp3); }
 #emptyState kbd {
-  font-family: var(--mono); font-size: 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--tx2);
   background: var(--bg3); border-radius: var(--rc); padding: 1px 5px;
 }
 /* display:flex above would beat the hidden attribute's UA style */

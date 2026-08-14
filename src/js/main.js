@@ -358,20 +358,52 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   /* ---------------- toast & confirm ---------------- */
-  function toast(msg, type) {
+  function toast(msg, type, ms = 3400) {
     const d = document.createElement("div");
     d.className = "toast" + (type ? " " + type : "");
     d.textContent = msg;
     $("#toasts").appendChild(d);
-    setTimeout(() => d.classList.add("out"), 3400);
-    setTimeout(() => d.remove(), 3800);
+    setTimeout(() => d.classList.add("out"), ms);
+    setTimeout(() => d.remove(), ms + 400);
+  }
+
+  /* ---------------- dialog plumbing ----------------
+     The overlays are real dialogs: focus moves in, Tab stays inside,
+     Esc cancels, and focus returns to whatever opened them. */
+  function ovFocusables(ov) {
+    return [...ov.querySelectorAll("button, [href], input, select, textarea")]
+      .filter(el => !el.disabled && el.offsetWidth > 0);
+  }
+  function openOv(ov, onCancel) {
+    ov.__cancel = onCancel || null;
+    ov.__restore = document.activeElement;
+    ov.classList.add("open");
+    const modal = ov.querySelector(".modal");
+    (ovFocusables(modal)[0] || modal).focus();
+    ov.__trap = e => {
+      if (e.key !== "Tab") return;
+      const f = ovFocusables(modal);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    ov.addEventListener("keydown", ov.__trap);
+  }
+  function closeOv(ov) {
+    ov.classList.remove("open");
+    if (ov.__trap) { ov.removeEventListener("keydown", ov.__trap); ov.__trap = null; }
+    ov.__cancel = null;
+    const r = ov.__restore; ov.__restore = null;
+    if (r && r.focus && document.contains(r)) r.focus();
   }
   function confirmModal(title, body) {
     return new Promise(res => {
       $("#cfTitle").textContent = title;
       $("#cfBody").textContent = body;
-      $("#confirmOverlay").classList.add("open");
-      const done = v => { $("#confirmOverlay").classList.remove("open"); $("#cfYes").onclick = $("#cfNo").onclick = null; res(v); };
+      const ov = $("#confirmOverlay");
+      const done = v => { closeOv(ov); $("#cfYes").onclick = $("#cfNo").onclick = null; res(v); };
+      openOv(ov, () => done(false));
       $("#cfYes").onclick = () => done(true);
       $("#cfNo").onclick = () => done(false);
     });
@@ -489,6 +521,18 @@ Land the piece: return to the opening image or question and say what it means no
   }
   Paged.registerHandlers(FootnoteFix);
 
+  /* ---------------- composing ticker ----------------
+     While the press runs, the instrument cluster reads the page being
+     set — truthful progress in the room's own language. doRender's
+     final "N pages" overwrites it the moment the flow completes. */
+  class ComposeTicker extends Paged.Handler {
+    afterPageLayout(pageElement, page) {
+      const n = page && typeof page.position === "number" ? page.position + 1 : null;
+      if (n) $("#pgInfo").textContent = "p. " + n + "…";
+    }
+  }
+  Paged.registerHandlers(ComposeTicker);
+
   /* ---------------- rendering ---------------- */
   function scheduleRender() {
     clearTimeout(renderTimer);
@@ -589,7 +633,7 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [key, face] of Object.entries(Engine.FACES)) {
       h += `<option value="${kind === "settings" ? key : face.name}">${face.label}</option>`;
     }
-    h += `</optgroup><optgroup label="Word fonts — this device, named in the .docx">`;
+    h += `</optgroup><optgroup label="Word fonts — exact in Word; preview needs it on this device">`;
     for (const [name] of Engine.WORD_CATALOG) {
       const miss = fontInstalled(name) ? "" : " · not on this device";
       h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
@@ -624,7 +668,11 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [id, k] of Object.entries(SELECTS)) $("#" + id).value = state.settings[k];
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
-    $$(".sw").forEach(sw => sw.classList.toggle("on", sw.dataset.c === state.settings.accent));
+    $$(".sw").forEach(sw => {
+      const on = sw.dataset.c === state.settings.accent;
+      sw.classList.toggle("on", on);
+      sw.setAttribute("aria-pressed", String(on));
+    });
     updateDocTitle();
   }
 
@@ -927,16 +975,27 @@ Land the piece: return to the opening image or question and say what it means no
     };
     const closeBoth = () => { hlMenu.style.display = "none"; fcMenu.style.display = "none"; };
     $("#hlGrid").innerHTML = Object.entries(Engine.HL_COLORS).map(([k, v]) =>
-      `<div class="pm-sw" data-k="${k}" title="${k}" style="background:#${v}"></div>`).join("");
+      `<button type="button" class="pm-sw" data-k="${k}" title="${k}" aria-label="Highlight: ${k}" style="background:#${v}"></button>`).join("");
     const FC = ["#c00000", "#e36c09", "#bf8f00", "#1a7f37", "#0f766e", "#2563eb", "#1f3a5f", "#6d28d9", "#c026d3", "#64748b", "#111827", "#000000"];
-    $("#fcGrid").innerHTML = FC.map(c => `<div class="pm-sw" data-c="${c}" title="${c}" style="background:${c}"></div>`).join("");
-    $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openAt(hlMenu, e.currentTarget); };
-    $("#tbFc").onclick = e => { e.stopPropagation(); hlMenu.style.display = "none"; openAt(fcMenu, e.currentTarget); };
+    const FC_NAMES = ["dark red", "orange", "dark yellow", "green", "teal", "blue", "navy", "violet", "magenta", "slate", "ink", "black"];
+    $("#fcGrid").innerHTML = FC.map((c, i) =>
+      `<button type="button" class="pm-sw" data-c="${c}" title="${FC_NAMES[i]}" aria-label="Text colour: ${FC_NAMES[i]}" style="background:${c}"></button>`).join("");
+    /* opening from the keyboard lands on the first swatch; Esc hands focus back */
+    const openMenu = (menu, btn) => { openAt(menu, btn); const f = menu.querySelector(".pm-sw"); if (f) f.focus(); };
+    $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openMenu(hlMenu, e.currentTarget); };
+    $("#tbFc").onclick = e => { e.stopPropagation(); hlMenu.style.display = "none"; openMenu(fcMenu, e.currentTarget); };
     $("#hlGrid").onclick = e => { const k = e.target.dataset.k; if (!k) return; closeBoth(); applyHl(k); };
     $("#fcGrid").onclick = e => { const c = e.target.dataset.c; if (!c) return; closeBoth(); applyColor(c); };
     $("#fcCustom").addEventListener("change", e => { closeBoth(); applyColor(e.target.value); });
     document.addEventListener("click", e => {
       if (!e.target.closest(".popmenu") && !e.target.closest("#tbHl") && !e.target.closest("#tbFc")) closeBoth();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      const wasHl = hlMenu.style.display === "block", wasFc = fcMenu.style.display === "block";
+      if (!wasHl && !wasFc) return;
+      closeBoth();
+      (wasHl ? $("#tbHl") : $("#tbFc")).focus();
     });
     /* Selection typeface / size — the select snaps back to its placeholder after use. */
     $("#tbFont").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) applyFont(v); });
@@ -1050,12 +1109,12 @@ Land the piece: return to the opening image or question and say what it means no
     return new Promise(res => {
       const ov = $("#pdfChoiceOverlay");
       $("#pcTitle").textContent = name;
-      ov.classList.add("open");
       const done = v => {
-        ov.classList.remove("open");
+        closeOv(ov);
         $("#pcEdit").onclick = $("#pcConvert").onclick = $("#pcCancel").onclick = null;
         res(v);
       };
+      openOv(ov, () => done(null));
       $("#pcEdit").onclick = () => done("edit");
       $("#pcConvert").onclick = () => done("convert");
       $("#pcCancel").onclick = () => done(null);
@@ -1095,7 +1154,7 @@ Land the piece: return to the opening image or question and say what it means no
       toast(`Imported ${f.name} — now fully editable`);
     } catch (err) {
       console.error("[DocForge] import failed", err);
-      toast(err && err.message ? err.message : "Import failed — check the console", "warn");
+      toast(err && err.message ? err.message : "Couldn't read that file — re-save it and try importing again", "warn");
     }
   }
 
@@ -1130,7 +1189,7 @@ Land the piece: return to the opening image or question and say what it means no
         toast("Edited PDF downloaded — original layout intact underneath");
       } catch (e) {
         console.error("[DocForge] pdf edit export failed", e);
-        toast("PDF export failed — check the console", "warn");
+        toast("PDF export failed — your edits are still here; try again", "warn");
       }
       btn.disabled = false; btn.classList.remove("busy");
       btn.innerHTML = label;
@@ -1142,7 +1201,7 @@ Land the piece: return to the opening image or question and say what it means no
   async function exportPdf() {
     if (inPdfMode()) { toast("You're editing a PDF — use its Export button, or ← Studio to go back", "warn"); return; }
     await ensureFresh();
-    toast("Choose “Save as PDF” in the print dialog");
+    toast("In the print dialog: destination “Save as PDF” · untick “Headers and footers”", null, 8000);
     setTimeout(() => { try { window.print(); } catch { toast("Printing is blocked here — open this file directly in Chrome/Edge", "warn"); } }, 350);
   }
   async function exportDocx() {
@@ -1160,7 +1219,7 @@ Land the piece: return to the opening image or question and say what it means no
       toast("Word file downloaded — click “Yes” if Word asks to update fields");
     } catch (e) {
       console.error("[DocForge] docx failed", e);
-      toast("Word export failed — check the console", "warn");
+      toast("Word export failed — nothing was lost; try again", "warn");
     }
     btn.disabled = false;
     btn.classList.remove("busy");
@@ -1232,9 +1291,15 @@ Land the piece: return to the opening image or question and say what it means no
     const next = editor.value.replace(re, $("#replInput").value);
     if (next === editor.value) return;
     const n = (editor.value.match(re) || []).length;
-    editor.value = next;
-    state.source = next; markDirty(); scheduleRender();
-    toast(`Replaced ${n} occurrence${n === 1 ? "" : "s"}`);
+    /* execCommand("insertText") is the one edit path Chromium records in
+       the textarea's native undo stack — setRangeText and .value do not */
+    editor.focus();
+    editor.setSelectionRange(0, editor.value.length);
+    let undoable = false;
+    try { undoable = document.execCommand(next ? "insertText" : "delete", false, next); } catch {}
+    if (!undoable) editor.setRangeText(next, 0, editor.value.length, "end");
+    state.source = editor.value; markDirty(); scheduleRender();
+    toast(`Replaced ${n} occurrence${n === 1 ? "" : "s"}` + (undoable ? " — Ctrl+Z undoes" : ""));
     findCount();
   }
 
@@ -1379,7 +1444,7 @@ Land the piece: return to the opening image or question and say what it means no
     const warns = lintSource(state.source);
     const badge = $("#lintBadge"), panel = $("#lintPanel");
     badge.hidden = !warns.length;
-    badge.textContent = warns.length === 1 ? "1 check" : warns.length + " checks";
+    badge.textContent = warns.length === 1 ? "1 warning" : warns.length + " warnings";
     if (!warns.length) { panel.hidden = true; return; }
     panel.innerHTML = warns.slice(0, 40).map(([line, msg]) =>
       `<button class="lint-item" data-line="${line}"><span class="ln">line ${line}</span>${Engine.esc(msg)}</button>`).join("");
@@ -1416,8 +1481,8 @@ Land the piece: return to the opening image or question and say what it means no
       const open = $("#settings").classList.toggle("open");
       $("#btnSettings").setAttribute("aria-expanded", String(open));
     };
-    $("#btnHelp").onclick = () => $("#helpOverlay").classList.add("open");
-    $$("[data-close]").forEach(b => b.onclick = () => b.closest(".overlay").classList.remove("open"));
+    $("#btnHelp").onclick = () => openOv($("#helpOverlay"));
+    $$("[data-close]").forEach(b => b.onclick = () => closeOv(b.closest(".overlay")));
     $("#btnSaveProj").onclick = saveProject;
     $("#btnOpen").onclick = () => $("#projInput").click();
     $("#btnNew").onclick = async () => { if (await confirmModal("Start a new document?", "The editor will be replaced with a blank document. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) applyTemplate("blank"); };
@@ -1435,6 +1500,8 @@ Land the piece: return to the opening image or question and say what it means no
       tplMenu.style.left = Math.min(r.left, innerWidth - tplMenu.offsetWidth - 8) + "px";
       tplMenu.style.top = (r.bottom + 6) + "px";
       tplBtn.setAttribute("aria-expanded", "true");
+      const first = tplMenu.querySelector(".tpl-item");
+      if (first) first.focus();
     });
     tplMenu.addEventListener("click", async e => {
       const item = e.target.closest(".tpl-item");
@@ -1454,6 +1521,19 @@ Land the piece: return to the opening image or question and say what it means no
       $("#sTitle").select();
     };
     $$("#toolbar .tb[data-act]").forEach(b => b.addEventListener("click", () => TOOL_ACTS[b.dataset.act]?.()));
+
+    /* toolbar rows scroll instead of wrapping; a fade on the clipped edge
+       says "more plates this way" (drawer open/close changes the width,
+       so a ResizeObserver keeps the cue honest) */
+    $$(".tbrow").forEach(row => {
+      const upd = () => {
+        row.classList.toggle("scroll-l", row.scrollLeft > 4);
+        row.classList.toggle("scroll-r", row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+      };
+      row.addEventListener("scroll", upd, { passive: true });
+      new ResizeObserver(upd).observe(row);
+      upd();
+    });
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };
     $("#zoomFit").onclick = () => { zoomMode = "fit"; applyZoom(); };
@@ -1515,8 +1595,15 @@ Land the piece: return to the opening image or question and say what it means no
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
       if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
       if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
-      if (mod && e.key === "/") { e.preventDefault(); $("#keysOverlay").classList.toggle("open"); }
-      if (e.key === "Escape") $$(".overlay.open").forEach(o => o.classList.remove("open"));
+      if (mod && e.key === "/") {
+        e.preventDefault();
+        const ov = $("#keysOverlay");
+        ov.classList.contains("open") ? closeOv(ov) : openOv(ov);
+      }
+      if (e.key === "Escape") {
+        $$(".overlay.open").forEach(o => o.__cancel ? o.__cancel() : closeOv(o));
+        if (tplMenu.style.display === "block") { closeTpl(); tplBtn.focus(); }
+      }
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
 

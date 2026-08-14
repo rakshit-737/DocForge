@@ -158,6 +158,11 @@ button, select, input, textarea { font: inherit; color: inherit; }
 @keyframes press { from { transform: scale(2.2); opacity: 0; } }
 #saveState.err { color: var(--warn); }
 body.pdf-mode .doc-id { display: none; }
+/* the proofing bench keeps only its own controls — studio actions
+   (templates, file ops, settings, exports) would act on the hidden
+   studio document, so they leave the masthead with it */
+body.pdf-mode #templateSelect, body.pdf-mode .grp, body.pdf-mode .tbbreak,
+body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { display: none; }
 
 .btn {
   background: var(--bg3);
@@ -286,12 +291,18 @@ body.pdf-mode .doc-id { display: none; }
   width: 16px; height: 16px; border-radius: var(--rc); background: var(--tx3);
   transition: left 0.16s ease-out, background 0.16s ease-out;
 }
-.toggle input { display: none; }
+/* visually hidden, never display:none — the checkbox must stay in the
+   tab order and the accessibility tree; the plate wears its focus ring */
+.toggle input {
+  position: absolute; opacity: 0;
+  width: 1px; height: 1px; margin: 0; pointer-events: none;
+}
+.toggle input:focus-visible + .tg { outline: 2px solid var(--pri); outline-offset: 1px; }
 .toggle input:checked + .tg { background: var(--tx); }
 .toggle input:checked + .tg::after { left: 21px; background: var(--bg2); }
 
 .swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.sw { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
+.sw { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
 .sw:hover { transform: scale(1.12); }
 .sw.on { border-color: var(--bg2); box-shadow: 0 0 0 2px var(--tx); }
 .swatches input[type="color"] {
@@ -323,7 +334,18 @@ body.pdf-mode .doc-id { display: none; }
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+  /* clipped tools must announce themselves: a fade appears on whichever
+     edge hides more row (classes toggled by the scroll observer) */
+  --fadeL: 0px; --fadeR: 0px;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0, black var(--fadeL),
+    black calc(100% - var(--fadeR)), transparent 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0, black var(--fadeL),
+    black calc(100% - var(--fadeR)), transparent 100%);
 }
+.tbrow.scroll-l { --fadeL: 26px; }
+.tbrow.scroll-r { --fadeR: 26px; }
 .tbrow::-webkit-scrollbar { display: none; }
 .tbg {
   display: flex;
@@ -375,7 +397,7 @@ body.pdf-mode .doc-id { display: none; }
 .popmenu .pm-title { font-family: var(--display); font-size: 14px; color: var(--tx); margin-bottom: 8px; }
 .popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
 .popmenu .pm-sw {
-  width: 22px; height: 22px; border-radius: 3px; cursor: pointer;
+  width: 22px; height: 22px; padding: 0; border-radius: 3px; cursor: pointer;
   border: 1px solid rgba(128, 128, 128, 0.35);
 }
 .popmenu .pm-sw:hover { transform: scale(1.12); }
@@ -424,6 +446,7 @@ body.pdf-mode .doc-id { display: none; }
 .kbd-hint { color: var(--tx3); font-size: 11px; }
 .kbd-hint kbd {
   font-family: var(--mono); font-size: 10px;
+  color: var(--tx2); /* tx3 on the raised plate misses 4.5:1 */
   background: var(--bg3); border-radius: var(--rc);
   padding: 1px 5px; margin-right: 2px;
   box-shadow: var(--recess);
@@ -487,17 +510,34 @@ body.pdf-mode .doc-id { display: none; }
 #previewBar .grow { flex: 1; }
 #previewBar .btn.ghost { color: var(--tx2); }
 #previewBar .btn.ghost:hover { color: var(--tx); }
-#pgInfo { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+/* width floor: the composing ticker ("p. 4…" → "12 pages") must not
+   nudge the zoom controls as its label changes */
+#pgInfo { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 60px; text-align: center; }
 #zoomPct { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
+/* while composing, the compositor's hand: three type sorts picked up
+   and set in sequence (heights vary like letterforms). Reduced motion
+   leaves them standing — still a legible "setting type" mark. */
 #busy {
   display: none;
-  width: 13px; height: 13px;
-  border: 2px solid color-mix(in srgb, var(--tx3) 40%, transparent);
-  border-top-color: var(--tx2);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  padding-bottom: 1px;
 }
-#busy.on { display: inline-block; }
+#busy.on { display: inline-flex; }
+#busy i {
+  width: 3px;
+  border-radius: 0.5px;
+  background: var(--tx3);
+  animation: sortSet 0.72s var(--ease) infinite;
+}
+#busy i:nth-child(1) { height: 8px; }
+#busy i:nth-child(2) { height: 11px; animation-delay: 0.12s; }
+#busy i:nth-child(3) { height: 9px; animation-delay: 0.24s; }
+@keyframes sortSet {
+  0%, 55%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-3px); }
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 #previewScroll {
@@ -573,7 +613,7 @@ body.pdf-mode .doc-id { display: none; }
 }
 #emptyState .es-more { font-size: 12px; margin-top: var(--sp3); }
 #emptyState kbd {
-  font-family: var(--mono); font-size: 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--tx2);
   background: var(--bg3); border-radius: var(--rc); padding: 1px 5px;
 }
 /* display:flex above would beat the hidden attribute's UA style */
@@ -1026,15 +1066,15 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
     </div>
     <div class="field"><label>Accent colour</label>
       <div class="swatches">
-        <div class="sw" data-c="#1f3a5f" style="background:#1f3a5f"></div>
-        <div class="sw" data-c="#2563eb" style="background:#2563eb"></div>
-        <div class="sw" data-c="#0f766e" style="background:#0f766e"></div>
-        <div class="sw" data-c="#15803d" style="background:#15803d"></div>
-        <div class="sw" data-c="#7f1d1d" style="background:#7f1d1d"></div>
-        <div class="sw" data-c="#6d28d9" style="background:#6d28d9"></div>
-        <div class="sw" data-c="#334155" style="background:#334155"></div>
-        <div class="sw" data-c="#111827" style="background:#111827"></div>
-        <input type="color" id="cAccent" title="Custom colour">
+        <button type="button" class="sw" data-c="#1f3a5f" style="background:#1f3a5f" aria-label="Accent: deep navy"></button>
+        <button type="button" class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Accent: blue"></button>
+        <button type="button" class="sw" data-c="#0f766e" style="background:#0f766e" aria-label="Accent: teal"></button>
+        <button type="button" class="sw" data-c="#15803d" style="background:#15803d" aria-label="Accent: green"></button>
+        <button type="button" class="sw" data-c="#7f1d1d" style="background:#7f1d1d" aria-label="Accent: maroon"></button>
+        <button type="button" class="sw" data-c="#6d28d9" style="background:#6d28d9" aria-label="Accent: violet"></button>
+        <button type="button" class="sw" data-c="#334155" style="background:#334155" aria-label="Accent: slate"></button>
+        <button type="button" class="sw" data-c="#111827" style="background:#111827" aria-label="Accent: ink black"></button>
+        <input type="color" id="cAccent" title="Custom colour" aria-label="Custom accent colour">
       </div>
     </div>
     <div class="frow">
@@ -1200,7 +1240,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
     <div id="findBar">
       <input type="text" id="findInput" placeholder="Find…">
       <input type="text" id="replInput" placeholder="Replace with…">
-      <span id="findCount"></span>
+      <span id="findCount" role="status"></span>
       <button class="btn small ghost" id="findPrev" title="Previous (Shift+Enter)" aria-label="Previous match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"/></svg></button>
       <button class="btn small ghost" id="findNext" title="Next (Enter)" aria-label="Next match"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"/></svg></button>
       <button class="btn small ghost" id="replOne" title="Replace current">Replace</button>
@@ -1231,10 +1271,10 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   <section id="previewPane">
     <div id="previewBar">
       <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
-      <span id="busy"></span>
+      <span id="busy" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="grow"></span>
       <div id="pvCluster" aria-label="Pages and zoom">
-        <span id="pgInfo">—</span>
+        <span id="pgInfo" role="status">—</span>
         <span class="pv-sep"></span>
         <button id="zoomOut" aria-label="Zoom out">−</button>
         <span id="zoomPct" title="Reset to fit">100%</span>
@@ -1295,7 +1335,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 </section>
 
 <div class="overlay" id="pdfChoiceOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="pcTitle" tabindex="-1">
     <header><span id="pcTitle">Open PDF</span></header>
     <div class="mbody">
       <p style="margin:0 0 12px">How do you want to work on this PDF?</p>
@@ -1329,7 +1369,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 </div>
 
 <div class="overlay" id="confirmOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="cfTitle" tabindex="-1">
     <header><span id="cfTitle">Are you sure?</span></header>
     <div class="mbody" id="cfBody"></div>
     <div class="mfoot">
@@ -1340,7 +1380,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 </div>
 
 <div class="overlay" id="helpOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Help — writing and exporting" tabindex="-1">
     <header>Help — writing & exporting <button class="btn icon ghost" data-close>✕</button></header>
     <div class="mbody">
       <h4>Formatting (Markdown)</h4>
@@ -1388,7 +1428,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 </div>
 
 <div class="overlay" id="keysOverlay">
-  <div class="modal small">
+  <div class="modal small" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" tabindex="-1">
     <header>Keyboard shortcuts <button class="btn icon ghost" data-close>✕</button></header>
     <div class="mbody">
       <table>
@@ -6108,20 +6148,52 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   /* ---------------- toast & confirm ---------------- */
-  function toast(msg, type) {
+  function toast(msg, type, ms = 3400) {
     const d = document.createElement("div");
     d.className = "toast" + (type ? " " + type : "");
     d.textContent = msg;
     $("#toasts").appendChild(d);
-    setTimeout(() => d.classList.add("out"), 3400);
-    setTimeout(() => d.remove(), 3800);
+    setTimeout(() => d.classList.add("out"), ms);
+    setTimeout(() => d.remove(), ms + 400);
+  }
+
+  /* ---------------- dialog plumbing ----------------
+     The overlays are real dialogs: focus moves in, Tab stays inside,
+     Esc cancels, and focus returns to whatever opened them. */
+  function ovFocusables(ov) {
+    return [...ov.querySelectorAll("button, [href], input, select, textarea")]
+      .filter(el => !el.disabled && el.offsetWidth > 0);
+  }
+  function openOv(ov, onCancel) {
+    ov.__cancel = onCancel || null;
+    ov.__restore = document.activeElement;
+    ov.classList.add("open");
+    const modal = ov.querySelector(".modal");
+    (ovFocusables(modal)[0] || modal).focus();
+    ov.__trap = e => {
+      if (e.key !== "Tab") return;
+      const f = ovFocusables(modal);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    ov.addEventListener("keydown", ov.__trap);
+  }
+  function closeOv(ov) {
+    ov.classList.remove("open");
+    if (ov.__trap) { ov.removeEventListener("keydown", ov.__trap); ov.__trap = null; }
+    ov.__cancel = null;
+    const r = ov.__restore; ov.__restore = null;
+    if (r && r.focus && document.contains(r)) r.focus();
   }
   function confirmModal(title, body) {
     return new Promise(res => {
       $("#cfTitle").textContent = title;
       $("#cfBody").textContent = body;
-      $("#confirmOverlay").classList.add("open");
-      const done = v => { $("#confirmOverlay").classList.remove("open"); $("#cfYes").onclick = $("#cfNo").onclick = null; res(v); };
+      const ov = $("#confirmOverlay");
+      const done = v => { closeOv(ov); $("#cfYes").onclick = $("#cfNo").onclick = null; res(v); };
+      openOv(ov, () => done(false));
       $("#cfYes").onclick = () => done(true);
       $("#cfNo").onclick = () => done(false);
     });
@@ -6239,6 +6311,18 @@ Land the piece: return to the opening image or question and say what it means no
   }
   Paged.registerHandlers(FootnoteFix);
 
+  /* ---------------- composing ticker ----------------
+     While the press runs, the instrument cluster reads the page being
+     set — truthful progress in the room's own language. doRender's
+     final "N pages" overwrites it the moment the flow completes. */
+  class ComposeTicker extends Paged.Handler {
+    afterPageLayout(pageElement, page) {
+      const n = page && typeof page.position === "number" ? page.position + 1 : null;
+      if (n) $("#pgInfo").textContent = "p. " + n + "…";
+    }
+  }
+  Paged.registerHandlers(ComposeTicker);
+
   /* ---------------- rendering ---------------- */
   function scheduleRender() {
     clearTimeout(renderTimer);
@@ -6339,7 +6423,7 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [key, face] of Object.entries(Engine.FACES)) {
       h += `<option value="${kind === "settings" ? key : face.name}">${face.label}</option>`;
     }
-    h += `</optgroup><optgroup label="Word fonts — this device, named in the .docx">`;
+    h += `</optgroup><optgroup label="Word fonts — exact in Word; preview needs it on this device">`;
     for (const [name] of Engine.WORD_CATALOG) {
       const miss = fontInstalled(name) ? "" : " · not on this device";
       h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
@@ -6374,7 +6458,11 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [id, k] of Object.entries(SELECTS)) $("#" + id).value = state.settings[k];
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
-    $$(".sw").forEach(sw => sw.classList.toggle("on", sw.dataset.c === state.settings.accent));
+    $$(".sw").forEach(sw => {
+      const on = sw.dataset.c === state.settings.accent;
+      sw.classList.toggle("on", on);
+      sw.setAttribute("aria-pressed", String(on));
+    });
     updateDocTitle();
   }
 
@@ -6677,16 +6765,27 @@ Land the piece: return to the opening image or question and say what it means no
     };
     const closeBoth = () => { hlMenu.style.display = "none"; fcMenu.style.display = "none"; };
     $("#hlGrid").innerHTML = Object.entries(Engine.HL_COLORS).map(([k, v]) =>
-      `<div class="pm-sw" data-k="${k}" title="${k}" style="background:#${v}"></div>`).join("");
+      `<button type="button" class="pm-sw" data-k="${k}" title="${k}" aria-label="Highlight: ${k}" style="background:#${v}"></button>`).join("");
     const FC = ["#c00000", "#e36c09", "#bf8f00", "#1a7f37", "#0f766e", "#2563eb", "#1f3a5f", "#6d28d9", "#c026d3", "#64748b", "#111827", "#000000"];
-    $("#fcGrid").innerHTML = FC.map(c => `<div class="pm-sw" data-c="${c}" title="${c}" style="background:${c}"></div>`).join("");
-    $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openAt(hlMenu, e.currentTarget); };
-    $("#tbFc").onclick = e => { e.stopPropagation(); hlMenu.style.display = "none"; openAt(fcMenu, e.currentTarget); };
+    const FC_NAMES = ["dark red", "orange", "dark yellow", "green", "teal", "blue", "navy", "violet", "magenta", "slate", "ink", "black"];
+    $("#fcGrid").innerHTML = FC.map((c, i) =>
+      `<button type="button" class="pm-sw" data-c="${c}" title="${FC_NAMES[i]}" aria-label="Text colour: ${FC_NAMES[i]}" style="background:${c}"></button>`).join("");
+    /* opening from the keyboard lands on the first swatch; Esc hands focus back */
+    const openMenu = (menu, btn) => { openAt(menu, btn); const f = menu.querySelector(".pm-sw"); if (f) f.focus(); };
+    $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openMenu(hlMenu, e.currentTarget); };
+    $("#tbFc").onclick = e => { e.stopPropagation(); hlMenu.style.display = "none"; openMenu(fcMenu, e.currentTarget); };
     $("#hlGrid").onclick = e => { const k = e.target.dataset.k; if (!k) return; closeBoth(); applyHl(k); };
     $("#fcGrid").onclick = e => { const c = e.target.dataset.c; if (!c) return; closeBoth(); applyColor(c); };
     $("#fcCustom").addEventListener("change", e => { closeBoth(); applyColor(e.target.value); });
     document.addEventListener("click", e => {
       if (!e.target.closest(".popmenu") && !e.target.closest("#tbHl") && !e.target.closest("#tbFc")) closeBoth();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Escape") return;
+      const wasHl = hlMenu.style.display === "block", wasFc = fcMenu.style.display === "block";
+      if (!wasHl && !wasFc) return;
+      closeBoth();
+      (wasHl ? $("#tbHl") : $("#tbFc")).focus();
     });
     /* Selection typeface / size — the select snaps back to its placeholder after use. */
     $("#tbFont").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) applyFont(v); });
@@ -6800,12 +6899,12 @@ Land the piece: return to the opening image or question and say what it means no
     return new Promise(res => {
       const ov = $("#pdfChoiceOverlay");
       $("#pcTitle").textContent = name;
-      ov.classList.add("open");
       const done = v => {
-        ov.classList.remove("open");
+        closeOv(ov);
         $("#pcEdit").onclick = $("#pcConvert").onclick = $("#pcCancel").onclick = null;
         res(v);
       };
+      openOv(ov, () => done(null));
       $("#pcEdit").onclick = () => done("edit");
       $("#pcConvert").onclick = () => done("convert");
       $("#pcCancel").onclick = () => done(null);
@@ -6845,7 +6944,7 @@ Land the piece: return to the opening image or question and say what it means no
       toast(`Imported ${f.name} — now fully editable`);
     } catch (err) {
       console.error("[DocForge] import failed", err);
-      toast(err && err.message ? err.message : "Import failed — check the console", "warn");
+      toast(err && err.message ? err.message : "Couldn't read that file — re-save it and try importing again", "warn");
     }
   }
 
@@ -6880,7 +6979,7 @@ Land the piece: return to the opening image or question and say what it means no
         toast("Edited PDF downloaded — original layout intact underneath");
       } catch (e) {
         console.error("[DocForge] pdf edit export failed", e);
-        toast("PDF export failed — check the console", "warn");
+        toast("PDF export failed — your edits are still here; try again", "warn");
       }
       btn.disabled = false; btn.classList.remove("busy");
       btn.innerHTML = label;
@@ -6892,7 +6991,7 @@ Land the piece: return to the opening image or question and say what it means no
   async function exportPdf() {
     if (inPdfMode()) { toast("You're editing a PDF — use its Export button, or ← Studio to go back", "warn"); return; }
     await ensureFresh();
-    toast("Choose “Save as PDF” in the print dialog");
+    toast("In the print dialog: destination “Save as PDF” · untick “Headers and footers”", null, 8000);
     setTimeout(() => { try { window.print(); } catch { toast("Printing is blocked here — open this file directly in Chrome/Edge", "warn"); } }, 350);
   }
   async function exportDocx() {
@@ -6910,7 +7009,7 @@ Land the piece: return to the opening image or question and say what it means no
       toast("Word file downloaded — click “Yes” if Word asks to update fields");
     } catch (e) {
       console.error("[DocForge] docx failed", e);
-      toast("Word export failed — check the console", "warn");
+      toast("Word export failed — nothing was lost; try again", "warn");
     }
     btn.disabled = false;
     btn.classList.remove("busy");
@@ -6982,9 +7081,15 @@ Land the piece: return to the opening image or question and say what it means no
     const next = editor.value.replace(re, $("#replInput").value);
     if (next === editor.value) return;
     const n = (editor.value.match(re) || []).length;
-    editor.value = next;
-    state.source = next; markDirty(); scheduleRender();
-    toast(`Replaced ${n} occurrence${n === 1 ? "" : "s"}`);
+    /* execCommand("insertText") is the one edit path Chromium records in
+       the textarea's native undo stack — setRangeText and .value do not */
+    editor.focus();
+    editor.setSelectionRange(0, editor.value.length);
+    let undoable = false;
+    try { undoable = document.execCommand(next ? "insertText" : "delete", false, next); } catch {}
+    if (!undoable) editor.setRangeText(next, 0, editor.value.length, "end");
+    state.source = editor.value; markDirty(); scheduleRender();
+    toast(`Replaced ${n} occurrence${n === 1 ? "" : "s"}` + (undoable ? " — Ctrl+Z undoes" : ""));
     findCount();
   }
 
@@ -7129,7 +7234,7 @@ Land the piece: return to the opening image or question and say what it means no
     const warns = lintSource(state.source);
     const badge = $("#lintBadge"), panel = $("#lintPanel");
     badge.hidden = !warns.length;
-    badge.textContent = warns.length === 1 ? "1 check" : warns.length + " checks";
+    badge.textContent = warns.length === 1 ? "1 warning" : warns.length + " warnings";
     if (!warns.length) { panel.hidden = true; return; }
     panel.innerHTML = warns.slice(0, 40).map(([line, msg]) =>
       `<button class="lint-item" data-line="${line}"><span class="ln">line ${line}</span>${Engine.esc(msg)}</button>`).join("");
@@ -7166,8 +7271,8 @@ Land the piece: return to the opening image or question and say what it means no
       const open = $("#settings").classList.toggle("open");
       $("#btnSettings").setAttribute("aria-expanded", String(open));
     };
-    $("#btnHelp").onclick = () => $("#helpOverlay").classList.add("open");
-    $$("[data-close]").forEach(b => b.onclick = () => b.closest(".overlay").classList.remove("open"));
+    $("#btnHelp").onclick = () => openOv($("#helpOverlay"));
+    $$("[data-close]").forEach(b => b.onclick = () => closeOv(b.closest(".overlay")));
     $("#btnSaveProj").onclick = saveProject;
     $("#btnOpen").onclick = () => $("#projInput").click();
     $("#btnNew").onclick = async () => { if (await confirmModal("Start a new document?", "The editor will be replaced with a blank document. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) applyTemplate("blank"); };
@@ -7185,6 +7290,8 @@ Land the piece: return to the opening image or question and say what it means no
       tplMenu.style.left = Math.min(r.left, innerWidth - tplMenu.offsetWidth - 8) + "px";
       tplMenu.style.top = (r.bottom + 6) + "px";
       tplBtn.setAttribute("aria-expanded", "true");
+      const first = tplMenu.querySelector(".tpl-item");
+      if (first) first.focus();
     });
     tplMenu.addEventListener("click", async e => {
       const item = e.target.closest(".tpl-item");
@@ -7204,6 +7311,19 @@ Land the piece: return to the opening image or question and say what it means no
       $("#sTitle").select();
     };
     $$("#toolbar .tb[data-act]").forEach(b => b.addEventListener("click", () => TOOL_ACTS[b.dataset.act]?.()));
+
+    /* toolbar rows scroll instead of wrapping; a fade on the clipped edge
+       says "more plates this way" (drawer open/close changes the width,
+       so a ResizeObserver keeps the cue honest) */
+    $$(".tbrow").forEach(row => {
+      const upd = () => {
+        row.classList.toggle("scroll-l", row.scrollLeft > 4);
+        row.classList.toggle("scroll-r", row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+      };
+      row.addEventListener("scroll", upd, { passive: true });
+      new ResizeObserver(upd).observe(row);
+      upd();
+    });
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };
     $("#zoomFit").onclick = () => { zoomMode = "fit"; applyZoom(); };
@@ -7265,8 +7385,15 @@ Land the piece: return to the opening image or question and say what it means no
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
       if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
       if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
-      if (mod && e.key === "/") { e.preventDefault(); $("#keysOverlay").classList.toggle("open"); }
-      if (e.key === "Escape") $$(".overlay.open").forEach(o => o.classList.remove("open"));
+      if (mod && e.key === "/") {
+        e.preventDefault();
+        const ov = $("#keysOverlay");
+        ov.classList.contains("open") ? closeOv(ov) : openOv(ov);
+      }
+      if (e.key === "Escape") {
+        $$(".overlay.open").forEach(o => o.__cancel ? o.__cancel() : closeOv(o));
+        if (tplMenu.style.display === "block") { closeTpl(); tplBtn.focus(); }
+      }
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
 
