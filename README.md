@@ -8,7 +8,7 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 
 - **Live paginated preview** — see actual A4/Letter pages, page numbers and all, as you type
 - **Markdown + toolbar editor** — `# headings`, `**bold**`, lists, tables, quotes, code
-- **Real typography** — three embedded open-licence typefaces (see *Fonts* below) used identically in the PDF and the Word file, so the two exports look like the same document on any machine; curly quotes, en dashes and non-breaking spaces applied automatically; widow/orphan control; headings never stranded at a page foot; long tables repeat their header row on every page in both formats
+- **Real typography** — seven embedded open-licence typefaces (see *Fonts* below) used identically in the PDF and the Word file, so the two exports look like the same document on any machine; curly quotes, en dashes and non-breaking spaces applied automatically; widow/orphan control; balanced headings and no orphan words on a paragraph's last line (`text-wrap`); tuned hyphenation in justified text; headings never stranded at a page foot; long tables repeat their header row on every page in both formats
 - **Professional page numbering** — the cover is unnumbered, the contents page runs in romans (i, ii…), and the body starts at "Page 1 of N" where N counts body pages only; identical scheme in Word
 - **Footnotes** — `[^1]` calls with `[^1]: text` definitions; placed at the foot of the correct page in the PDF and exported as real Word footnotes
 - **Citations** — `[@key]` in text, `[@key]: Full entry` definitions, `[references]` for the list; numeric `[1]` (IEEE-like) or Author–year (APA-like) style, chosen in Settings; locators like `[@key, p. 33]` supported
@@ -27,7 +27,7 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 - **Editor comforts** — outline navigator (☰ above the preview), find & replace (Ctrl+F / Ctrl+H), pasted Word/web content auto-converted to Markdown, a gentle structure checker that flags anything that would break the export, and a light/dark switch for the app chrome (the document always prints on white)
 - **Export PDF** — via the browser print engine (choose *Save as PDF*), margins and headers pre-configured; text stays selectable and searchable
 - **Export Word** — a real `.docx` with the same fonts embedded, styled headings, cover, tables with true column widths, figures, footnotes, equations and an auto-updating TOC field
-- **Templates** — assignment/academic report, business proposal, project report, formal letter, article
+- **Templates** — each one a working specimen, not a bare skeleton: the **assignment/academic report** opens with a ruled cover and ships live citations, a captioned results table, numbered figures with cross-references, a set equation and a footnote; the **business proposal** carries captioned scope/timeline/pricing tables and a two-column signature acceptance block; the **project report** leads with an at-a-glance status slip and closes on an owner-and-date actions table; the **formal letter** opens on a small-caps letterhead with a right-set date and an enclosures line; plus an **article/essay** and a guided **quick tour**
 - **Autosave** in the browser + `.docforge.json` project files (images included) you can reopen anywhere
 
 ## Syntax cheat-sheet
@@ -61,7 +61,7 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 
 The app embeds subsets of seven families — **Source Sans 3**, **Source Serif 4**, **Source Code Pro**, **Inter**, **Montserrat**, **EB Garamond** and **Crimson Pro** (all SIL Open Font License 1.1 — licence texts in `fonts/`). Pick the heading and body faces independently in Settings, or leave them on the theme's own pairing. The same TTF bytes serve the preview, the printed PDF and the `.docx` (only the families a document actually uses are embedded in its package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
 
-Below the embedded faces, the pickers carry the whole classic **Word font menu** — ~60 families from Aptos and Calibri through Garamond, Comic Sans MS and Edwardian Script (plus a *Custom family…* entry for anything else installed). These are proprietary, so they cannot travel inside the file: the preview uses the locally installed font and the `.docx` names the family, letting Word supply its own copy — exact parity on any machine with Office; a machine without the font sees a same-class fallback. Fonts not installed on the current device are labelled as such in the menu. The toolbar's typeface and size boxes apply a face to just the selected text via `[text]{font="…"}`.
+Below the embedded faces, the pickers carry the whole classic **Word font menu** — ~190 families, sorted into specimen-book groups (*sans serif*, *serif*, *monospace*, *script & handwriting*, *display & titling*): everything from Aptos, Calibri and the Microsoft 365 cloud fonts (Bierstadt, Grandview, Seaford, Skeena, Tenorite) through Garamond, Bodoni MT, Rockwell and the Sitka opticals to Edwardian Script, Old English Text and Stencil — every name verified against Word's own font list, plus a *Custom family…* entry for anything else installed. These are proprietary, so they cannot travel inside the file: the preview uses the locally installed font and the `.docx` names the family, letting Word supply its own copy — exact parity on any machine with Office; a machine without the font sees a same-class fallback. Fonts not installed on the current device are labelled as such in the menu. The toolbar's typeface and size boxes apply a face to just the selected text via `[text]{font="…"}`.
 
 ## Page borders
 
@@ -91,7 +91,7 @@ node build.mjs     # → dist/DocForge.html (single self-contained file, ~6 MB)
 
 The import libraries (mammoth for `.docx`, pdf.js for `.pdf`) ride inside the file as string constants and are eval'd on first use, so they cost nothing at startup and the file still works fully offline. pdf.js runs on the main thread via its fake-worker path — no real Worker, no network.
 
-Source lives in `src/` (`index.html`, `app.css`, `doc.css`, `js/engine.js`, `js/mathml-omml.js`, `js/docx-fonts.js`, `js/docx-export.js`, `js/main.js`). The build inlines everything — libraries, fonts, maths — into one file.
+Source lives in `src/` (`index.html`, `app.css`, `doc.css`, `js/engine.js`, `js/mathml-omml.js`, `js/docx-fonts.js`, `js/docx-export.js`, `js/docx-import.js`, `js/pdf-import.js`, `js/pdf-editor.js`, `js/main.js`). The build inlines everything — libraries, fonts, maths — into one file.
 
 QA lives in `qa/`: `node qa/visual.mjs` renders a torture document in every theme, exports both formats, converts the `.docx` through real Word (Windows), rasterises both PDFs and writes a side-by-side contact sheet; `node qa/tier4.mjs` exercises the editor features headlessly.
 
