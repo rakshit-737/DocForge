@@ -1533,6 +1533,7 @@ Land the piece: return to the opening image or question and say what it means no
       row.addEventListener("scroll", upd, { passive: true });
       new ResizeObserver(upd).observe(row);
       upd();
+      requestAnimationFrame(upd); /* fonts/layout can shift widths after boot */
     });
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };

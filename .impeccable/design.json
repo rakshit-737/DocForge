@@ -1,0 +1,815 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T19:47:45.209Z",
+  "title": "Design System: DocForge",
+  "extensions": {
+    "colorMeta": {
+      "brass": {
+        "role": "primary",
+        "displayName": "Brass",
+        "canonical": "oklch(70.894% 0.112 75.965)",
+        "tonalRamp": [
+          "oklch(15% 0.112 75.965)",
+          "oklch(26.429% 0.112 75.965)",
+          "oklch(37.857% 0.112 75.965)",
+          "oklch(49.286% 0.112 75.965)",
+          "oklch(60.714% 0.112 75.965)",
+          "oklch(72.143% 0.112 75.965)",
+          "oklch(83.571% 0.112 75.965)",
+          "oklch(95% 0.112 75.965)"
+        ]
+      },
+      "brass-bright": {
+        "role": "primary",
+        "displayName": "Bright Brass",
+        "canonical": "oklch(78.998% 0.105 77.522)",
+        "tonalRamp": [
+          "oklch(15% 0.105 77.522)",
+          "oklch(26.429% 0.105 77.522)",
+          "oklch(37.857% 0.105 77.522)",
+          "oklch(49.286% 0.105 77.522)",
+          "oklch(60.714% 0.105 77.522)",
+          "oklch(72.143% 0.105 77.522)",
+          "oklch(83.571% 0.105 77.522)",
+          "oklch(95% 0.105 77.522)"
+        ]
+      },
+      "brass-engraving": {
+        "role": "primary",
+        "displayName": "Brass Engraving",
+        "canonical": "oklch(18.769% 0.024 78.578)",
+        "tonalRamp": [
+          "oklch(15% 0.024 78.578)",
+          "oklch(26.429% 0.024 78.578)",
+          "oklch(37.857% 0.024 78.578)",
+          "oklch(49.286% 0.024 78.578)",
+          "oklch(60.714% 0.024 78.578)",
+          "oklch(72.143% 0.024 78.578)",
+          "oklch(83.571% 0.024 78.578)",
+          "oklch(95% 0.024 78.578)"
+        ]
+      },
+      "pressroom-ink": {
+        "role": "neutral",
+        "displayName": "Pressroom Ink",
+        "canonical": "oklch(18.306% 0.009 84.571)",
+        "tonalRamp": [
+          "oklch(15% 0.009 84.571)",
+          "oklch(26.429% 0.009 84.571)",
+          "oklch(37.857% 0.009 84.571)",
+          "oklch(49.286% 0.009 84.571)",
+          "oklch(60.714% 0.009 84.571)",
+          "oklch(72.143% 0.009 84.571)",
+          "oklch(83.571% 0.009 84.571)",
+          "oklch(95% 0.009 84.571)"
+        ]
+      },
+      "iron-surface": {
+        "role": "neutral",
+        "displayName": "Iron Surface",
+        "canonical": "oklch(21.069% 0.011 80.557)",
+        "tonalRamp": [
+          "oklch(15% 0.011 80.557)",
+          "oklch(26.429% 0.011 80.557)",
+          "oklch(37.857% 0.011 80.557)",
+          "oklch(49.286% 0.011 80.557)",
+          "oklch(60.714% 0.011 80.557)",
+          "oklch(72.143% 0.011 80.557)",
+          "oklch(83.571% 0.011 80.557)",
+          "oklch(95% 0.011 80.557)"
+        ]
+      },
+      "raised-plate": {
+        "role": "neutral",
+        "displayName": "Raised Plate",
+        "canonical": "oklch(24.474% 0.012 84.566)",
+        "tonalRamp": [
+          "oklch(15% 0.012 84.566)",
+          "oklch(26.429% 0.012 84.566)",
+          "oklch(37.857% 0.012 84.566)",
+          "oklch(49.286% 0.012 84.566)",
+          "oklch(60.714% 0.012 84.566)",
+          "oklch(72.143% 0.012 84.566)",
+          "oklch(83.571% 0.012 84.566)",
+          "oklch(95% 0.012 84.566)"
+        ]
+      },
+      "seam": {
+        "role": "neutral",
+        "displayName": "Seam",
+        "canonical": "oklch(29.953% 0.017 82.264)",
+        "tonalRamp": [
+          "oklch(15% 0.017 82.264)",
+          "oklch(26.429% 0.017 82.264)",
+          "oklch(37.857% 0.017 82.264)",
+          "oklch(49.286% 0.017 82.264)",
+          "oklch(60.714% 0.017 82.264)",
+          "oklch(72.143% 0.017 82.264)",
+          "oklch(83.571% 0.017 82.264)",
+          "oklch(95% 0.017 82.264)"
+        ]
+      },
+      "rag-paper": {
+        "role": "neutral",
+        "displayName": "Rag Paper",
+        "canonical": "oklch(92.386% 0.019 83.064)",
+        "tonalRamp": [
+          "oklch(15% 0.019 83.064)",
+          "oklch(26.429% 0.019 83.064)",
+          "oklch(37.857% 0.019 83.064)",
+          "oklch(49.286% 0.019 83.064)",
+          "oklch(60.714% 0.019 83.064)",
+          "oklch(72.143% 0.019 83.064)",
+          "oklch(83.571% 0.019 83.064)",
+          "oklch(95% 0.019 83.064)"
+        ]
+      },
+      "faded-ink": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "oklch(73.095% 0.027 84.588)",
+        "tonalRamp": [
+          "oklch(15% 0.027 84.588)",
+          "oklch(26.429% 0.027 84.588)",
+          "oklch(37.857% 0.027 84.588)",
+          "oklch(49.286% 0.027 84.588)",
+          "oklch(60.714% 0.027 84.588)",
+          "oklch(72.143% 0.027 84.588)",
+          "oklch(83.571% 0.027 84.588)",
+          "oklch(95% 0.027 84.588)"
+        ]
+      },
+      "ghost-ink": {
+        "role": "neutral",
+        "displayName": "Ghost Ink",
+        "canonical": "oklch(61.206% 0.022 84.589)",
+        "tonalRamp": [
+          "oklch(15% 0.022 84.589)",
+          "oklch(26.429% 0.022 84.589)",
+          "oklch(37.857% 0.022 84.589)",
+          "oklch(49.286% 0.022 84.589)",
+          "oklch(60.714% 0.022 84.589)",
+          "oklch(72.143% 0.022 84.589)",
+          "oklch(83.571% 0.022 84.589)",
+          "oklch(95% 0.022 84.589)"
+        ]
+      },
+      "proof-felt": {
+        "role": "neutral",
+        "displayName": "Proof Felt",
+        "canonical": "oklch(26.457% 0.014 145.167)",
+        "tonalRamp": [
+          "oklch(15% 0.014 145.167)",
+          "oklch(26.429% 0.014 145.167)",
+          "oklch(37.857% 0.014 145.167)",
+          "oklch(49.286% 0.014 145.167)",
+          "oklch(60.714% 0.014 145.167)",
+          "oklch(72.143% 0.014 145.167)",
+          "oklch(83.571% 0.014 145.167)",
+          "oklch(95% 0.014 145.167)"
+        ]
+      },
+      "walnut": {
+        "role": "neutral",
+        "displayName": "Oiled Walnut",
+        "canonical": "oklch(29.238% 0.034 79.163)",
+        "tonalRamp": [
+          "oklch(15% 0.034 79.163)",
+          "oklch(26.429% 0.034 79.163)",
+          "oklch(37.857% 0.034 79.163)",
+          "oklch(49.286% 0.034 79.163)",
+          "oklch(60.714% 0.034 79.163)",
+          "oklch(72.143% 0.034 79.163)",
+          "oklch(83.571% 0.034 79.163)",
+          "oklch(95% 0.034 79.163)"
+        ]
+      },
+      "walnut-raised": {
+        "role": "neutral",
+        "displayName": "Raised Walnut",
+        "canonical": "oklch(34.338% 0.036 64.447)",
+        "tonalRamp": [
+          "oklch(15% 0.036 64.447)",
+          "oklch(26.429% 0.036 64.447)",
+          "oklch(37.857% 0.036 64.447)",
+          "oklch(49.286% 0.036 64.447)",
+          "oklch(60.714% 0.036 64.447)",
+          "oklch(72.143% 0.036 64.447)",
+          "oklch(83.571% 0.036 64.447)",
+          "oklch(95% 0.036 64.447)"
+        ]
+      },
+      "proof-green": {
+        "role": "status",
+        "displayName": "Proof Green",
+        "canonical": "oklch(66.145% 0.104 131.719)",
+        "tonalRamp": [
+          "oklch(15% 0.104 131.719)",
+          "oklch(26.429% 0.104 131.719)",
+          "oklch(37.857% 0.104 131.719)",
+          "oklch(49.286% 0.104 131.719)",
+          "oklch(60.714% 0.104 131.719)",
+          "oklch(72.143% 0.104 131.719)",
+          "oklch(83.571% 0.104 131.719)",
+          "oklch(95% 0.104 131.719)"
+        ]
+      },
+      "amber-warn": {
+        "role": "status",
+        "displayName": "Amber",
+        "canonical": "oklch(68.222% 0.122 69.365)",
+        "tonalRamp": [
+          "oklch(15% 0.122 69.365)",
+          "oklch(26.429% 0.122 69.365)",
+          "oklch(37.857% 0.122 69.365)",
+          "oklch(49.286% 0.122 69.365)",
+          "oklch(60.714% 0.122 69.365)",
+          "oklch(72.143% 0.122 69.365)",
+          "oklch(83.571% 0.122 69.365)",
+          "oklch(95% 0.122 69.365)"
+        ]
+      },
+      "rust-danger": {
+        "role": "status",
+        "displayName": "Rust",
+        "canonical": "oklch(57.51% 0.144 27.651)",
+        "tonalRamp": [
+          "oklch(15% 0.144 27.651)",
+          "oklch(26.429% 0.144 27.651)",
+          "oklch(37.857% 0.144 27.651)",
+          "oklch(49.286% 0.144 27.651)",
+          "oklch(60.714% 0.144 27.651)",
+          "oklch(72.143% 0.144 27.651)",
+          "oklch(83.571% 0.144 27.651)",
+          "oklch(95% 0.144 27.651)"
+        ]
+      },
+      "brass-daylit": {
+        "role": "primary",
+        "displayName": "Daylit Brass",
+        "canonical": "oklch(60.569% 0.103 74.481)",
+        "tonalRamp": [
+          "oklch(15% 0.103 74.481)",
+          "oklch(26.429% 0.103 74.481)",
+          "oklch(37.857% 0.103 74.481)",
+          "oklch(49.286% 0.103 74.481)",
+          "oklch(60.714% 0.103 74.481)",
+          "oklch(72.143% 0.103 74.481)",
+          "oklch(83.571% 0.103 74.481)",
+          "oklch(95% 0.103 74.481)"
+        ]
+      },
+      "brass-daylit-deep": {
+        "role": "primary",
+        "displayName": "Deep Daylit Brass",
+        "canonical": "oklch(53.058% 0.095 74.726)",
+        "tonalRamp": [
+          "oklch(15% 0.095 74.726)",
+          "oklch(26.429% 0.095 74.726)",
+          "oklch(37.857% 0.095 74.726)",
+          "oklch(49.286% 0.095 74.726)",
+          "oklch(60.714% 0.095 74.726)",
+          "oklch(72.143% 0.095 74.726)",
+          "oklch(83.571% 0.095 74.726)",
+          "oklch(95% 0.095 74.726)"
+        ]
+      },
+      "plaster": {
+        "role": "neutral",
+        "displayName": "Warm Plaster",
+        "canonical": "oklch(93.518% 0.018 86.148)",
+        "tonalRamp": [
+          "oklch(15% 0.018 86.148)",
+          "oklch(26.429% 0.018 86.148)",
+          "oklch(37.857% 0.018 86.148)",
+          "oklch(49.286% 0.018 86.148)",
+          "oklch(60.714% 0.018 86.148)",
+          "oklch(72.143% 0.018 86.148)",
+          "oklch(83.571% 0.018 86.148)",
+          "oklch(95% 0.018 86.148)"
+        ]
+      },
+      "plaster-bright": {
+        "role": "neutral",
+        "displayName": "Bright Plaster",
+        "canonical": "oklch(96.203% 0.016 86.425)",
+        "tonalRamp": [
+          "oklch(15% 0.016 86.425)",
+          "oklch(26.429% 0.016 86.425)",
+          "oklch(37.857% 0.016 86.425)",
+          "oklch(49.286% 0.016 86.425)",
+          "oklch(60.714% 0.016 86.425)",
+          "oklch(72.143% 0.016 86.425)",
+          "oklch(83.571% 0.016 86.425)",
+          "oklch(95% 0.016 86.425)"
+        ]
+      },
+      "plaster-sheet": {
+        "role": "neutral",
+        "displayName": "Plaster Sheet",
+        "canonical": "oklch(99.366% 0.009 93.565)",
+        "tonalRamp": [
+          "oklch(15% 0.009 93.565)",
+          "oklch(26.429% 0.009 93.565)",
+          "oklch(37.857% 0.009 93.565)",
+          "oklch(49.286% 0.009 93.565)",
+          "oklch(60.714% 0.009 93.565)",
+          "oklch(72.143% 0.009 93.565)",
+          "oklch(83.571% 0.009 93.565)",
+          "oklch(95% 0.009 93.565)"
+        ]
+      },
+      "daylit-seam": {
+        "role": "neutral",
+        "displayName": "Daylit Seam",
+        "canonical": "oklch(85.946% 0.029 86.651)",
+        "tonalRamp": [
+          "oklch(15% 0.029 86.651)",
+          "oklch(26.429% 0.029 86.651)",
+          "oklch(37.857% 0.029 86.651)",
+          "oklch(49.286% 0.029 86.651)",
+          "oklch(60.714% 0.029 86.651)",
+          "oklch(72.143% 0.029 86.651)",
+          "oklch(83.571% 0.029 86.651)",
+          "oklch(95% 0.029 86.651)"
+        ]
+      },
+      "daylit-ink": {
+        "role": "neutral",
+        "displayName": "Daylit Ink",
+        "canonical": "oklch(26.702% 0.018 82.203)",
+        "tonalRamp": [
+          "oklch(15% 0.018 82.203)",
+          "oklch(26.429% 0.018 82.203)",
+          "oklch(37.857% 0.018 82.203)",
+          "oklch(49.286% 0.018 82.203)",
+          "oklch(60.714% 0.018 82.203)",
+          "oklch(72.143% 0.018 82.203)",
+          "oklch(83.571% 0.018 82.203)",
+          "oklch(95% 0.018 82.203)"
+        ]
+      },
+      "daylit-ink-faded": {
+        "role": "neutral",
+        "displayName": "Faded Daylit Ink",
+        "canonical": "oklch(46.256% 0.025 85.943)",
+        "tonalRamp": [
+          "oklch(15% 0.025 85.943)",
+          "oklch(26.429% 0.025 85.943)",
+          "oklch(37.857% 0.025 85.943)",
+          "oklch(49.286% 0.025 85.943)",
+          "oklch(60.714% 0.025 85.943)",
+          "oklch(72.143% 0.025 85.943)",
+          "oklch(83.571% 0.025 85.943)",
+          "oklch(95% 0.025 85.943)"
+        ]
+      },
+      "daylit-ink-ghost": {
+        "role": "neutral",
+        "displayName": "Ghost Daylit Ink",
+        "canonical": "oklch(50.245% 0.026 84.553)",
+        "tonalRamp": [
+          "oklch(15% 0.026 84.553)",
+          "oklch(26.429% 0.026 84.553)",
+          "oklch(37.857% 0.026 84.553)",
+          "oklch(49.286% 0.026 84.553)",
+          "oklch(60.714% 0.026 84.553)",
+          "oklch(72.143% 0.026 84.553)",
+          "oklch(83.571% 0.026 84.553)",
+          "oklch(95% 0.026 84.553)"
+        ]
+      },
+      "daylit-felt": {
+        "role": "neutral",
+        "displayName": "Daylit Felt",
+        "canonical": "oklch(84.128% 0.02 119.808)",
+        "tonalRamp": [
+          "oklch(15% 0.02 119.808)",
+          "oklch(26.429% 0.02 119.808)",
+          "oklch(37.857% 0.02 119.808)",
+          "oklch(49.286% 0.02 119.808)",
+          "oklch(60.714% 0.02 119.808)",
+          "oklch(72.143% 0.02 119.808)",
+          "oklch(83.571% 0.02 119.808)",
+          "oklch(95% 0.02 119.808)"
+        ]
+      },
+      "pale-oak": {
+        "role": "neutral",
+        "displayName": "Pale Oak",
+        "canonical": "oklch(87.645% 0.039 85.341)",
+        "tonalRamp": [
+          "oklch(15% 0.039 85.341)",
+          "oklch(26.429% 0.039 85.341)",
+          "oklch(37.857% 0.039 85.341)",
+          "oklch(49.286% 0.039 85.341)",
+          "oklch(60.714% 0.039 85.341)",
+          "oklch(72.143% 0.039 85.341)",
+          "oklch(83.571% 0.039 85.341)",
+          "oklch(95% 0.039 85.341)"
+        ]
+      },
+      "pale-oak-raised": {
+        "role": "neutral",
+        "displayName": "Raised Pale Oak",
+        "canonical": "oklch(83.687% 0.046 85.853)",
+        "tonalRamp": [
+          "oklch(15% 0.046 85.853)",
+          "oklch(26.429% 0.046 85.853)",
+          "oklch(37.857% 0.046 85.853)",
+          "oklch(49.286% 0.046 85.853)",
+          "oklch(60.714% 0.046 85.853)",
+          "oklch(72.143% 0.046 85.853)",
+          "oklch(83.571% 0.046 85.853)",
+          "oklch(95% 0.046 85.853)"
+        ]
+      },
+      "daylit-proof-green": {
+        "role": "status",
+        "displayName": "Daylit Proof Green",
+        "canonical": "oklch(54.883% 0.099 131.416)",
+        "tonalRamp": [
+          "oklch(15% 0.099 131.416)",
+          "oklch(26.429% 0.099 131.416)",
+          "oklch(37.857% 0.099 131.416)",
+          "oklch(49.286% 0.099 131.416)",
+          "oklch(60.714% 0.099 131.416)",
+          "oklch(72.143% 0.099 131.416)",
+          "oklch(83.571% 0.099 131.416)",
+          "oklch(95% 0.099 131.416)"
+        ]
+      },
+      "daylit-amber": {
+        "role": "status",
+        "displayName": "Daylit Amber",
+        "canonical": "oklch(56.897% 0.111 70.061)",
+        "tonalRamp": [
+          "oklch(15% 0.111 70.061)",
+          "oklch(26.429% 0.111 70.061)",
+          "oklch(37.857% 0.111 70.061)",
+          "oklch(49.286% 0.111 70.061)",
+          "oklch(60.714% 0.111 70.061)",
+          "oklch(72.143% 0.111 70.061)",
+          "oklch(83.571% 0.111 70.061)",
+          "oklch(95% 0.111 70.061)"
+        ]
+      },
+      "daylit-rust": {
+        "role": "status",
+        "displayName": "Daylit Rust",
+        "canonical": "oklch(49.536% 0.134 28.586)",
+        "tonalRamp": [
+          "oklch(15% 0.134 28.586)",
+          "oklch(26.429% 0.134 28.586)",
+          "oklch(37.857% 0.134 28.586)",
+          "oklch(49.286% 0.134 28.586)",
+          "oklch(60.714% 0.134 28.586)",
+          "oklch(72.143% 0.134 28.586)",
+          "oklch(83.571% 0.134 28.586)",
+          "oklch(95% 0.134 28.586)"
+        ]
+      },
+      "page-white": {
+        "role": "neutral",
+        "displayName": "Page White",
+        "canonical": "oklch(100% 0 89.876)",
+        "tonalRamp": [
+          "oklch(15% 0 89.876)",
+          "oklch(26.429% 0 89.876)",
+          "oklch(37.857% 0 89.876)",
+          "oklch(49.286% 0 89.876)",
+          "oklch(60.714% 0 89.876)",
+          "oklch(72.143% 0 89.876)",
+          "oklch(83.571% 0 89.876)",
+          "oklch(95% 0 89.876)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Garamond italic 700 — the masthead brand, the empty-state title, and the PDF bench's italic hint. Identity moments only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Garamond regular 400 (14-17px) — modal headers, help-sheet section heads, popmenu titles. Never bold, never italic."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "13px sans, 0.004em tracking — the working chrome default; field labels at 12px."
+      },
+      "data": {
+        "displayName": "Data (Mono)",
+        "purpose": "Mono 11-13.2px with tabular-nums — editor, statusbar, save state, page/zoom readouts, find count, kbd chips. Readouts carry min-width floors."
+      },
+      "label": {
+        "displayName": "Micro-Caps Label",
+        "purpose": "10.5px / 700 / uppercase / 0.14em, always brass — settings group labels only. The single micro-caps role in the chrome."
+      }
+    },
+    "shadows": [
+      {
+        "name": "recess",
+        "value": "inset 0 1px 2px rgba(0,0,0,0.35)",
+        "purpose": "A well cut into the surface: fields, selects, toggle plates, case interiors, kbd chips, instrument cluster, pressed buttons. Daylit variant: inset 0 1px 2px rgba(0,0,0,0.08)."
+      },
+      {
+        "name": "bevel-press",
+        "value": "inset 0 1px 0 var(--edge), inset 0 -1px 0 rgba(0,0,0,0.3)",
+        "purpose": "The machined block: lit top edge + seated bottom edge on every solid button. --edge = rgba(236,229,216,0.07) dark / rgba(255,255,255,0.6) daylit."
+      },
+      {
+        "name": "bevel-brass",
+        "value": "inset 0 1px 0 rgba(255,244,214,0.55), inset 0 -1px 0 rgba(0,0,0,0.3)",
+        "purpose": "The warm top-lit bevel on the brass ingot's machined face."
+      },
+      {
+        "name": "elev-m",
+        "value": "0 2px 6px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.35)",
+        "purpose": "Floating furniture: popmenus, outline/lint panels, image menu, toasts. Daylit: warm-gray 0.14/0.18 alphas."
+      },
+      {
+        "name": "elev-l",
+        "value": "0 8px 24px rgba(0,0,0,0.35), 0 32px 80px rgba(0,0,0,0.5)",
+        "purpose": "Modals and the floating settings drawer (<=1180px). Daylit: warm-gray 0.16/0.24 alphas."
+      },
+      {
+        "name": "proof-page",
+        "value": "0 1px 1px rgba(6,8,6,0.4), 0 3px 8px rgba(6,8,6,0.24), 0 18px 44px rgba(6,8,6,0.22)",
+        "purpose": "A proof resting on the felt: tight contact + soft ambient on every preview page. Daylit variant re-tuned to warm gray (52,56,44) at lower alphas."
+      },
+      {
+        "name": "grain-paper",
+        "value": "160x160 inline-SVG fractal noise tile, opacity 0.07 dark / 0.045 daylit",
+        "purpose": "Paper tooth on chrome bars (--grain over --bg/--bg2). The dark room needs more tooth for the same perceived texture."
+      },
+      {
+        "name": "grain-wood",
+        "value": "240x80 inline-SVG turbulence, baseFrequency 0.012 0.28, opacity 0.1",
+        "purpose": "Streaks stretched along the type-case (--woodgrain over every walnut well)."
+      },
+      {
+        "name": "vignette",
+        "value": "radial-gradient(120% 90% at 50% 42%, transparent 55%, var(--vig) 100%)",
+        "purpose": "The lamp over the proof-table; --vig is 6% black dark / 6% warm gray daylit, layered over --deck."
+      }
+    ],
+    "motion": [
+      {
+        "name": "dur",
+        "value": "160ms",
+        "purpose": "Feedback speed: hovers, presses, menus, toggles, drawer slide, toast pop."
+      },
+      {
+        "name": "dur2",
+        "value": "340ms",
+        "purpose": "Compositional speed: sitting down at the desk, proofs settling, mode swaps, the stamp's fade."
+      },
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.2, 0, 0, 1)",
+        "purpose": "The single easing for all named animation."
+      },
+      {
+        "name": "deskIn",
+        "value": "from { opacity: 0; transform: translateY(8px) }",
+        "purpose": "Sitting down at a table — #main on load/return, #pdfEditor on entry (dur2)."
+      },
+      {
+        "name": "proofIn",
+        "value": "from { opacity: 0; transform: translateY(5px) }",
+        "purpose": "Each freshly composed page settles onto the felt (dur2, backwards); nth-child stagger 60/120/180ms, capped at the fourth page."
+      },
+      {
+        "name": "press",
+        "value": "from { transform: scale(2.2); opacity: 0 } (0.4s)",
+        "purpose": "The autosave dot lands like an ink stamp; the word arrives under it via fade (dur2)."
+      },
+      {
+        "name": "sortSet",
+        "value": "translateY 0 / -3px cycle, 0.72s infinite, delays 0/0.12/0.24s",
+        "purpose": "The compositor's hand: three type sorts (heights 8/11/9px) picked up and set while rendering. Reduced motion leaves them standing — still a legible mark."
+      },
+      {
+        "name": "menuIn",
+        "value": "from { transform: scale(0.97) translateY(-3px); opacity: 0 }",
+        "purpose": "Popmenus unfold from their button (dur)."
+      },
+      {
+        "name": "modalIn",
+        "value": "from { transform: translateY(8px) scale(0.99); opacity: 0 }",
+        "purpose": "A sheet laid on the desk (dur); overlays use plain fade."
+      },
+      {
+        "name": "pop",
+        "value": "from { transform: translateY(8px); opacity: 0 } (0.16s)",
+        "purpose": "A proof slip laid over the work (toast entrance)."
+      },
+      {
+        "name": "toast-out",
+        "value": ".out class: 0.3s ease-in drop + fade; JS holds 3400ms, removes at +400ms",
+        "purpose": "The slip is taken away — exits are faster than entrances."
+      },
+      {
+        "name": "rise",
+        "value": "from { transform: translateY(6px); opacity: 0 }",
+        "purpose": "Laid out line by line: empty state (staggered 60/120/180ms), outline and lint panels."
+      },
+      {
+        "name": "spin",
+        "value": "rotate 360deg, 0.7s linear infinite",
+        "purpose": "The only literal spinner — the 12px currentColor ring inside a busy export button."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }",
+        "purpose": "Global, absolute kill; press-down transforms also removed. Must stay global."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "drawer-float",
+        "value": "1180px",
+        "purpose": "Settings drawer floats over the editor (elev-l) instead of squeezing it."
+      },
+      {
+        "name": "trim",
+        "value": "1024px",
+        "purpose": "Doc identity narrows to 26vw; PDF bench hint hidden."
+      },
+      {
+        "name": "stack",
+        "value": "900px",
+        "purpose": "Editor/preview stack vertically 48/52; doc-id leaves the masthead."
+      },
+      {
+        "name": "masthead-two-row",
+        "value": "720px",
+        "purpose": "Masthead composes as two rows via .tbbreak + explicit order; 16px inputs (anti-zoom); safe-area insets; button labels drop to icons."
+      },
+      {
+        "name": "phone-tight",
+        "value": "480px",
+        "purpose": "Modals 96vw/88dvh; empty-state grid two columns."
+      },
+      {
+        "name": "coarse-pointer",
+        "value": "(pointer: coarse)",
+        "purpose": "Plates grow to finger size (.tb 36x38, .btn 38, cluster 32, swatches 26); hover-only hints removed."
+      },
+      {
+        "name": "no-hover",
+        "value": "(hover: none)",
+        "purpose": "Screenshot-placeholder hint shows permanently."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Press Button",
+      "kind": "button",
+      "refersTo": "button-press",
+      "description": "The default machined-block button: lit top edge, seated bottom edge, physically presses when used.",
+      "html": "<button class=\"ds-btn\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z\"/><path d=\"M13 3v6h6\"/></svg>Word</button>",
+      "css": ".ds-btn { background: var(--bg3, #23201a); color: var(--tx, #ece5d8); font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 13px; border: 0; border-radius: 2px; height: 32px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(236,229,216,0.07), inset 0 -1px 0 rgba(0,0,0,0.3); transition: background 0.16s ease-out, color 0.16s ease-out; } .ds-btn:hover { background: var(--line, #322d24); } .ds-btn:active { transform: translateY(0.5px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); } .ds-btn:focus-visible { outline: 2px solid var(--pri, #c9974a); outline-offset: 1px; }"
+    },
+    {
+      "name": "Brass Ingot",
+      "kind": "button",
+      "refersTo": "button-brass",
+      "description": "The one primary action per surface — a machined brass block with a top-lit face and engraving-ink text.",
+      "html": "<button class=\"ds-btn-pri\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z\"/><path d=\"M13 3v6h6\"/><path d=\"M12 11.5v6.5m0 0l-2.6-2.6M12 18l2.6-2.6\"/></svg>PDF</button>",
+      "css": ".ds-btn-pri { background: linear-gradient(to bottom, color-mix(in srgb, #c9974a 78%, #fff8e8), var(--pri, #c9974a)); color: var(--pri-ink, #191207); font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 600; border: 0; border-radius: 2px; height: 32px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: inset 0 1px 0 rgba(255,244,214,0.55), inset 0 -1px 0 rgba(0,0,0,0.3); transition: background 0.16s ease-out; } .ds-btn-pri:hover { background: linear-gradient(to bottom, color-mix(in srgb, #c9974a 62%, #fff8e8), color-mix(in srgb, #c9974a 88%, #fff8e8)); } .ds-btn-pri:active { box-shadow: inset 0 1px 3px rgba(0,0,0,0.35); } .ds-btn-pri:focus-visible { outline: 2px solid var(--pri, #c9974a); outline-offset: 1px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "A quiet, shadowless action for instrument rows; hover raises it to a plate.",
+      "html": "<button class=\"ds-btn-ghost\">Fit</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: var(--tx2, #b0a795); font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 13px; border: 0; border-radius: 2px; height: 32px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: none; transition: background 0.16s ease-out, color 0.16s ease-out; } .ds-btn-ghost:hover { background: var(--bg3, #23201a); color: var(--tx, #ece5d8); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--pri, #c9974a); outline-offset: 1px; }"
+    },
+    {
+      "name": "Type-Case",
+      "kind": "nav",
+      "refersTo": "type-case",
+      "description": "A walnut well with a lit front edge holding transparent press plates; plates lift to raised walnut on hover.",
+      "html": "<div class=\"ds-case\" role=\"group\" aria-label=\"Formatting\"><button class=\"ds-plate\"><b>B</b></button><button class=\"ds-plate\"><i>I</i></button><button class=\"ds-plate\"><span class=\"ds-h\">H1</span></button><button class=\"ds-plate\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M9 6h11M9 12h11M9 18h11\"/><circle cx=\"4.5\" cy=\"6\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"4.5\" cy=\"12\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"4.5\" cy=\"18\" r=\"1.3\" fill=\"currentColor\" stroke=\"none\"/></svg></button></div>",
+      "css": ".ds-case { display: inline-flex; align-items: center; gap: 1px; padding: 2px; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='80'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.28' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='80' filter='url(%23w)' opacity='0.1'/%3E%3C/svg%3E\"); background-color: var(--wood, #352a18); border-radius: 2px; box-shadow: inset 0 1px 0 rgba(236,229,216,0.07), inset 0 1px 2px rgba(0,0,0,0.35); } .ds-plate { background: transparent; border: 0; color: var(--tx2, #b0a795); border-radius: 1px; min-width: 28px; height: 28px; padding: 0 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; transition: background 0.16s ease-out, color 0.16s ease-out; } .ds-plate:hover { background: var(--wood2, #463525); color: var(--tx, #ece5d8); } .ds-plate:active { transform: scale(0.96); } .ds-plate:focus-visible { outline: 2px solid var(--pri, #c9974a); outline-offset: 1px; } .ds-plate b, .ds-plate i, .ds-plate .ds-h { font-family: \"DocForge Mono\", ui-monospace, \"Cascadia Code\", Consolas, monospace; font-size: 11px; font-weight: 500; font-style: normal; letter-spacing: 0; } .ds-plate b { font-weight: 700; } .ds-plate i { font-style: italic; }"
+    },
+    {
+      "name": "Engraved Field",
+      "kind": "input",
+      "refersTo": "field-engraved",
+      "description": "Inputs sit in the surface — a recessed well, no border; focus adds a 1.5px brass ring outside the recess.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-in\">Title</label><input id=\"ds-in\" type=\"text\" placeholder=\"Document title\"></div>",
+      "css": ".ds-field label { display: block; font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 12px; color: var(--tx2, #b0a795); margin-bottom: 4px; } .ds-field input { width: 220px; background: var(--bg, #14120e); border: 0; border-radius: 2px; padding: 8px; color: var(--tx, #ece5d8); font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 13px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); } .ds-field input::placeholder { color: var(--tx3, #8a8375); } .ds-field input:focus { box-shadow: inset 0 1px 2px rgba(0,0,0,0.35), 0 0 0 1.5px var(--pri, #c9974a); }"
+    },
+    {
+      "name": "Toggle Plate",
+      "kind": "input",
+      "refersTo": "toggle-plate",
+      "description": "A recessed plate with a sliding square-ish knob; the real checkbox is visually hidden (never display:none) and the plate wears its focus ring.",
+      "html": "<label class=\"ds-toggle\"><span class=\"ds-lbl\">Cover page</span><input type=\"checkbox\" checked><span class=\"ds-tg\"></span></label>",
+      "css": ".ds-toggle { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; width: 220px; padding: 4px 0; cursor: pointer; user-select: none; font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; } .ds-toggle .ds-lbl { font-size: 12.8px; color: var(--tx, #ece5d8); } .ds-tg { width: 40px; height: 22px; border-radius: 3px; background: var(--bg, #14120e); box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); position: relative; transition: background 0.16s ease-out; flex: none; } .ds-tg::after { content: \"\"; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 2px; background: var(--tx3, #8a8375); transition: left 0.16s ease-out, background 0.16s ease-out; } .ds-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; } .ds-toggle input:focus-visible + .ds-tg { outline: 2px solid var(--pri, #c9974a); outline-offset: 1px; } .ds-toggle input:checked + .ds-tg { background: var(--tx, #ece5d8); } .ds-toggle input:checked + .ds-tg::after { left: 21px; background: var(--bg2, #1b1813); }"
+    },
+    {
+      "name": "Instrument Cluster",
+      "kind": "custom",
+      "refersTo": "instrument-cluster",
+      "description": "Pages · zoom · fit as one machined strip — recessed, mono readouts with tabular figures and width floors so ticking numbers never nudge neighbours.",
+      "html": "<div class=\"ds-cluster\"><span class=\"ds-pg\" role=\"status\">2 pages</span><span class=\"ds-sep\"></span><button aria-label=\"Zoom out\">−</button><span class=\"ds-pct\">103%</span><button aria-label=\"Zoom in\">+</button><span class=\"ds-sep\"></span><button class=\"ds-fit\">Fit</button></div>",
+      "css": ".ds-cluster { display: inline-flex; align-items: center; gap: 2px; background: var(--bg2, #1b1813); border-radius: 2px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); padding: 2px 6px; height: 26px; } .ds-cluster button { background: none; border: 0; color: var(--tx2, #b0a795); cursor: pointer; font-family: \"DocForge Mono\", ui-monospace, \"Cascadia Code\", Consolas, monospace; font-size: 12px; min-width: 22px; height: 22px; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; } .ds-cluster button:hover { color: var(--tx, #ece5d8); background: var(--bg3, #23201a); } .ds-cluster .ds-fit { font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 11.5px; padding: 0 7px; } .ds-pg, .ds-pct { font-family: \"DocForge Mono\", ui-monospace, \"Cascadia Code\", Consolas, monospace; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--tx2, #b0a795); text-align: center; } .ds-pg { min-width: 60px; } .ds-pct { min-width: 40px; } .ds-sep { width: 1px; height: 14px; background: var(--line, #322d24); margin: 0 5px; }"
+    },
+    {
+      "name": "Proof-Slip Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "An inverted paper slip laid over the work; it pops in over 160ms and is taken away with a faster 300ms drop.",
+      "html": "<div class=\"ds-toast\">Project file saved</div>",
+      "css": ".ds-toast { display: inline-block; background: var(--tx, #ece5d8); color: var(--bg2, #1b1813); padding: 8px 16px; border-radius: 6px; font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.35); animation: ds-pop 0.16s ease-out; } @keyframes ds-pop { from { transform: translateY(8px); opacity: 0; } }"
+    },
+    {
+      "name": "Micro-Caps Drawer Rail",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "The one micro-caps role in the chrome: a brass settings-group label fronting its section with a seam rail.",
+      "html": "<h3 class=\"ds-rail\">Document</h3>",
+      "css": ".ds-rail { font-family: \"DocForge Sans\", \"Segoe UI\", system-ui, -apple-system, sans-serif; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--pri, #c9974a); font-weight: 700; margin: 0; width: 220px; border-bottom: 1px solid var(--line, #322d24); padding-bottom: 6px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Typographer's Workshop",
+    "overview": "The chrome is the pressroom around the paper. Iron-dark ink surfaces carry a faint paper grain; controls are engraved plates seated in oiled-walnut type-cases (recessed wells, never outlined groups); the preview deck is a green felt proof-table under a lamp, and the white pages rest on it like proofs. Exactly one metal exists — brass — and it is spent by discipline, not by taste. Depth comes from materials (wood, felt, machined bevels, grain), not from decorative effects. The motion grammar is \"the press shows its work\": proofs settle, a composing ticker counts pages, type sorts jig while rendering, the autosave dot lands like an ink stamp. The light theme is the same room at daylight — warm plaster and pale oak — never a color inversion. The document itself is not part of this world: it always renders and prints on white.",
+    "keyCharacteristics": [
+      "One accent metal (brass), used in a short, closed list of places.",
+      "Materials, not effects: --wood/--wood2, bevel light --edge, grain tiles --grain/--woodgrain, felt --deck.",
+      "Recessed composition: controls sit in wells (inset shadows), they don't float on cards.",
+      "Dense, quiet UI: 13px sans chrome, mono instruments with tabular numerals, Garamond only for identity moments.",
+      "Two-speed motion: --dur 160ms feedback, --dur2 340ms compositional; reduced-motion kills all of it."
+    ],
+    "rules": [
+      {
+        "name": "The Brass Scarcity Rule",
+        "body": "Brass appears in exactly these places and nowhere else: (1) the letterpress thick–thin rule under the masthead (#topbar::after — 2px bar, 2px gap, 1px bar); (2) one primary ingot per surface (.btn.pri: #btnPdf in the studio, #peExport on the PDF bench); (3) the one micro-caps label role (drawer h3 / .sgroup summary); (4) focus — the global :focus-visible outline and the 1.5px field focus ring; (5) the hairline ring on the custom color well (0 0 0 1px brass at 65% — \"this one you mix yourself\"); (6) the selection apparatus on the PDF bench (hover/selected outlines, resize handle, drawing marquee) plus the masthead title's hover warming to --pri2. Adding a seventh use requires removing one.",
+        "section": "colors"
+      },
+      {
+        "name": "The Daylit-Not-Inverted Rule",
+        "body": "The light theme re-mixes the same materials (warm plaster, pale oak, daylit felt, deeper brass); it never flips lightness numerically, and --pri-ink/status hues are re-derived, not inverted.",
+        "section": "colors"
+      },
+      {
+        "name": "The White Paper Rule",
+        "body": "Document pages are #ffffff in both themes. Chrome theming must never tint them.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Micro-Caps Rule",
+        "body": "There is exactly one uppercase-tracked role in the chrome: the brass drawer labels. No other element may set text-transform: uppercase with tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Workshop Mono Rule",
+        "body": "Toolbar text glyphs (B, I, H1, Aa, TOC…) are set in the workshop's own mono at 11px — deliberately set type, not UI defaults — and every numeric readout uses tabular figures.",
+        "section": "typography"
+      },
+      {
+        "name": "The Seated-Plate Rule",
+        "body": "Every solid button carries the machined bevel; pressing it swaps the bevel for a recess and (feedback only) drops it 0.5px. Nothing in the chrome floats without either a bevel or an elevation shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Materials-Not-Effects Rule",
+        "body": "New depth must be expressed with the existing tokens (--recess, --edge, --elev-*, grain, wood, felt) — no new glows, gradients (brass ingot face excepted), or blurs.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do seat every new control in an existing material: engraved (recess) into --bg, or plated (bevel) on --bg3, or set in a walnut case.",
+      "Do use mono + tabular-nums with a min-width floor for any readout whose text changes width.",
+      "Do give every dialog role=\"dialog\" aria-modal=\"true\", a label, and route it through openOv/closeOv for trap + focus-restore; give live counters role=\"status\".",
+      "Do keep icons on the one grammar: 24 viewBox, 1.8 stroke, round caps, currentColor.",
+      "Do use --dur for feedback and --dur2 for anything that moves the composition; stagger settles at 60ms steps, capped.",
+      "Do keep new brass within the sanctioned list, or trade a use out first.",
+      "Do re-mix, not invert, when touching the daylit theme (warm plaster/oak; brass hovers go deeper)."
+    ],
+    "donts": [
+      "Don't put --tx3 text on --bg3 or --wood2 — it misses 4.5:1 (the kbd chips already stepped up to --tx2 for this reason). --tx3 is tuned for --bg/--bg2 only.",
+      "Don't outline groups with borders — grouping is done with wells (walnut cases, recesses) and seam hairlines.",
+      "Don't add a second uppercase-tracked type role, a second metal, or a second primary ingot on the same surface.",
+      "Don't hide the toggle checkbox (or any focusable proxy target) with display:none — visually-hidden only.",
+      "Don't animate anything outside the named-keyframe grammar, or let any animation survive prefers-reduced-motion.",
+      "Don't use raw native widgets where the system has a designed peer (the custom color well, the templates menu) — style them into the material."
+    ],
+    "hardRules": [
+      "The document always prints white: .pagedjs_page/.pe-page are #fff in both themes; @media print shows only the pages — no chrome, no shadows, no scale transform.",
+      "Brass scarcity is a closed list (The Brass Scarcity Rule). Lint is amber, autosave is green — status never borrows brass.",
+      "Chrome never touches doc.css: document styling (themes, borders, accents) is user-facing product surface; app.css styles the room, never the paper.",
+      "Single-file build stands: src/index.html composes via /*@TOKEN@*/ placeholders into dist/DocForge.html; no external requests, ever.",
+      "The reduced-motion kill block stays global (*, !important) at the bottom of app.css.",
+      "Selector IDs are load-bearing — the QA harness (qa/*.mjs) drives the real UI by ID.",
+      "The light theme is the daylit workshop, never an inversion — new tokens ship both a dark and a daylit value."
+    ]
+  }
+}

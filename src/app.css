@@ -2,11 +2,14 @@
    app.css — application chrome (never printed)
 
    Design language: the typographer's workshop. The chrome is the
-   pressroom around the paper — deep warm ink surfaces, engraved
-   plate controls (recessed, not outlined), and exactly one metal:
-   brass, on the hairline rule under the masthead and on the one
-   primary action. The preview deck is a felt proof-table; the
-   pages rest on it like proofs.
+   pressroom around the paper — iron-dark ink surfaces with a faint
+   paper grain, oiled walnut type-cases holding the engraved plate
+   controls (recessed, not outlined), and exactly one metal: brass,
+   on the letterpress thick–thin rule under the masthead, the one
+   primary action (a machined ingot), the micro-caps labels, and
+   focus. The preview deck is a felt proof-table; the pages rest on
+   it like proofs. Materials, not effects: wood --wood/--wood2,
+   bevel light --edge, grain --grain.
 
    Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl;
    elevation --recess/--elev-m/--elev-l; motion --dur (feedback) /
@@ -35,6 +38,14 @@
   --danger: #bf5147;
   --deck: #212721;      /* felt proof-table */
   --vig: rgba(0, 0, 0, 0.06);
+  --wood: #352a18;      /* oiled walnut — the type-cases */
+  --wood2: #463525;     /* raised walnut — a plate lifted from the case */
+  --edge: rgba(236, 229, 216, 0.07);  /* machined top bevel */
+  /* paper grain — one tile of monochrome noise; the dark room needs
+     more tooth than the daylit one for the same perceived texture */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+  /* wood grain — turbulence stretched along the case, real streaks */
+  --woodgrain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='80'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.28' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='80' filter='url(%23w)' opacity='0.1'/%3E%3C/svg%3E");
   --rc: 2px;            /* controls — press plates are square-ish */
   --rm: 6px;            /* menus, popovers */
   --rl: 10px;           /* modals */
@@ -62,6 +73,10 @@
   --danger: #a03d33;
   --deck: #c9cdbf;      /* daylit felt */
   --vig: rgba(42, 46, 36, 0.06);
+  --wood: #e2d5ba;      /* daylit walnut — pale oiled oak */
+  --wood2: #d7c8a8;
+  --edge: rgba(255, 255, 255, 0.6);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
   --recess: inset 0 1px 2px rgba(0, 0, 0, 0.08);
   --elev-m: 0 2px 6px rgba(52, 46, 34, 0.14), 0 16px 40px rgba(52, 46, 34, 0.18);
   --elev-l: 0 8px 24px rgba(52, 46, 34, 0.16), 0 32px 80px rgba(52, 46, 34, 0.24);
@@ -93,33 +108,36 @@ button, select, input, textarea { font: inherit; color: inherit; }
 
 /* ---------------- masthead ---------------- */
 #topbar {
-  height: 52px;
+  height: 56px;
   flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 0 16px 0 20px;
-  background: var(--bg);
+  background-image: var(--grain);
+  background-color: var(--bg);
   position: relative;
   z-index: 5;
 }
 .tbbreak { display: none; }
-/* the metal: one clean brass rule under the masthead */
+/* the metal: a letterpress thick–thin rule under the masthead,
+   the same rule the border settings offer the document */
 #topbar::after {
   content: "";
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 1.5px;
-  background: var(--pri);
+  height: 5px;
+  background: linear-gradient(to bottom,
+    var(--pri) 0 2px, transparent 2px 4px, var(--pri) 4px 5px);
   pointer-events: none;
 }
 .brand {
   font-family: var(--display);
   font-style: italic;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 22px;
   letter-spacing: 0.01em;
-  padding-right: 8px;
+  padding-right: 10px;
   user-select: none;
 }
 #topbar .grow { flex: 1; }
@@ -155,6 +173,8 @@ body.pdf-mode .doc-id { display: none; }
 body.pdf-mode #templateSelect, body.pdf-mode .grp, body.pdf-mode .tbbreak,
 body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { display: none; }
 
+/* press furniture: every solid button is a machined block — lit top
+   edge, seated bottom edge — and physically presses when used */
 .btn {
   background: var(--bg3);
   border: 0;
@@ -167,31 +187,42 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 var(--edge), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
   transition: background 0.16s ease-out, color 0.16s ease-out;
 }
 .btn:hover { background: var(--line); }
-.btn:active { transform: translateY(0.5px); }
+.btn:active { transform: translateY(0.5px); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35); }
 .btn svg { width: 15px; height: 15px; flex: none; }
-.btn.icon { width: 32px; padding: 0; justify-content: center; background: transparent; color: var(--tx2); }
+.btn.icon { width: 32px; padding: 0; justify-content: center; background: transparent; color: var(--tx2); box-shadow: none; }
 .btn.icon:hover { background: var(--bg3); color: var(--tx); }
+/* the one ingot: brass with a machined face */
 .btn.pri {
-  background: var(--pri);
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--pri) 78%, #fff8e8), var(--pri));
   color: var(--pri-ink);
   font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 244, 214, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
-.btn.pri:hover { background: var(--pri2); }
-.btn.ghost { background: transparent; }
+.btn.pri:hover {
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--pri) 62%, #fff8e8), color-mix(in srgb, var(--pri) 88%, #fff8e8));
+}
+.btn.pri:active { box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35); }
+.btn.ghost { background: transparent; box-shadow: none; }
 .btn.ghost:hover { background: var(--bg3); }
 .btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
 
-/* quiet plate holding the file ops */
+/* the file ops sit in a small walnut case */
 .grp {
   display: flex;
   align-items: center;
   padding: 2px;
-  background: var(--bg2);
+  background-image: var(--woodgrain);
+  background-color: var(--wood);
   border-radius: var(--rc);
+  box-shadow: inset 0 1px 0 var(--edge), var(--recess);
 }
+.grp .btn.icon:hover { background: var(--wood2); }
 .grp .btn.icon { width: 28px; height: 28px; }
 #btnHelp, #btnDark { color: var(--tx3); }
 #btnHelp:hover, #btnDark:hover { color: var(--tx); }
@@ -211,7 +242,8 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 #settings {
   width: 272px;
   flex: none;
-  background: var(--bg2);
+  background-image: var(--grain);
+  background-color: var(--bg2);
   overflow-y: auto;
   padding: 20px 20px 40px;
   margin-left: -272px;
@@ -232,6 +264,8 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 #settings h3 {
   font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
   color: var(--pri); margin: 24px 0 12px; font-weight: 700;
+  /* drawer rail: each section of the cabinet has its own front edge */
+  border-bottom: 1px solid var(--line); padding-bottom: 6px;
 }
 #settings h3:first-child { margin-top: 4px; }
 /* collapsible detail groups share the same one micro-caps role */
@@ -243,6 +277,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   list-style: none;
   display: flex; align-items: center; gap: 6px;
   margin-bottom: var(--sp3);
+  border-bottom: 1px solid var(--line); padding-bottom: 6px;
 }
 .sgroup summary::-webkit-details-marker { display: none; }
 .sgroup summary::after {
@@ -292,13 +327,20 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .toggle input:checked + .tg { background: var(--tx); }
 .toggle input:checked + .tg::after { left: 21px; background: var(--bg2); }
 
-.swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.swatches { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .sw { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
 .sw:hover { transform: scale(1.12); }
 .sw.on { border-color: var(--bg2); box-shadow: 0 0 0 2px var(--tx); }
+/* the custom colour well is a peer swatch, not a raw UA widget —
+   a hairline brass ring is what says "this one you mix yourself" */
 .swatches input[type="color"] {
-  width: 26px; height: 26px; border: none; background: none; padding: 0; cursor: pointer;
+  width: 22px; height: 22px; border: 0; background: none; padding: 0; cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pri) 65%, transparent);
 }
+.swatches input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.swatches input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.swatches input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
 
 /* ---------------- editor pane ---------------- */
 #editorPane {
@@ -316,7 +358,8 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   flex-direction: column;
   gap: var(--sp1);
   padding: var(--sp2);
-  background: var(--bg);
+  background-image: var(--grain);
+  background-color: var(--bg);
 }
 .tbrow {
   display: flex;
@@ -335,16 +378,20 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
     transparent 0, black var(--fadeL),
     black calc(100% - var(--fadeR)), transparent 100%);
 }
-.tbrow.scroll-l { --fadeL: 26px; }
-.tbrow.scroll-r { --fadeR: 26px; }
+.tbrow.scroll-l { --fadeL: 38px; }
+.tbrow.scroll-r { --fadeR: 38px; }
 .tbrow::-webkit-scrollbar { display: none; }
+/* each group of plates lives in its own walnut type-case:
+   a shallow well with a lit front edge */
 .tbg {
   display: flex;
   align-items: center;
   gap: 1px;
   padding: 2px;
-  background: var(--bg2);
+  background-image: var(--woodgrain);
+  background-color: var(--wood);
   border-radius: var(--rc);
+  box-shadow: inset 0 1px 0 var(--edge), var(--recess);
 }
 .tb {
   background: transparent;
@@ -358,7 +405,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   font-size: 12px;
   transition: background 0.16s ease-out, color 0.16s ease-out;
 }
-.tb:hover { background: var(--bg3); color: var(--tx); }
+.tb:hover { background: var(--wood2); color: var(--tx); }
 .tb:active { transform: scale(0.96); }
 .tb svg { width: 15px; height: 15px; }
 /* text glyphs set deliberately, in the workshop's own mono */
@@ -427,7 +474,9 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   align-items: center;
   gap: 16px;
   padding: 7px 16px;
-  background: var(--bg2);
+  border-top: 1px solid var(--line);
+  background-image: var(--grain);
+  background-color: var(--bg2);
   color: var(--tx3);
   font-family: var(--mono);
   font-size: 12px;
@@ -695,21 +744,23 @@ body.pdf-mode #main { display: none; }
 body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ease); }
 #peBar {
   display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; background: var(--bg2);
+  padding: 6px 12px;
+  background-image: var(--grain);
+  background-color: var(--bg2);
   flex-wrap: wrap;
 }
 .pe-name { font-weight: 600; color: var(--tx); margin-left: 4px; }
 .pe-meta { color: var(--tx3); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
 .pe-hint { color: var(--tx3); font-size: 12px; margin-left: var(--sp3); font-style: italic; font-family: var(--display); }
 @media (max-width: 1024px) { .pe-hint { display: none; } }
-#peTools { display: flex; gap: 2px; background: var(--bg3); border-radius: var(--rc); padding: 2px; }
+#peTools { display: flex; gap: 2px; background-image: var(--woodgrain); background-color: var(--wood); border-radius: var(--rc); padding: 2px; box-shadow: inset 0 1px 0 var(--edge), var(--recess); }
 .pe-tool {
   background: transparent; border: 0; color: var(--tx2);
   border-radius: var(--rc); width: 30px; height: 26px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .pe-tool svg { width: 16px; height: 16px; }
-.pe-tool:hover { color: var(--tx); }
+.pe-tool:hover { color: var(--tx); background: var(--wood2); }
 .pe-tool.on { background: var(--bg); color: var(--tx); box-shadow: var(--recess); }
 #peColor { width: 30px; height: 26px; padding: 1px; border: 0; border-radius: var(--rc); background: var(--bg); box-shadow: var(--recess); cursor: pointer; }
 #peZoomPct { font-family: var(--mono); font-size: 12px; color: var(--tx2); min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
