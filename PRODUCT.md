@@ -15,7 +15,7 @@ Students and working professionals producing formatted deliverables — assignme
 Operate (app chrome). The document itself always prints on white regardless of chrome theme.
 
 ## Brand commitment (standing)
-**The typographer's workshop** — the chrome is the pressroom around the paper. Committed materials: iron-dark ink surfaces, oiled walnut type-cases, brass (scarce: masthead rule, the one primary action, micro-caps labels, focus), green felt proof-table, paper grain. Type roles: Garamond italic masthead and display moments; sans UI; mono for data. Motion grammar: the press shows its work (proofs settle, composing ticker, type-sort busy, ink-stamp autosave). The light theme is the daylit workshop (warm plaster + wood), never an inversion.
+**The copy desk** (replaced the typographer's workshop, 2026-08-15, seed 53cee02d) — the chrome is a newspaper composing room at edition time: text is copy, the preview is the galley, export is going to press. Committed materials: newsprint-white ground (day desk, the default) with a slate night shift; structural ink rules over soft rules; a DocForge Serif nameplate over a double ink rule; square corners; flat ruled trays and printed-form fields; one grease-pencil red spent on the TO-PRESS plate, proof marks, and focus; teletype mono instrumentation (wire-ticker statusbar); newsprint grain; galleys settling on the stone. Motion grammar: the press shows its work (proofs settle, composing ticker "p. N…", type-sort busy, stamp autosave). The night desk is authored, never an inversion.
 
 ## Constraints
 - Ships as one HTML file (`node build.mjs` → `dist/DocForge.html`); no external requests ever.

@@ -1,85 +1,82 @@
 /* ============================================================
    app.css — application chrome (never printed)
 
-   Design language: the typographer's workshop. The chrome is the
-   pressroom around the paper — iron-dark ink surfaces with a faint
-   paper grain, oiled walnut type-cases holding the engraved plate
-   controls (recessed, not outlined), and exactly one metal: brass,
-   on the letterpress thick–thin rule under the masthead, the one
-   primary action (a machined ingot), the micro-caps labels, and
-   focus. The preview deck is a felt proof-table; the pages rest on
-   it like proofs. Materials, not effects: wood --wood/--wood2,
-   bevel light --edge, grain --grain.
+   Design language: the copy desk. The chrome is a newspaper
+   composing room at edition time — newsprint-white working
+   surfaces with a faint paper grain, ink hairline rules doing the
+   work borders and shadows used to do, square corners, ruled trays
+   and form fields, teletype mono instrumentation, and exactly one
+   color spent editorially: grease-pencil red on the TO-PRESS plate
+   (PDF), proof marks, and focus. The masthead is a serif nameplate
+   over a double ink rule; the preview deck is the stone, pages lie
+   on it like galleys. The dark variant is the night desk under
+   fluorescents; the day desk is the default.
 
-   Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl;
-   elevation --recess/--elev-m/--elev-l; motion --dur (feedback) /
-   --dur2 (compositional: pages, mode swaps) / --ease
-   (reduced-motion kills all of it). Type roles: Garamond italic
-   masthead · Garamond titles · Sans 13px UI · Mono tabular data ·
-   one micro-caps role (settings group labels, brass).
+   Scales: spacing on 4px steps (--sp*); radii --rc/--rm/--rl
+   (square-cornered world: 0/2/4); rules --rule (structural ink) /
+   --line (soft); elevation only where paper lies on the stone;
+   motion --dur (feedback) / --dur2 (compositional) / --ease
+   (reduced-motion kills all of it). Type roles: Serif nameplate ·
+   Sans 13px UI · Mono tabular instrumentation · one micro-caps
+   role (settings group labels, ink).
    ============================================================ */
 :root {
   --sp1: 4px; --sp2: 8px; --sp3: 12px; --sp4: 16px; --sp5: 24px;
   --dur: 160ms;
-  --dur2: 340ms;    /* compositional moves: proofs settling, changing tables */
+  --dur2: 340ms;    /* compositional moves: galleys settling, changing desks */
   --ease: cubic-bezier(0.2, 0, 0, 1);
-  --bg: #14120e;        /* pressroom ink */
-  --bg2: #1b1813;       /* surface */
-  --bg3: #23201a;       /* raised plate */
-  --line: #322d24;
-  --tx: #ece5d8;
-  --tx2: #b0a795;
-  --tx3: #8a8375;   /* tertiary — still ≥4.5:1 on --bg for the mono micro-text */
-  --pri: #c9974a;       /* brass — masthead rule + primary action only */
-  --pri2: #e0b26a;
-  --pri-ink: #191207;
-  --ok: #7ba05b;
-  --warn: #c98a3a;
-  --danger: #bf5147;
-  --deck: #212721;      /* felt proof-table */
-  --vig: rgba(0, 0, 0, 0.06);
-  --wood: #352a18;      /* oiled walnut — the type-cases */
-  --wood2: #463525;     /* raised walnut — a plate lifted from the case */
-  --edge: rgba(236, 229, 216, 0.07);  /* machined top bevel */
-  /* paper grain — one tile of monochrome noise; the dark room needs
-     more tooth than the daylit one for the same perceived texture */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
-  /* wood grain — turbulence stretched along the case, real streaks */
-  --woodgrain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='80'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.28' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='240' height='80' filter='url(%23w)' opacity='0.1'/%3E%3C/svg%3E");
-  --rc: 2px;            /* controls — press plates are square-ish */
-  --rm: 6px;            /* menus, popovers */
-  --rl: 10px;           /* modals */
-  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+  /* the night desk — slate under fluorescents; the day desk
+     (data-light) is the default the app boots into */
+  --bg: #191b1e;        /* night-desk slate */
+  --bg2: #1f2226;       /* surface */
+  --bg3: #272b30;       /* raised tray */
+  --line: #3a3f45;      /* soft rule */
+  --rule: #878d94;      /* structural ink rule (nameplate, ticker) */
+  --tx: #e8e6e1;
+  --tx2: #b2b0a9;
+  --tx3: #98978f;   /* tertiary — ≥4.5:1 on every night surface incl. --bg3 */
+  --pri: #bf4234;       /* grease-pencil red — TO PRESS, proof marks */
+  --pri2: #a33327;      /* hover gains ink, never loses it */
+  --focus: #d5493a;     /* the focus ring stays ≥3:1 on every night surface */
+  --pri-ink: #ffffff;
+  --ok: #6da272;
+  --warn: #c9973a;
+  --danger: #d5493a;
+  --deck: #232527;      /* the stone, after hours */
+  /* newsprint grain — one tile of monochrome noise */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  --rc: 0px;            /* the desk is square-cornered */
+  --rm: 2px;            /* menus, popovers */
+  --rl: 4px;            /* modals */
+  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   --elev-m: 0 2px 6px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.35);
   --elev-l: 0 8px 24px rgba(0, 0, 0, 0.35), 0 32px 80px rgba(0, 0, 0, 0.5);
   --sans: "DocForge Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --display: "DocForge Garamond", Georgia, serif;
+  --display: "DocForge Serif", Georgia, serif;
   --mono: "DocForge Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 }
 :root[data-light] {
-  /* the daylit workshop — warm plaster, not an inversion */
-  --bg: #efe9dc;
-  --bg2: #f7f2e7;
-  --bg3: #fffdf6;
-  --line: #d9d0bc;
-  --tx: #2a251c;
-  --tx2: #5f5849;
-  --tx3: #6b6353;   /* tertiary — ≥4.5:1 on the daylit plaster */
-  --pri: #a67833;
-  --pri2: #8c6323;
-  --pri-ink: #fffdf6;
-  --ok: #5c7d3d;
-  --warn: #a06a1f;
-  --danger: #a03d33;
-  --deck: #c9cdbf;      /* daylit felt */
-  --vig: rgba(42, 46, 36, 0.06);
-  --wood: #e2d5ba;      /* daylit walnut — pale oiled oak */
-  --wood2: #d7c8a8;
-  --edge: rgba(255, 255, 255, 0.6);
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.08);
-  --elev-m: 0 2px 6px rgba(52, 46, 34, 0.14), 0 16px 40px rgba(52, 46, 34, 0.18);
-  --elev-l: 0 8px 24px rgba(52, 46, 34, 0.16), 0 32px 80px rgba(52, 46, 34, 0.24);
+  /* the day desk — newsprint under daylight; the default */
+  --bg: #f4f2ec;        /* newsprint white */
+  --bg2: #ece9e1;       /* older newsprint — bars, trays */
+  --bg3: #faf9f5;       /* fresh sheet — raised surfaces, wells */
+  --line: #d2cec2;      /* soft rule */
+  --rule: #26261f;      /* structural ink rule */
+  --tx: #1a1a17;        /* ink */
+  --tx2: #4c4b44;
+  --tx3: #64625a;   /* tertiary — ≥4.5:1 on every day surface incl. --bg2 */
+  --pri: #bb3a2c;       /* grease-pencil red */
+  --pri2: #a12f23;
+  --focus: #bb3a2c;
+  --pri-ink: #ffffff;
+  --ok: #2f6f4f;
+  --warn: #7d540d;
+  --danger: #a12f23;
+  --deck: #d8d5cc;      /* the stone — cool composing surface */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  --elev-m: 0 2px 6px rgba(38, 38, 31, 0.12), 0 16px 40px rgba(38, 38, 31, 0.14);
+  --elev-l: 0 8px 24px rgba(38, 38, 31, 0.14), 0 32px 80px rgba(38, 38, 31, 0.2);
 }
 
 * { box-sizing: border-box; }
@@ -98,7 +95,7 @@ body {
 }
 button, select, input, textarea { font: inherit; color: inherit; }
 
-:focus-visible { outline: 2px solid var(--pri); outline-offset: 1px; border-radius: var(--rc); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: var(--rc); }
 
 /* quiet scrollbars that match the surface they live on */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -120,23 +117,21 @@ button, select, input, textarea { font: inherit; color: inherit; }
   z-index: 5;
 }
 .tbbreak { display: none; }
-/* the metal: a letterpress thick–thin rule under the masthead,
-   the same rule the border settings offer the document */
+/* the nameplate's double ink rule — a newspaper masthead's signature */
 #topbar::after {
   content: "";
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 5px;
   background: linear-gradient(to bottom,
-    var(--pri) 0 2px, transparent 2px 4px, var(--pri) 4px 5px);
+    var(--rule) 0 2px, transparent 2px 4px, var(--rule) 4px 5px);
   pointer-events: none;
 }
 .brand {
   font-family: var(--display);
-  font-style: italic;
   font-weight: 700;
   font-size: 22px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.005em;
   padding-right: 10px;
   user-select: none;
 }
@@ -173,11 +168,11 @@ body.pdf-mode .doc-id { display: none; }
 body.pdf-mode #templateSelect, body.pdf-mode .grp, body.pdf-mode .tbbreak,
 body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { display: none; }
 
-/* press furniture: every solid button is a machined block — lit top
-   edge, seated bottom edge — and physically presses when used */
+/* desk furniture: flat ruled blocks — a hairline box does the work
+   a shadow used to do; the press is a plain physical nudge */
 .btn {
   background: var(--bg3);
-  border: 0;
+  border: 1px solid var(--line);
   border-radius: var(--rc);
   height: 32px;
   padding: 0 12px;
@@ -187,42 +182,35 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  box-shadow: inset 0 1px 0 var(--edge), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-  transition: background 0.16s ease-out, color 0.16s ease-out;
+  transition: background 0.16s ease-out, color 0.16s ease-out, border-color 0.16s ease-out;
 }
-.btn:hover { background: var(--line); }
-.btn:active { transform: translateY(0.5px); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35); }
+.btn:hover { border-color: var(--rule); }
+.btn:active { transform: translateY(0.5px); }
 .btn svg { width: 15px; height: 15px; flex: none; }
-.btn.icon { width: 32px; padding: 0; justify-content: center; background: transparent; color: var(--tx2); box-shadow: none; }
-.btn.icon:hover { background: var(--bg3); color: var(--tx); }
-/* the one ingot: brass with a machined face */
+.btn.icon { width: 32px; padding: 0; justify-content: center; background: transparent; border-color: transparent; color: var(--tx2); }
+.btn.icon:hover { background: var(--bg3); border-color: var(--line); color: var(--tx); }
+/* the one red plate: TO PRESS */
 .btn.pri {
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--pri) 78%, #fff8e8), var(--pri));
+  background: var(--pri);
+  border-color: var(--pri2);
   color: var(--pri-ink);
   font-weight: 600;
-  box-shadow: inset 0 1px 0 rgba(255, 244, 214, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
-.btn.pri:hover {
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--pri) 62%, #fff8e8), color-mix(in srgb, var(--pri) 88%, #fff8e8));
-}
-.btn.pri:active { box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35); }
-.btn.ghost { background: transparent; box-shadow: none; }
-.btn.ghost:hover { background: var(--bg3); }
+.btn.pri:hover { background: var(--pri2); }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover { background: var(--bg3); border-color: var(--line); }
 .btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
 
-/* the file ops sit in a small walnut case */
+/* the file ops sit in one ruled tray */
 .grp {
   display: flex;
   align-items: center;
   padding: 2px;
-  background-image: var(--woodgrain);
-  background-color: var(--wood);
+  background: var(--bg2);
+  border: 1px solid var(--line);
   border-radius: var(--rc);
-  box-shadow: inset 0 1px 0 var(--edge), var(--recess);
 }
-.grp .btn.icon:hover { background: var(--wood2); }
+.grp .btn.icon:hover { background: var(--bg3); border-color: transparent; }
 .grp .btn.icon { width: 28px; height: 28px; }
 #btnHelp, #btnDark { color: var(--tx3); }
 #btnHelp:hover, #btnDark:hover { color: var(--tx); }
@@ -263,21 +251,21 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 /* the one micro-caps role in the chrome: settings group labels */
 #settings h3 {
   font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
-  color: var(--pri); margin: 24px 0 12px; font-weight: 700;
-  /* drawer rail: each section of the cabinet has its own front edge */
-  border-bottom: 1px solid var(--line); padding-bottom: 6px;
+  color: var(--tx2); margin: 24px 0 12px; font-weight: 700;
+  /* section head over its own rule — the style sheet's running heads */
+  border-bottom: 1px solid var(--rule); padding-bottom: 6px;
 }
 #settings h3:first-child { margin-top: 4px; }
 /* collapsible detail groups share the same one micro-caps role */
 .sgroup { margin: var(--sp5) 0 var(--sp3); }
 .sgroup summary {
   font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.14em;
-  color: var(--pri); font-weight: 700;
+  color: var(--tx2); font-weight: 700;
   cursor: pointer; user-select: none;
   list-style: none;
   display: flex; align-items: center; gap: 6px;
   margin-bottom: var(--sp3);
-  border-bottom: 1px solid var(--line); padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule); padding-bottom: 6px;
 }
 .sgroup summary::-webkit-details-marker { display: none; }
 .sgroup summary::after {
@@ -289,18 +277,19 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .sgroup[open] summary::after { transform: rotate(45deg); }
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 12px; color: var(--tx2); margin-bottom: 4px; }
+/* printed-form fields: a ruled hairline box, not a soft well —
+   focus swaps the rule for the grease pencil */
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {
   width: 100%;
-  background: var(--bg);
-  border: 0;
+  background: var(--bg3);
+  border: 1px solid var(--line);
   border-radius: var(--rc);
   padding: 8px;
   color: var(--tx);
   outline: none;
-  box-shadow: var(--recess);
 }
 .field input:focus, .field select:focus, .field textarea:focus {
-  box-shadow: var(--recess), 0 0 0 1.5px var(--pri);
+  border-color: var(--pri);
 }
 .frow { display: flex; gap: 8px; }
 .frow .field { flex: 1; }
@@ -308,7 +297,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; cursor: pointer; user-select: none; }
 .toggle span.lbl { font-size: 12.8px; color: var(--tx); }
 .tg {
-  width: 40px; height: 22px; border-radius: 3px; background: var(--bg);
+  width: 40px; height: 22px; border-radius: var(--rm); background: var(--bg);
   box-shadow: var(--recess);
   position: relative; transition: background 0.16s ease-out; flex: none;
 }
@@ -323,24 +312,25 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   position: absolute; opacity: 0;
   width: 1px; height: 1px; margin: 0; pointer-events: none;
 }
-.toggle input:focus-visible + .tg { outline: 2px solid var(--pri); outline-offset: 1px; }
+.toggle input:focus-visible + .tg { outline: 2px solid var(--focus); outline-offset: 1px; }
 .toggle input:checked + .tg { background: var(--tx); }
 .toggle input:checked + .tg::after { left: 21px; background: var(--bg2); }
 
 .swatches { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-.sw { width: 22px; height: 22px; padding: 0; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
+/* accent chips: square ink blocks, same grammar as the toolbar swatches */
+.sw { width: 22px; height: 22px; padding: 0; border-radius: var(--rm); cursor: pointer; border: 2px solid transparent; transition: transform 0.16s ease-out; }
 .sw:hover { transform: scale(1.12); }
 .sw.on { border-color: var(--bg2); box-shadow: 0 0 0 2px var(--tx); }
 /* the custom colour well is a peer swatch, not a raw UA widget —
-   a hairline brass ring is what says "this one you mix yourself" */
+   a hairline ink ring is what says "this one you mix yourself" */
 .swatches input[type="color"] {
   width: 22px; height: 22px; border: 0; background: none; padding: 0; cursor: pointer;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pri) 65%, transparent);
+  border-radius: var(--rm);
+  box-shadow: 0 0 0 1px var(--rule);
 }
 .swatches input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-.swatches input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
-.swatches input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
+.swatches input[type="color"]::-webkit-color-swatch { border: 0; border-radius: var(--rm); }
+.swatches input[type="color"]::-moz-color-swatch { border: 0; border-radius: var(--rm); }
 
 /* ---------------- editor pane ---------------- */
 #editorPane {
@@ -351,7 +341,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   background: var(--bg);
   position: relative;
 }
-/* engraved plate rows: two composed cases, never a ragged wrap —
+/* ruled tool trays: two composed rows, never a ragged wrap —
    at narrow widths a row slides under the cursor instead of breaking */
 #toolbar {
   display: flex;
@@ -381,17 +371,15 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .tbrow.scroll-l { --fadeL: 38px; }
 .tbrow.scroll-r { --fadeR: 38px; }
 .tbrow::-webkit-scrollbar { display: none; }
-/* each group of plates lives in its own walnut type-case:
-   a shallow well with a lit front edge */
+/* each group of tools is a ruled tray on the desk */
 .tbg {
   display: flex;
   align-items: center;
   gap: 1px;
   padding: 2px;
-  background-image: var(--woodgrain);
-  background-color: var(--wood);
+  background: var(--bg2);
+  border: 1px solid var(--line);
   border-radius: var(--rc);
-  box-shadow: inset 0 1px 0 var(--edge), var(--recess);
 }
 .tb {
   background: transparent;
@@ -405,19 +393,18 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   font-size: 12px;
   transition: background 0.16s ease-out, color 0.16s ease-out;
 }
-.tb:hover { background: var(--wood2); color: var(--tx); }
+.tb:hover { background: var(--bg3); color: var(--tx); }
 .tb:active { transform: scale(0.96); }
 .tb svg { width: 15px; height: 15px; }
-/* text glyphs set deliberately, in the workshop's own mono */
+/* text glyphs set deliberately, in the desk's own mono */
 .tb b, .tb i, .tb .h { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0; }
 .tb b { font-weight: 700; }
 .tb .h small { font-size: 8px; vertical-align: super; }
 .ic-hl { box-shadow: inset 0 -4px 0 #f5d90a; padding: 0 2px; border-radius: 1px; }
 .ic-fc { box-shadow: inset 0 -4px 0 #c73434; padding: 0 2px; border-radius: 1px; }
 .tbsel {
-  background: var(--bg); color: var(--tx2);
-  border: 0; border-radius: var(--rc);
-  box-shadow: var(--recess);
+  background: var(--bg3); color: var(--tx2);
+  border: 1px solid var(--line); border-radius: var(--rc);
   font-size: 11.5px; padding: 0 4px; max-width: 132px; height: 28px;
 }
 .tbsel.narrow { max-width: 64px; }
@@ -435,7 +422,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .popmenu .pm-title { font-family: var(--display); font-size: 14px; color: var(--tx); margin-bottom: 8px; }
 .popmenu .pm-grid { display: grid; grid-template-columns: repeat(5, 22px); gap: 6px; }
 .popmenu .pm-sw {
-  width: 22px; height: 22px; padding: 0; border-radius: 3px; cursor: pointer;
+  width: 22px; height: 22px; padding: 0; border-radius: var(--rm); cursor: pointer;
   border: 1px solid rgba(128, 128, 128, 0.35);
 }
 .popmenu .pm-sw:hover { transform: scale(1.12); }
@@ -469,12 +456,13 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 #editor::selection { background: color-mix(in srgb, var(--tx2) 30%, transparent); }
 #editor::placeholder { color: var(--tx3); }
 
+/* the wire ticker: one structural rule over mono instrumentation */
 #statusbar {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 7px 16px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--rule);
   background-image: var(--grain);
   background-color: var(--bg2);
   color: var(--tx3);
@@ -486,30 +474,27 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .kbd-hint { color: var(--tx3); font-size: 11px; }
 .kbd-hint kbd {
   font-family: var(--mono); font-size: 10px;
-  color: var(--tx2); /* tx3 on the raised plate misses 4.5:1 */
-  background: var(--bg3); border-radius: var(--rc);
-  padding: 1px 5px; margin-right: 2px;
-  box-shadow: var(--recess);
+  color: var(--tx2); /* tx3 on the raised sheet misses 4.5:1 */
+  background: var(--bg3); border: 1px solid var(--line); border-radius: var(--rc);
+  padding: 0 4px; margin-right: 2px;
 }
 
-/* ---------------- preview pane: the felt proof-table ---------------- */
+/* ---------------- preview pane: the stone ---------------- */
 #previewPane {
   flex: 14;
   min-width: 380px;
   display: flex;
   flex-direction: column;
-  /* felt with a soft vignette — the lamp is over the table */
-  background:
-    radial-gradient(120% 90% at 50% 42%, transparent 55%, var(--vig) 100%),
-    var(--deck);
+  /* the composing stone: one flat, evenly lit working surface */
+  background: var(--deck);
   position: relative;
 }
-/* the instrument cluster: pages · zoom · fit, one machined strip */
+/* the instrument cluster: pages · zoom · fit, one ruled counter strip */
 #pvCluster {
   display: flex; align-items: center; gap: 2px;
   background: var(--bg2);
+  border: 1px solid var(--line);
   border-radius: var(--rc);
-  box-shadow: var(--recess);
   padding: 2px 6px;
   height: 26px;
 }
@@ -537,7 +522,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .tpl-item b { display: block; font-size: 13px; font-weight: 600; }
 .tpl-item span { display: block; font-size: 12px; color: var(--tx3); margin-top: 1px; line-height: 1.45; }
 
-/* quiet instrument row over the felt */
+/* quiet instrument row over the stone */
 #previewBar {
   display: flex;
   align-items: center;
@@ -588,18 +573,18 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 }
 #scaleWrap { transform-origin: top center; margin: 0 auto; width: fit-content; }
 
-/* Paged.js page cards: proofs resting on the felt —
+/* Paged.js page cards: galleys lying on the stone —
    tight contact shadow plus a soft ambient one.
-   The focal motion: each freshly composed proof settles onto the
-   table. Paged.js appends pages as it lays them out, so long
+   The focal motion: each freshly composed galley settles onto the
+   stone. Paged.js appends pages as it lays them out, so long
    documents stagger naturally; the nth-child delays only space the
    first few when they all land in one frame. Delay is capped. */
 .pagedjs_page {
   background: #fff;
   box-shadow:
-    0 1px 1px rgba(6, 8, 6, 0.4),
-    0 3px 8px rgba(6, 8, 6, 0.24),
-    0 18px 44px rgba(6, 8, 6, 0.22);
+    0 1px 1px rgba(18, 18, 16, 0.35),
+    0 3px 8px rgba(18, 18, 16, 0.2),
+    0 18px 44px rgba(18, 18, 16, 0.18);
   margin: 0 auto 32px;
   animation: proofIn var(--dur2) var(--ease) backwards;
 }
@@ -609,21 +594,22 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 @keyframes proofIn { from { opacity: 0; transform: translateY(5px); } }
 :root[data-light] .pagedjs_page {
   box-shadow:
-    0 1px 1px rgba(52, 56, 44, 0.28),
-    0 3px 8px rgba(52, 56, 44, 0.14),
-    0 18px 44px rgba(52, 56, 44, 0.16);
+    0 1px 1px rgba(38, 38, 31, 0.25),
+    0 3px 8px rgba(38, 38, 31, 0.12),
+    0 18px 44px rgba(38, 38, 31, 0.14);
 }
 .pagedjs_pages { display: block; }
 
 /* clickable screenshot placeholders in preview */
 .doc .shot { cursor: pointer; position: relative; }
 .doc .shot:hover .shot-box { border-color: var(--a600); box-shadow: 0 0 0 3pt var(--a100); }
+/* the hint is a proof slip laid on the galley: square, ink on newsprint */
 .doc .shot .shot-hint {
   display: none;
   position: absolute; top: 6pt; right: 6pt;
-  background: #17130cd9; color: #f7f2e7;
-  font-size: 8pt; padding: 3pt 7pt; border-radius: 20pt;
-  font-family: var(--sans);
+  background: #1a1a17e6; color: #f4f2ec;
+  font-size: 8pt; padding: 2pt 6pt; border-radius: 2px;
+  font-family: var(--mono);
 }
 .doc .shot:hover .shot-hint { display: block; }
 
@@ -648,8 +634,8 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 }
 #emptyState code {
   font-family: var(--mono); font-size: 12px; color: var(--tx2);
-  background: var(--bg2); border-radius: var(--rc);
-  padding: 3px 8px; box-shadow: var(--recess);
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--rc);
+  padding: 2px 7px;
 }
 #emptyState .es-more { font-size: 12px; margin-top: var(--sp3); }
 #emptyState kbd {
@@ -695,7 +681,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .modal .mbody { padding: 16px 20px; overflow-y: auto; line-height: 1.65; color: var(--tx2); }
 .modal .mfoot { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
 .modal.small { width: min(430px, 92vw); }
-/* the help sheet: Garamond section heads, reference rows without table walls */
+/* the help sheet: serif section heads, reference rows without table walls */
 .mbody h4 {
   margin: 26px 0 10px; color: var(--tx);
   font-family: var(--display); font-size: 17px; font-weight: 400;
@@ -707,9 +693,9 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .mbody code, .mbody pre {
   font-family: var(--mono);
   background: var(--bg);
+  border: 1px solid var(--line);
   border-radius: var(--rc); font-size: 12px;
   color: var(--tx);
-  box-shadow: var(--recess);
 }
 .mbody code { padding: 1.5px 6px; }
 .mbody pre { padding: 10px 12px; overflow-x: auto; line-height: 1.6; box-shadow: none; }
@@ -753,14 +739,14 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 .pe-meta { color: var(--tx3); font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
 .pe-hint { color: var(--tx3); font-size: 12px; margin-left: var(--sp3); font-style: italic; font-family: var(--display); }
 @media (max-width: 1024px) { .pe-hint { display: none; } }
-#peTools { display: flex; gap: 2px; background-image: var(--woodgrain); background-color: var(--wood); border-radius: var(--rc); padding: 2px; box-shadow: inset 0 1px 0 var(--edge), var(--recess); }
+#peTools { display: flex; gap: 2px; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--rc); padding: 2px; }
 .pe-tool {
   background: transparent; border: 0; color: var(--tx2);
   border-radius: var(--rc); width: 30px; height: 26px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .pe-tool svg { width: 16px; height: 16px; }
-.pe-tool:hover { color: var(--tx); background: var(--wood2); }
+.pe-tool:hover { color: var(--tx); background: var(--bg3); }
 .pe-tool.on { background: var(--bg); color: var(--tx); box-shadow: var(--recess); }
 #peColor { width: 30px; height: 26px; padding: 1px; border: 0; border-radius: var(--rc); background: var(--bg); box-shadow: var(--recess); cursor: pointer; }
 #peZoomPct { font-family: var(--mono); font-size: 12px; color: var(--tx2); min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -778,7 +764,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 .pe-edit.sel { outline: 1.5px solid var(--pri); }
 .pe-resize {
   position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px;
-  background: var(--pri); border: 2px solid #fff; border-radius: 3px; cursor: nwse-resize;
+  background: var(--pri); border: 2px solid #fff; border-radius: var(--rm); cursor: nwse-resize;
 }
 .pe-drawing { position: absolute; border: 1px dashed var(--pri); background: color-mix(in srgb, var(--pri) 8%, transparent); pointer-events: none; }
 
@@ -828,16 +814,15 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 #findBar input {
   flex: 1;
   min-width: 60px;
-  background: var(--bg2);
-  border: 0;
+  background: var(--bg3);
+  border: 1px solid var(--line);
   border-radius: var(--rc);
-  box-shadow: var(--recess);
   padding: 6px 8px;
   outline: none;
   font-family: var(--mono);
   font-size: 12px;
 }
-#findBar input:focus { box-shadow: var(--recess), 0 0 0 1.5px var(--pri); }
+#findBar input:focus { border-color: var(--pri); }
 #findCount { font-family: var(--mono); font-size: 12px; color: var(--tx3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ---------------- structure linter ---------------- */
@@ -874,7 +859,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   text-align: left;
   background: none;
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--rm);
   padding: 6px 8px;
   cursor: pointer;
   color: var(--tx2);
@@ -911,7 +896,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   text-align: left;
   background: none;
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--rm);
   padding: 5px 8px;
   cursor: pointer;
   color: var(--tx2);

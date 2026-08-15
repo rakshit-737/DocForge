@@ -92,10 +92,11 @@ const pageWhite = await p.evaluate(() => {
   return pg && getComputedStyle(pg).backgroundColor;
 });
 ok("document page stays white in light chrome", /255,\s*255,\s*255|rgb\(255/.test(pageWhite || ""));
+const themeBeforeReload = await p.evaluate(() => document.documentElement.hasAttribute("data-light"));
 await p.reload();
 await p.waitForSelector(".pagedjs_page", { timeout: 40000 });
 const persisted = await p.evaluate(() => document.documentElement.hasAttribute("data-light"));
-ok("theme persists across reload", persisted);
+ok("theme persists across reload", persisted === themeBeforeReload);
 
 const errors = p.__errors.filter(e => !/favicon/i.test(e));
 ok("no console errors", errors.length === 0);

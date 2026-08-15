@@ -60,29 +60,40 @@ Welcome! **DocForge** turns plain text into a polished, print-ready document —
 Write with simple *Markdown* marks (the toolbar inserts them for you):
 
 - \`# Heading\` starts a section — \`##\` and \`###\` for sub-sections
-- \`**bold**\`, \`*italic*\` and \`\` \`code\` \`\`
+- **bold**, *italic*, \`code\`, ==highlighted== and ++underlined++, straight off the toolbar
 - \`-\` for bullets, \`1.\` for numbered lists
 
 :::tip Try it now
-Change anything on the left and watch the pages update. Open **Settings** (top right) to switch the theme, accent colour, page size and more.
+Change anything on the left and watch the pages update. Open **Settings** (top right) to switch the theme, accent colour, page size, typefaces and more.
 :::
 
 ## Screenshot placeholders
 
 Add a screenshot slot anywhere with a single line:
 
-[screenshot: Homepage of the app, with the login form visible]
+[screenshot: Homepage of the app, with the login form visible | #fig-home]
 
-Leave it as a tidy placeholder in the printed PDF — or **click the box in the preview** to attach the real image. Either way it becomes a numbered figure.
+Leave it as a tidy placeholder in the printed PDF — or **click the box in the preview** to attach the real image. Either way it becomes a numbered figure you can point at from prose — "see [#fig-home]" — and the number keeps itself right.
 
-## Tables and callouts
+## Tables, captions and callouts
 
+[table: The furniture that makes a document feel finished | #tbl-kit]
 | Feature | How | Notes |
 | --- | --- | --- |
 | Cover page | Settings → Cover page | Title, subtitle, author, date |
 | Table of contents | \`[toc]\` | Real page numbers with dotted leaders |
+| Captioned tables & figures | \`[table: …]\` above a table | Numbered; cross-reference with \`[#id]\` |
+| Lists of figures / tables | \`[lof]\` / \`[lot]\` | Companions to the contents page |
 | Page break | \`[pagebreak]\` | Forces a new page |
 | Callouts | \`:::note\` … \`:::\` | note, tip, warning, important |
+
+## The scholarly kit
+
+Footnotes,[^1] citations (\`[@key]\` builds and numbers the References page for you) and typeset mathematics:
+
+$$e^{i\\pi} + 1 = 0$$
+
+[^1]: Written inline as \`[^1]\`, defined once anywhere — the note lands at the foot of the right page by itself.
 
 # Exporting
 
@@ -92,13 +103,14 @@ Hit **PDF** and choose *Save as PDF* in the print dialog. Margins, page numbers 
 
 ## Word
 
-**Word** downloads a real \`.docx\`: styled headings, cover page, tables, figures and an auto-updating table of contents. When Word asks to *update fields*, click **Yes** so the contents page fills itself in.
+**Word** downloads a real \`.docx\`: styled headings, cover page, tables, figures, footnotes, equations and an auto-updating table of contents. When Word asks to *update fields*, click **Yes** so the contents page fills itself in.
 
 # Make it yours
 
 1. Switch themes — Modern, Executive, Academic or Minimal
 2. Pick an accent colour to match your brand or college
-3. Start from a template in the **Templates** menu
+3. Choose typefaces — six embedded faces travel inside the file, and the whole classic Word specimen book is in the same menu
+4. Start from a template in the **Templates** menu
 
 :::note
 Everything runs in this one file — no account, no internet, nothing to install. Your work autosaves in this browser; use **Save** for a backup file you can reopen anywhere.
@@ -113,7 +125,9 @@ Everything runs in this one file — no account, no internet, nothing to install
 
 # Introduction
 
-State the problem this assignment addresses and why it matters. Keep it to two or three paragraphs: the context, the goal, and a one-line summary of your approach.
+State the problem this assignment addresses and why it matters. Keep it to two or three paragraphs: the context, the goal, and a one-line summary of your approach.[^1]
+
+[^1]: Footnotes are written inline as \`[^1]\` and defined once below the paragraph — the note itself is placed at the foot of the right page, in the PDF and in Word alike.
 
 ## Objectives
 
@@ -123,34 +137,37 @@ State the problem this assignment addresses and why it matters. Keep it to two o
 
 # Background
 
-Summarise the concepts, papers or tools the reader needs. Cite sources in brackets [1] and list them in the References section.
+Summarise the concepts, papers or tools the reader needs. Cite as you write — the divide-and-conquer analysis follows [@clrs2009], and the report structure follows [@ieee2021] — and the References section numbers, orders and formats itself.
 
 # Methodology
 
-Describe your approach step by step. Include diagrams or screenshots where they help:
+Describe your approach step by step, and point at your own material by number: the setup in [#fig-setup] produces the measurements in [#tbl-results]. Where a formula earns its place, set it properly:
 
-[screenshot: System / setup overview]
+$$T(n) = 2T(n/2) + cn = O(n \\log n)$$
+
+[screenshot: System / setup overview | #fig-setup]
 
 # Implementation
 
-Explain the key parts of your implementation. Short code excerpts beat long listings:
+Explain the key parts of your implementation. Short, annotated excerpts beat long listings:
 
-\`\`\`
-function example(input) {
-  return process(input);
-}
+\`\`\`python
+def solve(items):
+    """One idea per excerpt — reference the repository for the rest."""
+    return [transform(x) for x in items if keep(x)]
 \`\`\`
 
 # Results and Discussion
 
-Present results in tables and figures, then interpret them — what worked, what didn't, and why.
+Present results in captioned tables and figures, then interpret them — what worked, what didn't, and why.
 
+[table: Test outcomes against expected values | #tbl-results]
 | Test case | Expected | Observed | Result |
 | --- | --- | --- | --- |
 | Case 1 | Value | Value | Pass |
 | Case 2 | Value | Value | Pass |
 
-[screenshot: Output of the final run]
+[screenshot: Output of the final run | #fig-output]
 
 :::note Observation
 Call out the single most important finding here so it isn't lost in the prose.
@@ -160,10 +177,10 @@ Call out the single most important finding here so it isn't lost in the prose.
 
 Summarise what was achieved against each objective, note limitations, and suggest future work.
 
-# References
+[references]
 
-1. Author, *Title of the source*, Publisher, Year.
-2. Author, *Title of the source*, Journal / Conference, Year.
+[@clrs2009]: T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to Algorithms*, 3rd ed., MIT Press, 2009.
+[@ieee2021]: IEEE, *IEEE Editorial Style Manual for Authors*, IEEE Publishing Operations, 2021.
 `,
     },
     proposal: {
@@ -249,6 +266,9 @@ Three to five sentences: where the project stands, the headline wins, the main r
 
 # Metrics
 
+Numbers first, narrative second — [#tbl-metrics] carries the period-on-period picture; the prose below it explains only what moved and why.
+
+[table: Key metrics, period on period | #tbl-metrics]
 | Metric | Last period | This period | Trend |
 | --- | --- | --- | --- |
 | Metric one | 0 | 0 | → |
@@ -280,7 +300,9 @@ Your address line
 City, PIN
 your.email@example.com
 
+:::right
 [DATE]
+:::
 
 **To**
 Recipient Name
@@ -314,9 +336,11 @@ Start with the idea, scene or question that earns the reader's attention. No thr
 
 # The Argument
 
-Develop the piece one point per section. Quote sparingly and attribute clearly:
+Develop the piece one point per section. Quote sparingly and attribute clearly:[^1]
 
 > A short, well-chosen quotation does more work than a paragraph of summary.
+
+[^1]: Keep asides here, in footnotes, where they can't break the paragraph's stride.
 
 # Counterpoint
 
@@ -633,12 +657,22 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [key, face] of Object.entries(Engine.FACES)) {
       h += `<option value="${kind === "settings" ? key : face.name}">${face.label}</option>`;
     }
-    h += `</optgroup><optgroup label="Word fonts — exact in Word; preview needs it on this device">`;
-    for (const [name] of Engine.WORD_CATALOG) {
-      const miss = fontInstalled(name) ? "" : " · not on this device";
-      h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
-    }
     h += `</optgroup>`;
+    /* The Word census, sorted into the classic specimen-book groups. These print
+       exactly in Word; the preview needs the face installed on this device. */
+    const GROUPS = [
+      ["sans", "Word · Sans serif"], ["serif", "Word · Serif"], ["mono", "Word · Monospace"],
+      ["script", "Word · Script & handwriting"], ["display", "Word · Display & titling"],
+    ];
+    for (const [gk, label] of GROUPS) {
+      h += `<optgroup label="${label}">`;
+      for (const [name, fk] of Engine.WORD_CATALOG) {
+        if (fk !== gk) continue;
+        const miss = fontInstalled(name) ? "" : " · not on this device";
+        h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
+      }
+      h += `</optgroup>`;
+    }
     if (kind === "settings") h += `<option value="custom">Custom family…</option>`;
     return h;
   }
@@ -1679,7 +1713,7 @@ Land the piece: return to the opening image or question and say what it means no
     $$("button[title]:not([aria-label])").forEach(b => {
       if (!b.textContent.trim()) b.setAttribute("aria-label", b.title);
     });
-    applyUiTheme(safeLS.get(UI_KEY) === "light");
+    applyUiTheme(safeLS.get(UI_KEY) !== "dark"); /* the day desk is the default */
     syncSettingsUI(); updateCounts(); refreshLint();
     if (window.self !== window.top) $("#embedHint").classList.add("on");
     doRender();
