@@ -622,7 +622,9 @@ const DocxExport = (() => {
         }),
         cp({
           spacing: { after: 260 },
-          border: centred ? { top: { style: BorderStyle.SINGLE, size: 12, color: "14181F", space: 10 }, bottom: { style: BorderStyle.SINGLE, size: 12, color: "14181F", space: 10 } } : undefined,
+          // The academic Oxford rule: heavy above, hairline below (sizes in eighth-points
+          // — 21 ≈ 2.6 pt, 7 ≈ 0.9 pt), mirroring .cv-title in doc.css.
+          border: centred ? { top: { style: BorderStyle.SINGLE, size: 21, color: "14181F", space: 10 }, bottom: { style: BorderStyle.SINGLE, size: 7, color: "14181F", space: 10 } } : undefined,
           children: [new TextRun({ text: settings.title || "Untitled document", bold: true, size: HP(centred ? 27 : 31), color: "10141A", font: f.head })],
         }),
         ...(settings.subtitle ? [cp({ spacing: { after: 300 }, children: [new TextRun({ text: settings.subtitle, size: HP(13.5), color: "4A5160" })] })] : []),

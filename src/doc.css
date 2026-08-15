@@ -21,8 +21,15 @@
 }
 
 /* ---------- base blocks ---------- */
-.doc p { margin: 0 0 8.75pt; }
-.doc.justify .content p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+/* text-wrap:pretty ships in the print engine (Chromium 117+): no orphan word alone on
+   a paragraph's last line. Older engines simply ignore it. */
+.doc p { margin: 0 0 8.75pt; text-wrap: pretty; }
+.doc.justify .content p {
+  text-align: justify;
+  hyphens: auto; -webkit-hyphens: auto;
+  /* never hyphenate short words, never leave fewer than three letters on a line */
+  hyphenate-limit-chars: 6 3 3;
+}
 
 .doc h1, .doc h2, .doc h3, .doc h4 {
   font-family: var(--font-head);
@@ -31,6 +38,7 @@
   break-inside: avoid;   /* a two-line heading must not split across pages */
   line-height: 1.25;
   margin: 0;
+  text-wrap: balance;    /* a two-line heading breaks evenly, not 90/10 */
 }
 .doc h1 {
   font-size: 20.5pt;
@@ -363,12 +371,14 @@
   color: #10141a;
   margin: 0 0 7mm;
   max-width: 92%;
+  text-wrap: balance;
 }
 .cover .cv-sub {
   font-size: 13.5pt;
   line-height: 1.5;
   color: #4a5160;
   max-width: 80%;
+  text-wrap: pretty;
 }
 .cover .cv-spacer { flex: 1; }
 .cover .cv-rule { width: 22mm; height: 1.2mm; background: var(--a600); margin: 8mm 0; }
@@ -407,7 +417,9 @@
 .doc[data-theme="academic"] .cover .cv-kicker { letter-spacing: 0.3em; }
 .doc[data-theme="academic"] .cover .cv-title {
   font-weight: 700; font-size: 27pt;
-  border-top: 1.6pt solid #14181f; border-bottom: 1.6pt solid #14181f;
+  /* an Oxford rule — heavy above, hairline below — the letterpress thick–thin
+     signature, mirrored in the .docx cover (docx-export.js, centred branch) */
+  border-top: 2.6pt solid #14181f; border-bottom: 0.9pt solid #14181f;
   padding: 9mm 4mm; max-width: 100%;
 }
 .doc[data-theme="academic"] .cover .cv-sub { max-width: 95%; }

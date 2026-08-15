@@ -137,30 +137,83 @@ const Engine = (() => {
   };
 
   /* ---------- the Word font menu ----------
-     The classic Office families. None of these can travel inside the file (they are
-     proprietary), so the preview uses the locally installed face and the .docx names
-     the family — Word supplies its own copy, which is exact parity on any machine
-     with Office. `kind` only drives the CSS fallback when the face is missing. */
+     The full classic Office census — every Latin text family Word ships on Windows
+     (symbol and math faces left out; they would set prose as dingbats). None of these
+     can travel inside the file (they are proprietary), so the preview uses the locally
+     installed face and the .docx names the family — Word supplies its own copy, which
+     is exact parity on any machine with Office. `kind` drives the CSS fallback when
+     the face is missing AND the optgroup the pickers sort it under, so keep each group
+     alphabetical — the menu is rendered in this order. */
   const WORD_CATALOG = [
-    ["Aptos", "sans"], ["Calibri", "sans"], ["Calibri Light", "sans"], ["Candara", "sans"],
-    ["Corbel", "sans"], ["Segoe UI", "sans"], ["Arial", "sans"], ["Arial Black", "sans"],
-    ["Arial Narrow", "sans"], ["Tahoma", "sans"], ["Verdana", "sans"], ["Trebuchet MS", "sans"],
-    ["Century Gothic", "sans"], ["Franklin Gothic Medium", "sans"], ["Gill Sans MT", "sans"],
-    ["Tw Cen MT", "sans"], ["Bahnschrift", "sans"], ["Berlin Sans FB", "sans"],
-    ["Lucida Sans Unicode", "sans"], ["Comic Sans MS", "sans"],
-    ["Cambria", "serif"], ["Constantia", "serif"], ["Times New Roman", "serif"],
-    ["Georgia", "serif"], ["Garamond", "serif"], ["Book Antiqua", "serif"],
-    ["Palatino Linotype", "serif"], ["Bookman Old Style", "serif"],
-    ["Baskerville Old Face", "serif"], ["Bell MT", "serif"], ["Bodoni MT", "serif"],
-    ["Calisto MT", "serif"], ["Century", "serif"], ["Century Schoolbook", "serif"],
-    ["Goudy Old Style", "serif"], ["High Tower Text", "serif"], ["Perpetua", "serif"],
-    ["Rockwell", "serif"], ["Sitka Text", "serif"], ["Elephant", "serif"],
-    ["Consolas", "mono"], ["Courier New", "mono"], ["Lucida Console", "mono"], ["Cascadia Code", "mono"],
-    ["Segoe Script", "script"], ["Segoe Print", "script"], ["Brush Script MT", "script"],
-    ["Lucida Handwriting", "script"], ["Bradley Hand ITC", "script"], ["Mistral", "script"],
-    ["Ink Free", "script"], ["Freestyle Script", "script"], ["French Script MT", "script"],
-    ["Edwardian Script ITC", "script"], ["Monotype Corsiva", "script"],
-    ["Impact", "display"], ["Papyrus", "display"], ["Copperplate Gothic Bold", "display"], ["Castellar", "display"],
+    // — sans serif —
+    ["Agency FB", "sans"], ["Aptos", "sans"], ["Aptos Display", "sans"], ["Aptos Narrow", "sans"],
+    ["Arial", "sans"], ["Arial Black", "sans"], ["Arial Narrow", "sans"], ["Arial Rounded MT Bold", "sans"],
+    ["Bahnschrift", "sans"], ["Berlin Sans FB", "sans"], ["Berlin Sans FB Demi", "sans"],
+    ["Bierstadt", "sans"], ["Bierstadt Display", "sans"], ["Britannic Bold", "sans"],
+    ["Calibri", "sans"], ["Calibri Light", "sans"], ["Candara", "sans"], ["Candara Light", "sans"],
+    ["Century Gothic", "sans"], ["Comic Sans MS", "sans"], ["Corbel", "sans"], ["Corbel Light", "sans"],
+    ["Dubai", "sans"], ["Dubai Light", "sans"], ["Dubai Medium", "sans"], ["Ebrima", "sans"],
+    ["Eras Bold ITC", "sans"], ["Eras Demi ITC", "sans"], ["Eras Light ITC", "sans"], ["Eras Medium ITC", "sans"],
+    ["Franklin Gothic Book", "sans"], ["Franklin Gothic Demi", "sans"], ["Franklin Gothic Demi Cond", "sans"],
+    ["Franklin Gothic Heavy", "sans"], ["Franklin Gothic Medium", "sans"], ["Franklin Gothic Medium Cond", "sans"],
+    ["Gadugi", "sans"], ["Gill Sans MT", "sans"], ["Gill Sans MT Condensed", "sans"],
+    ["Gill Sans MT Ext Condensed Bold", "sans"], ["Grandview", "sans"], ["Grandview Display", "sans"],
+    ["Haettenschweiler", "sans"], ["Leelawadee UI", "sans"],
+    ["Lucida Sans", "sans"], ["Lucida Sans Unicode", "sans"], ["Maiandra GD", "sans"],
+    ["Malgun Gothic", "sans"], ["Microsoft JhengHei", "sans"], ["Microsoft Sans Serif", "sans"],
+    ["Microsoft YaHei", "sans"],
+    ["MS Reference Sans Serif", "sans"], ["Nirmala UI", "sans"], ["Seaford", "sans"], ["Seaford Display", "sans"],
+    ["Segoe UI", "sans"], ["Segoe UI Black", "sans"], ["Segoe UI Light", "sans"],
+    ["Segoe UI Semibold", "sans"], ["Segoe UI Semilight", "sans"],
+    ["Segoe UI Variable Display", "sans"], ["Segoe UI Variable Text", "sans"],
+    ["Skeena", "sans"], ["Skeena Display", "sans"], ["Tahoma", "sans"],
+    ["Tenorite", "sans"], ["Tenorite Display", "sans"], ["Trebuchet MS", "sans"],
+    ["Tw Cen MT", "sans"], ["Tw Cen MT Condensed", "sans"], ["Tw Cen MT Condensed Extra Bold", "sans"],
+    ["Verdana", "sans"], ["Yu Gothic", "sans"], ["Yu Gothic UI", "sans"],
+    // — serif —
+    ["Aptos Serif", "serif"], ["Aptos Slab", "serif"], ["Baskerville Old Face", "serif"], ["Bell MT", "serif"],
+    ["Bodoni MT", "serif"], ["Bodoni MT Black", "serif"], ["Bodoni MT Condensed", "serif"],
+    ["Book Antiqua", "serif"], ["Bookman Old Style", "serif"], ["Californian FB", "serif"],
+    ["Calisto MT", "serif"], ["Cambria", "serif"], ["Centaur", "serif"], ["Century", "serif"],
+    ["Century Schoolbook", "serif"], ["Constantia", "serif"], ["Elephant", "serif"],
+    ["Footlight MT Light", "serif"], ["Garamond", "serif"], ["Georgia", "serif"],
+    ["Gloucester MT Extra Condensed", "serif"], ["Goudy Old Style", "serif"], ["Goudy Stout", "serif"],
+    ["High Tower Text", "serif"], ["Lucida Bright", "serif"], ["Lucida Fax", "serif"],
+    ["Modern No. 20", "serif"], ["Palatino Linotype", "serif"],
+    ["Perpetua", "serif"], ["Poor Richard", "serif"],
+    ["Rockwell", "serif"], ["Rockwell Condensed", "serif"], ["Rockwell Extra Bold", "serif"],
+    ["SimSun", "serif"], ["Sitka Banner", "serif"], ["Sitka Display", "serif"], ["Sitka Heading", "serif"],
+    ["Sitka Small", "serif"], ["Sitka Subheading", "serif"], ["Sitka Text", "serif"], ["Sylfaen", "serif"],
+    ["Times New Roman", "serif"],
+    // — monospace —
+    ["Aptos Mono", "mono"], ["Cascadia Code", "mono"], ["Cascadia Mono", "mono"],
+    ["Consolas", "mono"], ["Courier New", "mono"], ["Lucida Console", "mono"],
+    ["Lucida Sans Typewriter", "mono"], ["MS Gothic", "mono"], ["OCR A Extended", "mono"],
+    // — script & handwriting —
+    ["Blackadder ITC", "script"], ["Bradley Hand ITC", "script"], ["Brush Script MT", "script"],
+    ["Edwardian Script ITC", "script"], ["Forte", "script"], ["Freestyle Script", "script"],
+    ["French Script MT", "script"], ["Gabriola", "script"], ["Gigi", "script"],
+    ["Harlow Solid Italic", "script"], ["Informal Roman", "script"], ["Ink Free", "script"],
+    ["Kristen ITC", "script"], ["Kunstler Script", "script"], ["Lucida Calligraphy", "script"],
+    ["Lucida Handwriting", "script"], ["Matura MT Script Capitals", "script"], ["Mistral", "script"],
+    ["Monotype Corsiva", "script"], ["MV Boli", "script"], ["Palace Script MT", "script"],
+    ["Parchment", "script"], ["Pristina", "script"], ["Rage Italic", "script"],
+    ["Script MT Bold", "script"], ["Segoe Print", "script"], ["Segoe Script", "script"],
+    ["Tempus Sans ITC", "script"], ["Viner Hand ITC", "script"], ["Vivaldi", "script"],
+    ["Vladimir Script", "script"],
+    // — display & titling —
+    ["Algerian", "display"], ["Bauhaus 93", "display"], ["Bernard MT Condensed", "display"],
+    ["Bodoni MT Poster Compressed", "display"], ["Broadway", "display"], ["Castellar", "display"],
+    ["Chiller", "display"], ["Colonna MT", "display"], ["Cooper Black", "display"],
+    ["Copperplate Gothic Bold", "display"], ["Copperplate Gothic Light", "display"],
+    ["Curlz MT", "display"], ["Engravers MT", "display"], ["Felix Titling", "display"],
+    ["Gill Sans Ultra Bold", "display"], ["Gill Sans Ultra Bold Condensed", "display"],
+    ["Harrington", "display"], ["Impact", "display"], ["Imprint MT Shadow", "display"],
+    ["Jokerman", "display"], ["Juice ITC", "display"], ["Magneto", "display"],
+    ["Niagara Engraved", "display"], ["Niagara Solid", "display"], ["Old English Text MT", "display"],
+    ["Onyx", "display"], ["Papyrus", "display"], ["Perpetua Titling MT", "display"],
+    ["Playbill", "display"], ["Ravie", "display"], ["Showcard Gothic", "display"],
+    ["Snap ITC", "display"], ["Stencil", "display"], ["Wide Latin", "display"],
   ];
   const GENERIC = {
     sans: "Arial, sans-serif", serif: "Georgia, serif", mono: "Consolas, monospace",
