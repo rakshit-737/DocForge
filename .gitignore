@@ -9,3 +9,4 @@ publish.sh
 publish.bat
 .opencode
 tools/.fontcache/
+.impeccable/live/
