@@ -189,7 +189,7 @@ Summarise what was achieved against each objective, note limitations, and sugges
       patch: { theme: "executive", accent: "#1f3a5f", title: "Project Proposal", subtitle: "Prepared for [Client] — scope, timeline and investment", kicker: "Your Company", metaExtra: "proposal@yourcompany.com", cover: true, h1break: false, numbered: false },
       source: `# Executive Summary
 
-One paragraph a busy decision-maker can read in thirty seconds: the problem, your solution, the outcome you're promising, and the investment required.
+One paragraph a busy decision-maker can read in thirty seconds: the problem, your solution, the outcome you're promising, and the investment required. Point them straight at the numbers — the packages in [#tbl-price] and the schedule in [#tbl-time].
 
 :::tip Why us
 One or two sentences on the single strongest reason you'll deliver — track record, speed, or specialist expertise.
@@ -197,24 +197,30 @@ One or two sentences on the single strongest reason you'll deliver — track rec
 
 # The Problem
 
-Describe the client's situation in their words. Quantify the cost of doing nothing where possible.
+Describe the client's situation in their words. Quantify the cost of doing nothing where possible.[^1]
+
+[^1]: Put supporting figures and sources in footnotes like this one, so the argument stays readable.
 
 # Proposed Solution
 
 Explain what you will build or deliver and how it solves the problem above. Keep the technology honest and the benefits concrete.
 
-[screenshot: Mock-up or illustrative screen of the deliverable]
+[screenshot: Mock-up or illustrative screen of the deliverable | #fig-mock]
 
 # Scope & Deliverables
 
+[table: What the engagement includes | #tbl-scope]
 | Deliverable | Description | Included |
 | --- | --- | --- |
 | Item one | What the client receives | Yes |
 | Item two | What the client receives | Yes |
 | Item three | Optional add-on | Optional |
 
+Anything not listed in [#tbl-scope] is out of scope for this engagement and can be quoted separately.
+
 # Timeline
 
+[table: Phases from kick-off to handover | #tbl-time]
 | Phase | Work | Duration |
 | --- | --- | --- |
 | Discovery | Requirements and sign-off | 1 week |
@@ -223,12 +229,13 @@ Explain what you will build or deliver and how it solves the problem above. Keep
 
 # Investment
 
+[table: Packages and pricing | #tbl-price]
 | Package | What's included | Price |
 | --- | --- | --- |
 | Standard | Scope above | ₹ — |
 | Extended | Scope + add-ons | ₹ — |
 
-Payment terms: 50% to begin, 50% on delivery.
+Payment terms: 50% to begin, 50% on delivery. Prices exclude applicable taxes.
 
 # Next Steps
 
@@ -239,6 +246,16 @@ Payment terms: 50% to begin, 50% on delivery.
 :::note Validity
 This proposal is valid for 30 days from the date on the cover.
 :::
+
+# Acceptance
+
+Signing below confirms the selected package and the terms above.
+
+| For [Client] | For Your Company |
+| --- | --- |
+| Name, designation | Name, designation |
+| Signature | Signature |
+| Date | Date |
 `,
     },
     report: {
@@ -251,6 +268,10 @@ This proposal is valid for 30 days from the date on the cover.
 
 Three to five sentences: where the project stands, the headline wins, the main risk, and the ask.
 
+:::tip At a glance
+**Scope** on track · **Schedule** watch — one milestone slipped · **Budget** on track
+:::
+
 # Progress This Period
 
 ## Completed
@@ -262,7 +283,7 @@ Three to five sentences: where the project stands, the headline wins, the main r
 
 - Item under way, with expected completion
 
-[screenshot: Latest build / dashboard state]
+[screenshot: Latest build / dashboard state | #fig-dash]
 
 # Metrics
 
@@ -282,23 +303,27 @@ Name the risk, its impact, and the mitigation you propose.
 
 # Decisions Needed
 
-1. Decision one — options and recommendation
-2. Decision two — options and recommendation
+1. **Decision one** — the options, the trade-off, and your recommendation in one line
+2. **Decision two** — the options, the trade-off, and your recommendation in one line
 
 # Next Steps
 
-- Action, owner, date
-- Action, owner, date
+[table: Actions for the coming period | #tbl-actions]
+| Action | Owner | Due |
+| --- | --- | --- |
+| Action one | Name | Date |
+| Action two | Name | Date |
 `,
     },
     letter: {
       label: "Formal letter",
       desc: "Address block, subject line and a clean sign-off — no cover, no numbers.",
       patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, title: "Letter", subtitle: "" },
-      source: `**Your Name**
-Your address line
-City, PIN
-your.email@example.com
+      source: `[Your Name]{size=15 sc}
+Your address line · City, PIN
+your.email@example.com · +91 00000 00000
+
+---
 
 :::right
 [DATE]
@@ -324,6 +349,8 @@ Thank you for your time and consideration.
 Yours faithfully,
 
 **Your Name**
+
+Enclosures: 1. Document name · 2. Document name
 `,
     },
     article: {
@@ -345,6 +372,8 @@ Develop the piece one point per section. Quote sparingly and attribute clearly:[
 # Counterpoint
 
 Take the strongest objection seriously and answer it.
+
+---
 
 # Closing
 
