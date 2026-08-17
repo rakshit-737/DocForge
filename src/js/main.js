@@ -1188,7 +1188,21 @@ Land the piece: return to the opening image or question and say what it means no
     const ext = ((f.name.match(/\.([a-z0-9]+)$/i) || [])[1] || "").toLowerCase();
     if (ext === "json") return openProjectFile(f);
     if (ext === "doc") return toast("Old binary .doc — open it in Word and save as .docx first", "warn");
-    if (!["docx", "pdf", "md", "markdown", "txt"].includes(ext)) return toast("Can't import that file type", "warn");
+    // An image picked through Open becomes an attached figure, same as dropping it.
+    if (/^image\//.test(f.type)) {
+      try {
+        const att = await processImageFile(f);
+        const key = newKey();
+        state.attachments[key] = att;
+        const cap = f.name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ");
+        insertBlock(`[screenshot: ${cap} | img:${key}]`);
+        toast("Image added as a figure");
+      } catch { toast("Could not read that image", "warn"); }
+      return;
+    }
+    if (!["docx", "pdf", "md", "markdown", "txt", "html", "htm", "csv", "tsv", "xlsx", "pptx", "epub", "ipynb"].includes(ext)) {
+      return toast("Can't import that file type", "warn");
+    }
     if (ext === "pdf") {
       const mode = await pdfChoice(f.name);
       if (!mode) return;
@@ -1210,6 +1224,12 @@ Land the piece: return to the opening image or question and say what it means no
     try {
       if (ext === "docx") await importDocxFile(f);
       else if (ext === "pdf") await importPdfFile(f);
+      else if (ext === "html" || ext === "htm") { state.source = htmlToMd(await f.text()) || ""; state.attachments = {}; }
+      else if (ext === "csv" || ext === "tsv") { state.source = FileImport.csv(await f.text()); state.attachments = {}; }
+      else if (ext === "xlsx") { state.source = await FileImport.xlsx(await f.arrayBuffer()); state.attachments = {}; }
+      else if (ext === "pptx") { state.source = await FileImport.pptx(await f.arrayBuffer()); state.attachments = {}; }
+      else if (ext === "epub") { state.source = await FileImport.epub(await f.arrayBuffer(), htmlToMd); state.attachments = {}; }
+      else if (ext === "ipynb") { state.source = FileImport.ipynb(await f.text()); state.attachments = {}; }
       else { state.source = await f.text(); state.attachments = {}; }
       state.settings.title = f.name.replace(/\.[a-z0-9]+$/i, "");
       editor.value = state.source;
@@ -1687,7 +1707,7 @@ Land the piece: return to the opening image or question and say what it means no
        a document file (.docx / .pdf / .md / project) routes through import. */
     editor.addEventListener("dragover", e => { e.preventDefault(); });
     editor.addEventListener("drop", async e => {
-      const docFile = [...(e.dataTransfer?.files || [])].find(f => /\.(docx|doc|pdf|md|markdown|txt|json)$/i.test(f.name));
+      const docFile = [...(e.dataTransfer?.files || [])].find(f => /\.(docx|doc|pdf|md|markdown|txt|json|html|htm|csv|tsv|xlsx|pptx|epub|ipynb)$/i.test(f.name));
       if (docFile) { e.preventDefault(); importFile(docFile); return; }
       const file = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type));
       if (!file) return; // let plain text drops behave natively

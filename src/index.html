@@ -378,7 +378,7 @@ finish review, the verdict, and DESIGN.md
 
 <input type="file" id="peImgInput" hidden accept="image/png,image/jpeg">
 <input type="file" id="imgInput" hidden accept="image/png,image/jpeg,image/gif,image/webp">
-<input type="file" id="projInput" hidden accept=".json,.docforge.json,.docx,.pdf,.md,.markdown,.txt,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+<input type="file" id="projInput" hidden accept=".json,.docforge.json,.docx,.pdf,.md,.markdown,.txt,.html,.htm,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,image/png,image/jpeg,image/gif,image/webp,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 
 <div id="imgMenu">
   <button id="imAttach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.3l-8.4 8.4a5.3 5.3 0 0 1-7.5-7.5l8.8-8.8a3.5 3.5 0 0 1 5 5l-8.9 8.8a1.77 1.77 0 0 1-2.5-2.5l8.2-8.1"/></svg>Attach image…</button>
@@ -444,7 +444,7 @@ finish review, the verdict, and DESIGN.md
       <h4>Typefaces & borders</h4>
       <p>Settings offers six embedded typefaces (Source Sans, Source Serif, Inter, Montserrat, Garamond, Crimson) for headings and body independently — the same fonts travel inside the Word file, so it looks identical on any machine. Below them sits the whole classic <b>Word font menu</b> (Calibri, Cambria, Times New Roman, Georgia, Garamond, Comic Sans MS and ~50 more): those are used from this device and written into the .docx by name — Word supplies its own copy, so the Word file is exact; on a machine without the font the preview falls back to a lookalike. The toolbar's typeface/size boxes restyle just the selected text. Page borders come in seven styles with weight and colour options, drawn the same in the PDF and as real Word page borders.</p>
       <h4>Importing Word & PDF files</h4>
-      <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code> and <code>.txt</code>. Word documents keep headings, lists, tables, images and inline styling.</p>
+      <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code>, <code>.txt</code>, <code>.html</code>, <code>.csv</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.epub</code>, <code>.ipynb</code> and images. Word documents keep headings, lists, tables, images and inline styling; spreadsheets become tables per sheet, decks become a section per slide with speaker notes, and notebooks keep their prose and code cells.</p>
       <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot, size and <b>in the PDF's own font</b> (embedded fonts only carry the characters the document already uses; type a character the font's subset lacks and that line falls back to the closest standard face, with a notice). The toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
       <h4>Editor</h4>
       <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
@@ -519,6 +519,9 @@ finish review, the verdict, and DESIGN.md
 </script>
 <script>
 /*@PDFEDITOR@*/
+</script>
+<script>
+/*@FILEIMPORT@*/
 </script>
 <script>
 /*@MAIN@*/
