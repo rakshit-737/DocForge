@@ -607,9 +607,9 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
    The page is a real editing surface: an ink caret and a quiet warm-gray
    selection are the whole affordance — no outlines, no boxes. Generated
    islands (TOC, references, figures, equations) keep the arrow cursor. */
-.pagedjs_page_content { caret-color: #1a1a17; cursor: text; }
+.pagedjs_page_content { caret-color: #111827; cursor: text; }
 .pagedjs_page_content:focus, .pagedjs_page_content:focus-visible { outline: none; }
-.pagedjs_page ::selection { background: rgba(26, 26, 23, 0.16); }
+.pagedjs_page ::selection { background: rgba(37, 99, 235, 0.22); }
 .pagedjs_page [contenteditable="false"] { cursor: default; }
 
 /* pane tags — the two columns name themselves, in the desk's teletype voice */
@@ -642,6 +642,34 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 
 /* focus mode — the desk clears, the manuscript stays */
 body.focus-mode #editorPane, body.focus-mode #settings, body.focus-mode #paneDivider { display: none; }
+.focus-exit-btn {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 55;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--tx2);
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: var(--rm);
+  cursor: pointer;
+  box-shadow: var(--elev-m);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.16s ease-out, color 0.16s ease-out;
+}
+.focus-exit-btn:hover { color: var(--tx); border-color: var(--rule); }
+.focus-exit-btn kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--rc);
+  padding: 0 4px;
+}
+body:not(.focus-mode) .focus-exit-btn { display: none !important; }
 
 /* clickable screenshot placeholders in preview */
 .doc .shot { cursor: pointer; position: relative; }
@@ -995,9 +1023,11 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   position: absolute;
   top: 44px;
   left: 8px;
-  width: 252px;
+  width: 280px;
   max-height: calc(100% - 60px);
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: var(--bg3);
   border-radius: var(--rm);
   box-shadow: var(--elev-m);
@@ -1005,6 +1035,21 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   z-index: 40;
   animation: rise 0.16s ease-out;
 }
+.ol-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+.ol-tab {
+  background: none; border: 0; color: var(--tx3);
+  font-size: 11px; padding: 3px 6px; cursor: pointer;
+  border-radius: var(--rc);
+}
+.ol-tab:hover { color: var(--tx2); }
+.ol-tab.on { color: var(--tx); font-weight: 600; background: var(--bg2); }
+.ol-list { overflow-y: auto; flex: 1; }
 .ol-item {
   display: block;
   width: 100%;
@@ -1022,8 +1067,9 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 }
 .ol-item:hover { background: var(--line); color: var(--tx); }
 .ol-item.l1 { font-weight: 600; color: var(--tx); }
-.ol-item.l2 { padding-left: 20px; }
-.ol-item.l3 { padding-left: 34px; font-size: 12px; }
+.ol-item.l2 { padding-left: 18px; }
+.ol-item.l3 { padding-left: 30px; font-size: 12px; }
+.ol-item.active { background: color-mix(in srgb, var(--pri) 12%, transparent); color: var(--pri); font-weight: 600; }
 .ol-empty { color: var(--tx3); font-size: 12.5px; padding: 8px; }
 #btnOutline.on { background: var(--bg3); color: var(--tx); }
 
@@ -1124,6 +1170,38 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   .pagedjs_page { box-shadow: none; margin: 0; animation: none; }
   .doc .shot .shot-hint { display: none !important; }
 }
+
+/* floating contextual selection toolbar */
+.float-tb {
+  position: fixed;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: var(--rm);
+  box-shadow: var(--elev-m);
+  padding: 3px 4px;
+  animation: pop 0.14s ease-out;
+}
+.float-tb[hidden] { display: none; }
+.ftb-btn {
+  background: transparent;
+  border: 0;
+  color: var(--tx2);
+  border-radius: var(--rc);
+  width: 26px; height: 26px;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.ftb-btn:hover { background: var(--bg2); color: var(--tx); }
+.ftb-btn svg { width: 13px; height: 13px; }
+.ftb-btn small { font-size: 8px; vertical-align: super; }
+.ftb-sep { width: 1px; height: 14px; background: var(--line); margin: 0 3px; }
 
 /* button-embedded spinner (Word export progress) */
 .btnspin {

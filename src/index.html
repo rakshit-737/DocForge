@@ -254,6 +254,9 @@ finish review, the verdict, and DESIGN.md
       </div>
       <div class="tbg">
         <button class="tb" data-act="table" title="Table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15M15.5 4.5v15"/></svg></button>
+        <button class="tb" data-act="equation" title="Equation ($$)"><span class="h">∑</span></button>
+        <button class="tb" data-act="footnote" title="Footnote ([^1])"><span class="h">f¹</span></button>
+        <button class="tb" data-act="citation" title="Citation ([@key])"><span class="h">[@]</span></button>
         <button class="tb" data-act="callout" title="Callout (note / tip / warning)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H12l-4 4v-4H5.5A1.5 1.5 0 0 1 4 14.5z"/><path d="M12 7.5v3.5"/><circle cx="12" cy="13.2" r="0.4" fill="currentColor"/></svg></button>
         <button class="tb" data-act="codeblock" title="Code block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M9.5 9.5L7 12l2.5 2.5M14.5 9.5L17 12l-2.5 2.5"/></svg></button>
       </div>
@@ -324,7 +327,15 @@ finish review, the verdict, and DESIGN.md
       </div>
     </div>
     <div id="previewScroll"><div id="scaleWrap"></div></div>
-    <nav id="outlinePanel" hidden></nav>
+    <button id="btnFocusExit" class="focus-exit-btn" title="Exit focus mode (Esc)" hidden>Exit Focus Mode <kbd>Esc</kbd></button>
+    <nav id="outlinePanel" hidden>
+      <div class="ol-tabs">
+        <button class="ol-tab on" data-tab="head">Headings</button>
+        <button class="ol-tab" data-tab="figtbl">Figures &amp; Tables</button>
+        <button class="ol-tab" data-tab="notes">Footnotes</button>
+      </div>
+      <div id="olList" class="ol-list"></div>
+    </nav>
   </section>
 </div>
 
@@ -495,6 +506,19 @@ finish review, the verdict, and DESIGN.md
       </table>
     </div>
   </div>
+</div>
+
+<div id="floatTb" class="float-tb" role="toolbar" aria-label="Quick formatting" hidden>
+  <button type="button" class="ftb-btn" data-fact="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+  <button type="button" class="ftb-btn" data-fact="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+  <button type="button" class="ftb-btn" data-fact="underline" title="Underline (Ctrl+U)"><span style="text-decoration:underline;text-underline-offset:2px">U</span></button>
+  <button type="button" class="ftb-btn" data-fact="strike" title="Strikethrough"><span style="text-decoration:line-through">S</span></button>
+  <span class="ftb-sep"></span>
+  <button type="button" class="ftb-btn" data-fact="hl" title="Highlight"><span class="ic-hl">A</span></button>
+  <button type="button" class="ftb-btn" data-fact="link" title="Insert link">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+  </button>
+  <button type="button" class="ftb-btn" data-fact="clearfmt" title="Clear formatting">T<small>✕</small></button>
 </div>
 
 <div id="toasts"></div>
