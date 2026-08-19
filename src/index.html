@@ -59,7 +59,7 @@ finish review, the verdict, and DESIGN.md
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
   </button>
   <div class="tbbreak" aria-hidden="true"></div>
-  <button class="btn" id="btnSettings">
+  <button class="btn" id="btnSettings" aria-expanded="false" aria-controls="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
     <span class="bl">Settings</span>
   </button>
@@ -279,6 +279,12 @@ finish review, the verdict, and DESIGN.md
     </div>
     <div id="editorWrap">
       <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
+      <div id="dropHint" hidden aria-hidden="true">
+        <div class="dh-card">
+          <div class="dh-title">Drop to import</div>
+          <div class="dh-sub">Word · PDF · Markdown · spreadsheet · deck · book · notebook · image</div>
+        </div>
+      </div>
       <div id="emptyState" hidden>
         <div class="es-title">A blank sheet</div>
         <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
@@ -293,7 +299,7 @@ finish review, the verdict, and DESIGN.md
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
-      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
+      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>K</kbd> commands · <kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
     </div>
     <div id="lintPanel" hidden></div>
   </section>
@@ -411,7 +417,7 @@ finish review, the verdict, and DESIGN.md
 
 <div class="overlay" id="helpOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Help — writing and exporting" tabindex="-1">
-    <header>Help — writing & exporting <button class="btn icon ghost" data-close>✕</button></header>
+    <header>Help — writing & exporting <button class="btn icon ghost" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
     <div class="mbody">
       <h4>Formatting (Markdown)</h4>
       <table>
@@ -447,7 +453,7 @@ finish review, the verdict, and DESIGN.md
       <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code>, <code>.txt</code>, <code>.html</code>, <code>.csv</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.epub</code>, <code>.ipynb</code> and images. Word documents keep headings, lists, tables, images and inline styling; spreadsheets become tables per sheet, decks become a section per slide with speaker notes, and notebooks keep their prose and code cells.</p>
       <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot, size and <b>in the PDF's own font</b> (embedded fonts only carry the characters the document already uses; type a character the font's subset lacks and that line falls back to the closest standard face, with a notice). The toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
       <h4>Editor</h4>
-      <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
+      <p><b>Ctrl+K</b> opens the command palette — every action in the app, searchable by name · <b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
       <p><b>PDF</b> — click <b>PDF</b>, then choose <i>Save as PDF</i> as the destination in the print dialog. Best in Chrome or Edge. If the dialog shows “Headers and footers”, untick it (DocForge prints its own).</p>
       <p><b>Word</b> — click <b>Word</b> for a real <code>.docx</code>. If Word asks to <i>update fields</i> when opening, click <b>Yes</b> — that fills in the table of contents page numbers.</p>
@@ -457,11 +463,20 @@ finish review, the verdict, and DESIGN.md
   </div>
 </div>
 
+<div class="overlay" id="cmdkOverlay">
+  <div class="modal small cmdk" role="dialog" aria-modal="true" aria-label="Command palette" tabindex="-1">
+    <input id="cmdkInput" type="text" placeholder="Type a command — new, table, export, template…" autocomplete="off" spellcheck="false" aria-label="Search commands" role="combobox" aria-expanded="true" aria-controls="cmdkList" aria-autocomplete="list">
+    <div id="cmdkList" role="listbox" aria-label="Commands"></div>
+    <div class="cmdk-foot"><span class="kbd-hint"><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> run · <kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
 <div class="overlay" id="keysOverlay">
   <div class="modal small" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" tabindex="-1">
-    <header>Keyboard shortcuts <button class="btn icon ghost" data-close>✕</button></header>
+    <header>Keyboard shortcuts <button class="btn icon ghost" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
     <div class="mbody">
       <table>
+        <tr><td><code>Ctrl</code> <code>K</code></td><td>Command palette — every action, searchable</td></tr>
         <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline</td></tr>
         <tr><td><code>Ctrl</code> <code>F</code> / <code>Ctrl</code> <code>H</code></td><td>Find / replace</td></tr>
         <tr><td><code>Ctrl</code> <code>S</code></td><td>Save project file</td></tr>

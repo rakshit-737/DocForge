@@ -179,7 +179,7 @@ The two color-tool icons carry literal ink samples, not chrome tokens: `.ic-hl` 
 2. The toggle's proxy focus ring — `.toggle input:focus-visible + .tg`, same 2px `--focus` drawn on the plate (app.css:315).
 3. The masthead title warming on hover — `#docTitle:hover { color: var(--pri2) }` (app.css:153).
 4. The TO-PRESS plate — `.btn.pri` (`--pri` face, `--pri2` border, `--pri-ink` text; app.css:194–196) and (5) its hover to `--pri2` (app.css:199). Exactly three instances exist in the HTML, one per surface: `#btnPdf` (studio masthead), `#peExport` (PDF bench), `#cfYes` (confirm dialog's Continue).
-6. Printed-form field focus — `.field input/select/textarea:focus` swaps the soft rule for `border-color: var(--pri)` (app.css:292), and (7) the find-bar inputs do the same (app.css:825).
+6. Printed-form field focus — `.field input/select/textarea:focus` and the command palette's query line (`#cmdkInput:focus`) swap their resting rule for `border-color: var(--pri)` in one shared declaration (the form fields rest on a soft `--line` box, the query line on its engraved 1px `--rule` bottom), and (7) the find-bar inputs do the same.
 8–11. The proof marks on the PDF bench: `.pe-edit:hover` dashed outline (`--pri` at 65%), `.pe-edit.sel` 1.5px solid outline, the `.pe-resize` handle fill, and the `.pe-drawing` marquee (`--pri` border, 8% fill) (app.css:763–769).
 Adding a twelfth site requires removing one.
 
@@ -264,7 +264,7 @@ Square-cornered desk hardware: chrome controls sit at **0** (`--rc` — buttons,
 - **Busy:** an embedded 12px `currentColor` ring spinner (`.btnspin`, `spin` 0.7s linear), `cursor: progress`, opacity 0.85. **Disabled:** opacity 0.55 only.
 
 ### Ruled trays
-`.grp` (masthead file ops), `.tbg` (toolbar groups), `#peTools` (bench tools): `--bg2` fill, 1px `--line` hairline, 2px padding, square. Plates inside (`.tb`, 28px min, 1px radius) are transparent until hover, when they lift to `--bg3`; active scales to 0.96. Inline selects (`.tbsel`) are hairline boxes on `--bg3`. The instrument cluster (`#pvCluster`) is the same grammar at 26px with 1px `--line` separators.
+`.grp` (masthead file ops), `.tbg` (toolbar groups), `#peTools` (bench tools): `--bg2` fill, 1px `--line` hairline, 2px padding, square. Plates inside (`.tb`, 28px min, 1px radius) are transparent until hover, when they lift to `--bg3`; active scales to 0.96. Inline selects (`.tbsel`) are hairline boxes on `--bg3`. The instrument cluster (`#pvCluster`) is the same grammar at 26px with 1px `--line` separators; the bench bar's `.tbsep` separators are the same 1px `--line` at 16px.
 
 ### Printed-form fields
 Inputs/selects/textareas are ruled hairline boxes, not soft wells: `--bg3` fill, 1px `--line` border, square, 8px padding. **Focus swaps the rule for the grease pencil** (`border-color: var(--pri)`), the find-bar inputs identically (in mono at 12px). Labels above at 12px `--tx2`; paired fields share a `.frow` at equal flex.
@@ -276,10 +276,16 @@ A 40×22 track (2px radius) recessed into `--bg` (`--recess` — a true well) wi
 22px **square ink blocks** (2px radius; 26px coarse), hover scales 1.12. The active one wears a 2px `--bg2` gap ring plus a 2px ink outer ring — selection is ink, not red — and carries `aria-pressed` (toggled in `main.js`). The custom `<input type=color>` is a peer square distinguished only by a 1px `--rule` hairline ring: "this one you mix yourself."
 
 ### Popmenus (highlight / text-colour / templates)
-Fixed-position sheets: `--bg3`, 2px radius, `--elev-m`, 12px padding, `menuIn` entrance. Serif 14px title, a 5-column grid of 22px square swatches, optional "Custom" row. The templates menu is a designed menu (`role="menu"`, label + one-line reason per item), positioned under its button with `aria-expanded` bookkeeping; opening focuses the first item; outside-click and Esc close (Esc returns focus to the opener).
+Fixed-position sheets: `--bg3`, 2px radius, `--elev-m`, 12px padding, `menuIn` entrance. Serif 14px title, a 5-column grid of 22px square swatches, optional "Custom" row. The templates menu is a designed menu (`role="menu"`, label + one-line reason per item), positioned under its button with `aria-expanded` bookkeeping; opening focuses the first item, arrows/Home/End walk the list; outside-click and Esc close (Esc returns focus to the opener).
 
 ### Dialogs
 `.overlay` scrim centering a `.modal` (`--bg2`, 4px radius, `--elev-l`, `modalIn`; 680px, `.small` 430px). Semantics are real: `role="dialog" aria-modal="true"`, labelled headers, `tabindex="-1"`. `openOv`/`closeOv` in `main.js` move focus in, trap Tab in a cycle, cancel on Esc, and **return focus to the opener**. Headers are serif 16px over a `--line` seam; bodies are `--tx2` at 1.65 line-height; footers right-align actions with the red plate last (`#cfYes`). The help sheet uses serif `h4` rails and wall-less reference tables (row seams at 55% `--line`).
+
+### Command palette — the desk's spike
+`Ctrl+K`. A `.modal.small` opened **top-anchored** (11vh, so the galley stays in view) through the same `openOv` machinery: an engraved mono query line (`#cmdkInput` — borderless but for a 1px `--rule` bottom; focus joins the printed-form grease-pencil site), a ruled `role="listbox"` of every desk action grouped under mono `--tx3` group lines (File · Export · Insert · View · Templates), teletype shortcut hints right-aligned, and a kbd-hint footer over a `--line` seam. The query line is a `role="combobox"` controlling the listbox (`aria-controls`/`aria-autocomplete="list"`); group lines are `aria-hidden` wayfinding and options carry `tabindex="-1"`, so DOM focus never leaves the input. Selection is a flat `--bg3` fill steered by ↑/↓/Home/End with `aria-activedescendant` (cleared when nothing matches); Enter runs — or, on an empty result, keeps the palette and the query; Esc closes and restores focus. The list is built fresh on each open so the template roster and the theme label stay truthful. Unavailable on the proofing bench, and it will not open over (or under) another dialog. Shortcut hints and the placeholder sit at `--tx2` — the kbd-chip precedent for the day fresh sheet.
+
+### Drop affordance — copy landing on the desk
+While a file is held over the editor, `#dropHint` lays an ink-ruled landing zone over the writing surface (2px dashed `--rule` on `--bg` at 93%, serif italic title, one-line format list; `fade` in at `--dur`), naming what dropping will do. Counted dragenter/dragleave so child churn can't flicker it; `pointer-events: none` so the editor stays the drop target. Ink, not red — dropping is composition, not an editorial mark.
 
 ### Toasts — proof slips
 Inverted slips: ink ground (`--tx`), `--bg2` text, 600 weight; ochre ground for warnings. 2px radius, `--elev-m`, bottom-center stack. Lifecycle in `main.js`: `pop` in (160ms rise), hold 3400ms by default — `toast(msg, type, ms)` takes a duration for slips that must linger (the print instructions hold 8000ms) — then `.out`, a 300ms ease-in drop, removed 400ms later. Exits are faster than entrances: the slip is *taken away*.

@@ -425,7 +425,7 @@ Land the piece: return to the opening image or question and say what it means no
      Esc cancels, and focus returns to whatever opened them. */
   function ovFocusables(ov) {
     return [...ov.querySelectorAll("button, [href], input, select, textarea")]
-      .filter(el => !el.disabled && el.offsetWidth > 0);
+      .filter(el => !el.disabled && el.offsetWidth > 0 && el.tabIndex !== -1);
   }
   function openOv(ov, onCancel) {
     ov.__cancel = onCancel || null;
@@ -1221,6 +1221,8 @@ Land the piece: return to the opening image or question and say what it means no
     }
     if (!await confirmModal(`Import “${f.name}”?`,
       "The imported document will replace the editor contents. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) return;
+    // Heavy conversions can take a few seconds — say so the moment work begins.
+    if (["docx", "pdf", "xlsx", "pptx", "epub"].includes(ext)) toast(`Reading “${f.name}”…`, null, 1800);
     try {
       if (ext === "docx") await importDocxFile(f);
       else if (ext === "pdf") await importPdfFile(f);
@@ -1300,6 +1302,11 @@ Land the piece: return to the opening image or question and say what it means no
       const blob = await DocxExport.build(lastContentEl, state.settings, state.attachments);
       downloadBlob(blob, safeName() + ".docx");
       toast("Word file downloaded — click “Yes” if Word asks to update fields");
+      // Honest warning only — read off the badge refreshLint already keeps
+      // current, rather than paying a second full lint pass here.
+      const badge = $("#lintBadge");
+      const warns = badge.hidden ? 0 : parseInt(badge.textContent, 10) || 0;
+      if (warns) toast(`${warns} document check${warns === 1 ? "" : "s"} outstanding — see the checks badge, bottom left`, "warn", 5000);
     } catch (e) {
       console.error("[DocForge] docx failed", e);
       toast("Word export failed — nothing was lost; try again", "warn");
@@ -1309,7 +1316,133 @@ Land the piece: return to the opening image or question and say what it means no
     btn.innerHTML = label;
   }
 
-  /* ---------------- boot ---------------- */
+  /* ---------------- command palette — the desk's spike ----------------
+     Every action in the app, searchable by name. Built fresh on each open so
+     the template list and theme label stay truthful; runs through the same
+     overlay machinery as every dialog (focus trap, Esc, focus restore). */
+  /* The definition lands at the end of the document — never at the caret,
+     which would tear the sentence in two — and the caret stays on the marker. */
+  function appendDef(def) {
+    const at = editor.selectionStart;
+    const src = editor.value.replace(/\s*$/, "");
+    editor.value = (src ? src + "\n\n" : "") + def + "\n";
+    editor.focus();
+    editor.setSelectionRange(at, at);
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+  function insertFootnote() {
+    // next id = max existing id + 1 (counting would collide after a deletion,
+    // and a duplicate id silently overwrites the other note's text on export)
+    const ids = [...state.source.matchAll(/\[\^(\d+)\]/g)].map(m => +m[1]);
+    const n = (ids.length ? Math.max(...ids) : 0) + 1;
+    editor.focus();
+    editor.setRangeText(`[^${n}]`, editor.selectionStart, editor.selectionEnd, "end");
+    appendDef(`[^${n}]: Footnote text`);
+  }
+  function insertCitation() {
+    editor.focus();
+    editor.setRangeText("[@key]", editor.selectionStart, editor.selectionEnd, "end");
+    appendDef("[@key]: Author, *Title of the source*, Publisher, Year.");
+  }
+
+  function cmdkCommands() {
+    const cmds = [
+      { g: "File", l: "New document", h: "", run: () => $("#btnNew").click() },
+      { g: "File", l: "Open / import a file…", h: "", run: () => $("#projInput").click() },
+      { g: "File", l: "Save project file", h: "Ctrl S", run: saveProject },
+      { g: "File", l: "Rename document", h: "", run: () => $("#docTitle").click() },
+      { g: "Export", l: "Export PDF", h: "Ctrl P", run: () => $("#btnPdf").click() },
+      { g: "Export", l: "Export Word (.docx)", h: "", run: () => $("#btnDocx").click() },
+      { g: "Insert", l: "Insert table", h: "", run: TOOL_ACTS.table },
+      { g: "Insert", l: "Insert equation", h: "", run: () => insertBlock("$$\nE = mc^2\n$$") },
+      { g: "Insert", l: "Insert figure (screenshot placeholder)", h: "", run: TOOL_ACTS.shot },
+      { g: "Insert", l: "Insert image from file…", h: "", run: TOOL_ACTS.image },
+      { g: "Insert", l: "Insert footnote", h: "", run: insertFootnote },
+      { g: "Insert", l: "Insert citation", h: "", run: insertCitation },
+      { g: "Insert", l: "Insert callout", h: "", run: TOOL_ACTS.callout },
+      { g: "Insert", l: "Insert code block", h: "", run: TOOL_ACTS.codeblock },
+      { g: "Insert", l: "Insert table of contents", h: "", run: TOOL_ACTS.toc },
+      { g: "Insert", l: "Insert page break", h: "", run: TOOL_ACTS.pagebreak },
+      { g: "View", l: "Find in document", h: "Ctrl F", run: () => findBar(true) },
+      { g: "View", l: "Replace in document", h: "Ctrl H", run: () => { findBar(true); $("#replInput").focus(); } },
+      { g: "View", l: "Toggle outline", h: "", run: () => $("#btnOutline").click() },
+      { g: "View", l: "Toggle document settings", h: "", run: () => $("#btnSettings").click() },
+      { g: "View", l: document.documentElement.hasAttribute("data-light") ? "Switch to the night desk (dark)" : "Switch to the day desk (light)", h: "", run: () => $("#btnDark").click() },
+      { g: "View", l: "Keyboard shortcuts", h: "Ctrl /", run: () => openOv($("#keysOverlay")) },
+      { g: "View", l: "Help — writing & exporting", h: "", run: () => openOv($("#helpOverlay")) },
+    ];
+    for (const [id, t] of Object.entries(TEMPLATES)) {
+      cmds.push({ g: "Templates", l: `Template: ${t.label}`, h: "", run: async () => {
+        if (await confirmModal("Load template?", "“" + t.label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
+      } });
+    }
+    return cmds;
+  }
+
+  let ckSel = 0, ckItems = [];
+  function cmdkRender(q) {
+    const list = $("#cmdkList");
+    const needle = q.trim().toLowerCase();
+    const all = cmdkCommands();
+    ckItems = !needle ? all : all
+      .map(c => ({ c, i: c.l.toLowerCase().indexOf(needle) }))
+      .filter(x => x.i >= 0 || x.c.g.toLowerCase().startsWith(needle))
+      .sort((a, b) => (a.i < 0 ? 99 : a.i) - (b.i < 0 ? 99 : b.i))
+      .map(x => x.c);
+    ckSel = Math.min(ckSel, Math.max(0, ckItems.length - 1));
+    if (!ckItems.length) {
+      list.innerHTML = `<div class="ck-empty">No matching command</div>`;
+      $("#cmdkInput").removeAttribute("aria-activedescendant");
+      return;
+    }
+    let h = "", lastG = null;
+    ckItems.forEach((c, i) => {
+      // group lines are visual wayfinding only — a listbox may hold options alone
+      if (c.g !== lastG) { h += `<div class="ck-group" aria-hidden="true">${c.g}</div>`; lastG = c.g; }
+      h += `<button class="ck-item" role="option" id="ck-${i}" data-i="${i}" tabindex="-1" aria-selected="${i === ckSel}">` +
+        `${Engine.esc(c.l)}${c.h ? `<span class="ck-hint">${c.h}</span>` : ""}</button>`;
+    });
+    list.innerHTML = h;
+    const sel = list.querySelector(`[data-i="${ckSel}"]`);
+    if (sel) sel.scrollIntoView({ block: "nearest" });
+    $("#cmdkInput").setAttribute("aria-activedescendant", `ck-${ckSel}`);
+    list.querySelectorAll(".ck-item").forEach(b => {
+      b.onclick = () => cmdkRun(+b.dataset.i);
+      b.onmousemove = () => { if (ckSel !== +b.dataset.i) { ckSel = +b.dataset.i; cmdkPaint(); } };
+    });
+  }
+  function cmdkPaint() {
+    $("#cmdkList").querySelectorAll(".ck-item").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.i === ckSel)));
+    const sel = $("#cmdkList").querySelector(`[data-i="${ckSel}"]`);
+    if (sel) sel.scrollIntoView({ block: "nearest" });
+    $("#cmdkInput").setAttribute("aria-activedescendant", `ck-${ckSel}`);
+  }
+  function cmdkRun(i) {
+    const cmd = ckItems[i];
+    if (!cmd) return; // Enter on "no matching command" keeps the palette (and the query)
+    closeOv($("#cmdkOverlay"));
+    cmd.run();
+  }
+  function cmdkOpen() {
+    if (inPdfMode()) return; // studio actions would hit the hidden document
+    ckSel = 0;
+    $("#cmdkInput").value = "";
+    openOv($("#cmdkOverlay"));
+    cmdkRender("");
+  }
+  function bindCmdk() {
+    const input = $("#cmdkInput");
+    input.addEventListener("input", () => { ckSel = 0; cmdkRender(input.value); });
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); cmdkRun(ckSel); return; }
+      if (!ckItems.length) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); ckSel = Math.min(ckSel + 1, ckItems.length - 1); cmdkPaint(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); ckSel = Math.max(ckSel - 1, 0); cmdkPaint(); }
+      else if (e.key === "Home" && !input.value) { e.preventDefault(); ckSel = 0; cmdkPaint(); }
+      else if (e.key === "End" && !input.value) { e.preventDefault(); ckSel = ckItems.length - 1; cmdkPaint(); }
+    });
+  }
+
   /* ---------------- outline navigator ---------------- */
   let outlineOpen = false;
   function refreshOutline() {
@@ -1560,10 +1693,12 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   function bindChrome() {
-    $("#btnSettings").onclick = () => {
-      const open = $("#settings").classList.toggle("open");
+    /* one door for the drawer, so aria-expanded can never drift from the truth */
+    const setDrawer = open => {
+      $("#settings").classList.toggle("open", open);
       $("#btnSettings").setAttribute("aria-expanded", String(open));
     };
+    $("#btnSettings").onclick = () => setDrawer(!$("#settings").classList.contains("open"));
     $("#btnHelp").onclick = () => openOv($("#helpOverlay"));
     $$("[data-close]").forEach(b => b.onclick = () => closeOv(b.closest(".overlay")));
     $("#btnSaveProj").onclick = saveProject;
@@ -1593,13 +1728,26 @@ Land the piece: return to the opening image or question and say what it means no
       const id = item.dataset.id;
       if (await confirmModal("Load template?", "“" + TEMPLATES[id].label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
     });
+    /* menu semantics: arrows walk the list, Home/End jump, Tab leaves and
+       closes (a menu must not stay stranded over the chrome), Esc is global */
+    tplMenu.addEventListener("keydown", e => {
+      if (e.key === "Tab") { closeTpl(); return; }
+      const items = [...tplMenu.querySelectorAll(".tpl-item")];
+      const at = items.indexOf(document.activeElement);
+      let to = -1;
+      if (e.key === "ArrowDown") to = (at + 1) % items.length;
+      else if (e.key === "ArrowUp") to = (at - 1 + items.length) % items.length;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = items.length - 1;
+      if (to >= 0) { e.preventDefault(); items[to].focus(); }
+    });
     document.addEventListener("click", e => {
       if (!e.target.closest("#tplMenu") && !e.target.closest("#templateSelect")) closeTpl();
     });
 
     /* the masthead title opens the document's own settings */
     $("#docTitle").onclick = () => {
-      $("#settings").classList.add("open");
+      setDrawer(true);
       $("#sTitle").focus();
       $("#sTitle").select();
     };
@@ -1677,6 +1825,13 @@ Land the piece: return to the opening image or question and say what it means no
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); saveProject(); }
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const ov = $("#cmdkOverlay");
+        if (ov.classList.contains("open")) closeOv(ov);
+        // never open beneath (or over) another dialog — overlays share a z-plane
+        else if (!document.querySelector(".overlay.open")) cmdkOpen();
+      }
       if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
       if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
       if (mod && e.key === "/") {
@@ -1705,8 +1860,23 @@ Land the piece: return to the opening image or question and say what it means no
 
     /* Drop an image file anywhere on the editor to insert it as a figure;
        a document file (.docx / .pdf / .md / project) routes through import. */
+    /* While a file is held over the editor, an ink-ruled landing zone names
+       what dropping will do. Counted enter/leave so child churn can't flicker it. */
+    let dragDepth = 0;
+    const dropHint = $("#dropHint");
+    const dragHas = e => [...(e.dataTransfer?.types || [])].includes("Files");
+    editor.addEventListener("dragenter", e => {
+      if (!dragHas(e)) return;
+      dragDepth++;
+      dropHint.hidden = false;
+    });
+    editor.addEventListener("dragleave", () => {
+      if (--dragDepth <= 0) { dragDepth = 0; dropHint.hidden = true; }
+    });
     editor.addEventListener("dragover", e => { e.preventDefault(); });
     editor.addEventListener("drop", async e => {
+      dragDepth = 0;
+      dropHint.hidden = true;
       const docFile = [...(e.dataTransfer?.files || [])].find(f => /\.(docx|doc|pdf|md|markdown|txt|json|html|htm|csv|tsv|xlsx|pptx|epub|ipynb)$/i.test(f.name));
       if (docFile) { e.preventDefault(); importFile(docFile); return; }
       const file = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type));
@@ -1739,7 +1909,7 @@ Land the piece: return to the opening image or question and say what it means no
       `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
     ).join("");
     buildFontSelects();
-    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor();
+    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk();
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;

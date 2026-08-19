@@ -297,7 +297,8 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   color: var(--tx);
   outline: none;
 }
-.field input:focus, .field select:focus, .field textarea:focus {
+/* #cmdkInput rides the same printed-form focus site — one role, one rule */
+.field input:focus, .field select:focus, .field textarea:focus, #cmdkInput:focus {
   border-color: var(--pri);
 }
 .frow { display: flex; gap: 8px; }
@@ -480,7 +481,9 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   font-variant-numeric: tabular-nums;
 }
 #statusbar .grow { flex: 1; }
-.kbd-hint { color: var(--tx3); font-size: 11px; }
+.kbd-hint { color: var(--tx3); font-size: 11px; white-space: nowrap; }
+/* at narrow desktop splits the doubled hint would wrap the ticker — drop it */
+@media (max-width: 1080px) { #statusbar .kbd-hint { display: none; } }
 .kbd-hint kbd {
   font-family: var(--mono); font-size: 10px;
   color: var(--tx2); /* tx3 on the raised sheet misses 4.5:1 */
@@ -776,6 +779,78 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
   background: var(--pri); border: 2px solid #fff; border-radius: var(--rm); cursor: nwse-resize;
 }
 .pe-drawing { position: absolute; border: 1px dashed var(--pri); background: color-mix(in srgb, var(--pri) 8%, transparent); pointer-events: none; }
+
+/* the bench bar's tray separators — same grammar as the cluster's */
+.tbsep { width: 1px; height: 16px; background: var(--line); margin: 0 6px; flex: none; }
+
+/* ---------------- command palette — the desk's spike ----------------
+   Every desk action on one spike: an engraved query line over a ruled
+   list, teletype hints at the right. Opens top-anchored so the galley
+   stays in view; selection is a flat fill, never a colored bar. */
+#cmdkOverlay { align-items: flex-start; padding-top: 11vh; }
+.cmdk { width: min(560px, 92vw); }
+#cmdkInput {
+  width: 100%;
+  background: var(--bg3);
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 13px 16px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  color: var(--tx);
+  outline: none;
+}
+#cmdkInput::placeholder { color: var(--tx2); } /* tx3 misses the written floor on the day fresh sheet */
+#cmdkList {
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  padding: 6px;
+}
+.ck-group {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tx3);
+  padding: 8px 10px 3px;
+  user-select: none;
+}
+.ck-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  border-radius: var(--rc);
+  padding: 7px 10px;
+  color: var(--tx);
+  font-size: 13px;
+}
+.ck-item[aria-selected="true"] { background: var(--bg3); }
+/* tx2, not tx3 — the selected row's --bg3 fill is where the kbd chips
+   already stepped up for exactly this */
+.ck-item .ck-hint { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--tx2); white-space: nowrap; }
+.ck-item svg { width: 14px; height: 14px; flex: none; color: var(--tx2); }
+.ck-empty { color: var(--tx3); font-size: 12.5px; padding: 14px 12px; }
+.cmdk-foot {
+  padding: 7px 12px;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: flex-end;
+}
+
+/* ---------------- drop affordance — copy landing on the desk ----------------
+   An ink-ruled landing zone over the editor while a file is held above it.
+   Ink, not grease pencil: dropping is composition, not an editorial mark. */
+#dropHint {
+  position: absolute;
+  inset: 8px;
+  z-index: 30;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px dashed var(--rule);
+  background: color-mix(in srgb, var(--bg) 93%, transparent);
+  animation: fade var(--dur) var(--ease);
+}
+#dropHint[hidden] { display: none; }
+#dropHint .dh-title { font-family: var(--display); font-style: italic; font-size: 18px; color: var(--tx); }
+#dropHint .dh-sub { font-size: 12.5px; color: var(--tx2); margin-top: 4px; }
+#dropHint .dh-card { text-align: center; }
 
 /* PDF open chooser */
 .btn.pchoice {
@@ -1081,7 +1156,7 @@ finish review, the verdict, and DESIGN.md
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
   </button>
   <div class="tbbreak" aria-hidden="true"></div>
-  <button class="btn" id="btnSettings">
+  <button class="btn" id="btnSettings" aria-expanded="false" aria-controls="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
     <span class="bl">Settings</span>
   </button>
@@ -1301,6 +1376,12 @@ finish review, the verdict, and DESIGN.md
     </div>
     <div id="editorWrap">
       <textarea id="editor" spellcheck="false" aria-label="Document source"></textarea>
+      <div id="dropHint" hidden aria-hidden="true">
+        <div class="dh-card">
+          <div class="dh-title">Drop to import</div>
+          <div class="dh-sub">Word · PDF · Markdown · spreadsheet · deck · book · notebook · image</div>
+        </div>
+      </div>
       <div id="emptyState" hidden>
         <div class="es-title">A blank sheet</div>
         <p>Start with <code># A heading</code>, then just write — the pages compose themselves on the right.</p>
@@ -1315,7 +1396,7 @@ finish review, the verdict, and DESIGN.md
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
-      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
+      <span class="kbd-hint"><kbd>Ctrl</kbd><kbd>K</kbd> commands · <kbd>Ctrl</kbd><kbd>/</kbd> shortcuts</span>
     </div>
     <div id="lintPanel" hidden></div>
   </section>
@@ -1433,7 +1514,7 @@ finish review, the verdict, and DESIGN.md
 
 <div class="overlay" id="helpOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Help — writing and exporting" tabindex="-1">
-    <header>Help — writing & exporting <button class="btn icon ghost" data-close>✕</button></header>
+    <header>Help — writing & exporting <button class="btn icon ghost" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
     <div class="mbody">
       <h4>Formatting (Markdown)</h4>
       <table>
@@ -1469,7 +1550,7 @@ finish review, the verdict, and DESIGN.md
       <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code>, <code>.txt</code>, <code>.html</code>, <code>.csv</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.epub</code>, <code>.ipynb</code> and images. Word documents keep headings, lists, tables, images and inline styling; spreadsheets become tables per sheet, decks become a section per slide with speaker notes, and notebooks keep their prose and code cells.</p>
       <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot, size and <b>in the PDF's own font</b> (embedded fonts only carry the characters the document already uses; type a character the font's subset lacks and that line falls back to the closest standard face, with a notice). The toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
       <h4>Editor</h4>
-      <p><b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
+      <p><b>Ctrl+K</b> opens the command palette — every action in the app, searchable by name · <b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
       <p><b>PDF</b> — click <b>PDF</b>, then choose <i>Save as PDF</i> as the destination in the print dialog. Best in Chrome or Edge. If the dialog shows “Headers and footers”, untick it (DocForge prints its own).</p>
       <p><b>Word</b> — click <b>Word</b> for a real <code>.docx</code>. If Word asks to <i>update fields</i> when opening, click <b>Yes</b> — that fills in the table of contents page numbers.</p>
@@ -1479,11 +1560,20 @@ finish review, the verdict, and DESIGN.md
   </div>
 </div>
 
+<div class="overlay" id="cmdkOverlay">
+  <div class="modal small cmdk" role="dialog" aria-modal="true" aria-label="Command palette" tabindex="-1">
+    <input id="cmdkInput" type="text" placeholder="Type a command — new, table, export, template…" autocomplete="off" spellcheck="false" aria-label="Search commands" role="combobox" aria-expanded="true" aria-controls="cmdkList" aria-autocomplete="list">
+    <div id="cmdkList" role="listbox" aria-label="Commands"></div>
+    <div class="cmdk-foot"><span class="kbd-hint"><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> run · <kbd>Esc</kbd> close</span></div>
+  </div>
+</div>
+
 <div class="overlay" id="keysOverlay">
   <div class="modal small" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" tabindex="-1">
-    <header>Keyboard shortcuts <button class="btn icon ghost" data-close>✕</button></header>
+    <header>Keyboard shortcuts <button class="btn icon ghost" data-close aria-label="Close"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
     <div class="mbody">
       <table>
+        <tr><td><code>Ctrl</code> <code>K</code></td><td>Command palette — every action, searchable</td></tr>
         <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline</td></tr>
         <tr><td><code>Ctrl</code> <code>F</code> / <code>Ctrl</code> <code>H</code></td><td>Find / replace</td></tr>
         <tr><td><code>Ctrl</code> <code>S</code></td><td>Save project file</td></tr>
@@ -6627,7 +6717,7 @@ Land the piece: return to the opening image or question and say what it means no
      Esc cancels, and focus returns to whatever opened them. */
   function ovFocusables(ov) {
     return [...ov.querySelectorAll("button, [href], input, select, textarea")]
-      .filter(el => !el.disabled && el.offsetWidth > 0);
+      .filter(el => !el.disabled && el.offsetWidth > 0 && el.tabIndex !== -1);
   }
   function openOv(ov, onCancel) {
     ov.__cancel = onCancel || null;
@@ -7423,6 +7513,8 @@ Land the piece: return to the opening image or question and say what it means no
     }
     if (!await confirmModal(`Import “${f.name}”?`,
       "The imported document will replace the editor contents. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) return;
+    // Heavy conversions can take a few seconds — say so the moment work begins.
+    if (["docx", "pdf", "xlsx", "pptx", "epub"].includes(ext)) toast(`Reading “${f.name}”…`, null, 1800);
     try {
       if (ext === "docx") await importDocxFile(f);
       else if (ext === "pdf") await importPdfFile(f);
@@ -7502,6 +7594,11 @@ Land the piece: return to the opening image or question and say what it means no
       const blob = await DocxExport.build(lastContentEl, state.settings, state.attachments);
       downloadBlob(blob, safeName() + ".docx");
       toast("Word file downloaded — click “Yes” if Word asks to update fields");
+      // Honest warning only — read off the badge refreshLint already keeps
+      // current, rather than paying a second full lint pass here.
+      const badge = $("#lintBadge");
+      const warns = badge.hidden ? 0 : parseInt(badge.textContent, 10) || 0;
+      if (warns) toast(`${warns} document check${warns === 1 ? "" : "s"} outstanding — see the checks badge, bottom left`, "warn", 5000);
     } catch (e) {
       console.error("[DocForge] docx failed", e);
       toast("Word export failed — nothing was lost; try again", "warn");
@@ -7511,7 +7608,133 @@ Land the piece: return to the opening image or question and say what it means no
     btn.innerHTML = label;
   }
 
-  /* ---------------- boot ---------------- */
+  /* ---------------- command palette — the desk's spike ----------------
+     Every action in the app, searchable by name. Built fresh on each open so
+     the template list and theme label stay truthful; runs through the same
+     overlay machinery as every dialog (focus trap, Esc, focus restore). */
+  /* The definition lands at the end of the document — never at the caret,
+     which would tear the sentence in two — and the caret stays on the marker. */
+  function appendDef(def) {
+    const at = editor.selectionStart;
+    const src = editor.value.replace(/\s*$/, "");
+    editor.value = (src ? src + "\n\n" : "") + def + "\n";
+    editor.focus();
+    editor.setSelectionRange(at, at);
+    state.source = editor.value; markDirty(); scheduleRender();
+  }
+  function insertFootnote() {
+    // next id = max existing id + 1 (counting would collide after a deletion,
+    // and a duplicate id silently overwrites the other note's text on export)
+    const ids = [...state.source.matchAll(/\[\^(\d+)\]/g)].map(m => +m[1]);
+    const n = (ids.length ? Math.max(...ids) : 0) + 1;
+    editor.focus();
+    editor.setRangeText(`[^${n}]`, editor.selectionStart, editor.selectionEnd, "end");
+    appendDef(`[^${n}]: Footnote text`);
+  }
+  function insertCitation() {
+    editor.focus();
+    editor.setRangeText("[@key]", editor.selectionStart, editor.selectionEnd, "end");
+    appendDef("[@key]: Author, *Title of the source*, Publisher, Year.");
+  }
+
+  function cmdkCommands() {
+    const cmds = [
+      { g: "File", l: "New document", h: "", run: () => $("#btnNew").click() },
+      { g: "File", l: "Open / import a file…", h: "", run: () => $("#projInput").click() },
+      { g: "File", l: "Save project file", h: "Ctrl S", run: saveProject },
+      { g: "File", l: "Rename document", h: "", run: () => $("#docTitle").click() },
+      { g: "Export", l: "Export PDF", h: "Ctrl P", run: () => $("#btnPdf").click() },
+      { g: "Export", l: "Export Word (.docx)", h: "", run: () => $("#btnDocx").click() },
+      { g: "Insert", l: "Insert table", h: "", run: TOOL_ACTS.table },
+      { g: "Insert", l: "Insert equation", h: "", run: () => insertBlock("$$\nE = mc^2\n$$") },
+      { g: "Insert", l: "Insert figure (screenshot placeholder)", h: "", run: TOOL_ACTS.shot },
+      { g: "Insert", l: "Insert image from file…", h: "", run: TOOL_ACTS.image },
+      { g: "Insert", l: "Insert footnote", h: "", run: insertFootnote },
+      { g: "Insert", l: "Insert citation", h: "", run: insertCitation },
+      { g: "Insert", l: "Insert callout", h: "", run: TOOL_ACTS.callout },
+      { g: "Insert", l: "Insert code block", h: "", run: TOOL_ACTS.codeblock },
+      { g: "Insert", l: "Insert table of contents", h: "", run: TOOL_ACTS.toc },
+      { g: "Insert", l: "Insert page break", h: "", run: TOOL_ACTS.pagebreak },
+      { g: "View", l: "Find in document", h: "Ctrl F", run: () => findBar(true) },
+      { g: "View", l: "Replace in document", h: "Ctrl H", run: () => { findBar(true); $("#replInput").focus(); } },
+      { g: "View", l: "Toggle outline", h: "", run: () => $("#btnOutline").click() },
+      { g: "View", l: "Toggle document settings", h: "", run: () => $("#btnSettings").click() },
+      { g: "View", l: document.documentElement.hasAttribute("data-light") ? "Switch to the night desk (dark)" : "Switch to the day desk (light)", h: "", run: () => $("#btnDark").click() },
+      { g: "View", l: "Keyboard shortcuts", h: "Ctrl /", run: () => openOv($("#keysOverlay")) },
+      { g: "View", l: "Help — writing & exporting", h: "", run: () => openOv($("#helpOverlay")) },
+    ];
+    for (const [id, t] of Object.entries(TEMPLATES)) {
+      cmds.push({ g: "Templates", l: `Template: ${t.label}`, h: "", run: async () => {
+        if (await confirmModal("Load template?", "“" + t.label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
+      } });
+    }
+    return cmds;
+  }
+
+  let ckSel = 0, ckItems = [];
+  function cmdkRender(q) {
+    const list = $("#cmdkList");
+    const needle = q.trim().toLowerCase();
+    const all = cmdkCommands();
+    ckItems = !needle ? all : all
+      .map(c => ({ c, i: c.l.toLowerCase().indexOf(needle) }))
+      .filter(x => x.i >= 0 || x.c.g.toLowerCase().startsWith(needle))
+      .sort((a, b) => (a.i < 0 ? 99 : a.i) - (b.i < 0 ? 99 : b.i))
+      .map(x => x.c);
+    ckSel = Math.min(ckSel, Math.max(0, ckItems.length - 1));
+    if (!ckItems.length) {
+      list.innerHTML = `<div class="ck-empty">No matching command</div>`;
+      $("#cmdkInput").removeAttribute("aria-activedescendant");
+      return;
+    }
+    let h = "", lastG = null;
+    ckItems.forEach((c, i) => {
+      // group lines are visual wayfinding only — a listbox may hold options alone
+      if (c.g !== lastG) { h += `<div class="ck-group" aria-hidden="true">${c.g}</div>`; lastG = c.g; }
+      h += `<button class="ck-item" role="option" id="ck-${i}" data-i="${i}" tabindex="-1" aria-selected="${i === ckSel}">` +
+        `${Engine.esc(c.l)}${c.h ? `<span class="ck-hint">${c.h}</span>` : ""}</button>`;
+    });
+    list.innerHTML = h;
+    const sel = list.querySelector(`[data-i="${ckSel}"]`);
+    if (sel) sel.scrollIntoView({ block: "nearest" });
+    $("#cmdkInput").setAttribute("aria-activedescendant", `ck-${ckSel}`);
+    list.querySelectorAll(".ck-item").forEach(b => {
+      b.onclick = () => cmdkRun(+b.dataset.i);
+      b.onmousemove = () => { if (ckSel !== +b.dataset.i) { ckSel = +b.dataset.i; cmdkPaint(); } };
+    });
+  }
+  function cmdkPaint() {
+    $("#cmdkList").querySelectorAll(".ck-item").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.i === ckSel)));
+    const sel = $("#cmdkList").querySelector(`[data-i="${ckSel}"]`);
+    if (sel) sel.scrollIntoView({ block: "nearest" });
+    $("#cmdkInput").setAttribute("aria-activedescendant", `ck-${ckSel}`);
+  }
+  function cmdkRun(i) {
+    const cmd = ckItems[i];
+    if (!cmd) return; // Enter on "no matching command" keeps the palette (and the query)
+    closeOv($("#cmdkOverlay"));
+    cmd.run();
+  }
+  function cmdkOpen() {
+    if (inPdfMode()) return; // studio actions would hit the hidden document
+    ckSel = 0;
+    $("#cmdkInput").value = "";
+    openOv($("#cmdkOverlay"));
+    cmdkRender("");
+  }
+  function bindCmdk() {
+    const input = $("#cmdkInput");
+    input.addEventListener("input", () => { ckSel = 0; cmdkRender(input.value); });
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); cmdkRun(ckSel); return; }
+      if (!ckItems.length) return;
+      if (e.key === "ArrowDown") { e.preventDefault(); ckSel = Math.min(ckSel + 1, ckItems.length - 1); cmdkPaint(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); ckSel = Math.max(ckSel - 1, 0); cmdkPaint(); }
+      else if (e.key === "Home" && !input.value) { e.preventDefault(); ckSel = 0; cmdkPaint(); }
+      else if (e.key === "End" && !input.value) { e.preventDefault(); ckSel = ckItems.length - 1; cmdkPaint(); }
+    });
+  }
+
   /* ---------------- outline navigator ---------------- */
   let outlineOpen = false;
   function refreshOutline() {
@@ -7762,10 +7985,12 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   function bindChrome() {
-    $("#btnSettings").onclick = () => {
-      const open = $("#settings").classList.toggle("open");
+    /* one door for the drawer, so aria-expanded can never drift from the truth */
+    const setDrawer = open => {
+      $("#settings").classList.toggle("open", open);
       $("#btnSettings").setAttribute("aria-expanded", String(open));
     };
+    $("#btnSettings").onclick = () => setDrawer(!$("#settings").classList.contains("open"));
     $("#btnHelp").onclick = () => openOv($("#helpOverlay"));
     $$("[data-close]").forEach(b => b.onclick = () => closeOv(b.closest(".overlay")));
     $("#btnSaveProj").onclick = saveProject;
@@ -7795,13 +8020,26 @@ Land the piece: return to the opening image or question and say what it means no
       const id = item.dataset.id;
       if (await confirmModal("Load template?", "“" + TEMPLATES[id].label + "” will replace the current document. Use Save first if you want a backup file.")) applyTemplate(id);
     });
+    /* menu semantics: arrows walk the list, Home/End jump, Tab leaves and
+       closes (a menu must not stay stranded over the chrome), Esc is global */
+    tplMenu.addEventListener("keydown", e => {
+      if (e.key === "Tab") { closeTpl(); return; }
+      const items = [...tplMenu.querySelectorAll(".tpl-item")];
+      const at = items.indexOf(document.activeElement);
+      let to = -1;
+      if (e.key === "ArrowDown") to = (at + 1) % items.length;
+      else if (e.key === "ArrowUp") to = (at - 1 + items.length) % items.length;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = items.length - 1;
+      if (to >= 0) { e.preventDefault(); items[to].focus(); }
+    });
     document.addEventListener("click", e => {
       if (!e.target.closest("#tplMenu") && !e.target.closest("#templateSelect")) closeTpl();
     });
 
     /* the masthead title opens the document's own settings */
     $("#docTitle").onclick = () => {
-      $("#settings").classList.add("open");
+      setDrawer(true);
       $("#sTitle").focus();
       $("#sTitle").select();
     };
@@ -7879,6 +8117,13 @@ Land the piece: return to the opening image or question and say what it means no
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); saveProject(); }
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const ov = $("#cmdkOverlay");
+        if (ov.classList.contains("open")) closeOv(ov);
+        // never open beneath (or over) another dialog — overlays share a z-plane
+        else if (!document.querySelector(".overlay.open")) cmdkOpen();
+      }
       if (mod && e.key.toLowerCase() === "f") { e.preventDefault(); findBar(true); }
       if (mod && e.key.toLowerCase() === "h") { e.preventDefault(); findBar(true); $("#replInput").focus(); }
       if (mod && e.key === "/") {
@@ -7907,8 +8152,23 @@ Land the piece: return to the opening image or question and say what it means no
 
     /* Drop an image file anywhere on the editor to insert it as a figure;
        a document file (.docx / .pdf / .md / project) routes through import. */
+    /* While a file is held over the editor, an ink-ruled landing zone names
+       what dropping will do. Counted enter/leave so child churn can't flicker it. */
+    let dragDepth = 0;
+    const dropHint = $("#dropHint");
+    const dragHas = e => [...(e.dataTransfer?.types || [])].includes("Files");
+    editor.addEventListener("dragenter", e => {
+      if (!dragHas(e)) return;
+      dragDepth++;
+      dropHint.hidden = false;
+    });
+    editor.addEventListener("dragleave", () => {
+      if (--dragDepth <= 0) { dragDepth = 0; dropHint.hidden = true; }
+    });
     editor.addEventListener("dragover", e => { e.preventDefault(); });
     editor.addEventListener("drop", async e => {
+      dragDepth = 0;
+      dropHint.hidden = true;
       const docFile = [...(e.dataTransfer?.files || [])].find(f => /\.(docx|doc|pdf|md|markdown|txt|json|html|htm|csv|tsv|xlsx|pptx|epub|ipynb)$/i.test(f.name));
       if (docFile) { e.preventDefault(); importFile(docFile); return; }
       const file = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type));
@@ -7941,7 +8201,7 @@ Land the piece: return to the opening image or question and say what it means no
       `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
     ).join("");
     buildFontSelects();
-    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor();
+    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk();
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;
