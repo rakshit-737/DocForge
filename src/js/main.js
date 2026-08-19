@@ -591,25 +591,57 @@ Land the piece: return to the opening image or question and say what it means no
     clearTimeout(renderTimer);
     renderTimer = setTimeout(doRender, 420);
   }
+  /* Direct manuscript edits keep the DOM current natively, so their rebuild
+     can wait for a genuine pause — typing never races the compositor. */
+  function scheduleLiveRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(doRender, 1300);
+  }
 
+  let pageTotal = 0;
   async function doRender() {
-    clearTimeout(renderTimer); renderTimer = null;
     if (rendering) { renderPending = true; return; }
+    LiveEdit.flush();   // any manuscript edit still pending reaches the source first
+    clearTimeout(renderTimer); renderTimer = null;
     rendering = true;
     $("#busy").classList.add("on");
+    // where is the reader, and where is their caret? restored after the swap
+    const view = LiveEdit.captureView();
     try {
       const { doc } = Engine.render(state.source, state.settings, state.attachments);
       lastContentEl = doc.querySelector(".content").cloneNode(true);
       const css = DOC_CSS + Engine.dynamicCss(state.settings);
-      document.querySelectorAll("style[data-pagedjs-inserted-styles]").forEach(s => s.remove());
-      if (previewer) { try { previewer.polisher.destroy(); } catch {} }
-      scaleWrap.innerHTML = "";
+      /* Compose the new galleys offscreen while the old ones stay on the
+         stone — the reader never sees a blank deck, and the scroll container
+         never collapses to zero (which is what threw them back to page 1). */
+      const oldPreviewer = previewer;
+      const oldStyles = [...document.querySelectorAll("style[data-pagedjs-inserted-styles]")];
+      const stage = document.createElement("div");
+      stage.style.cssText = "position:absolute;left:-100000px;top:0;";
+      if (scaleWrap.style.zoom) stage.style.zoom = scaleWrap.style.zoom;   // measurements match the live deck
+      $("#previewScroll").appendChild(stage);
       previewer = new Paged.Previewer();
       const url = URL.createObjectURL(new Blob([css], { type: "text/css" }));
-      const flow = await previewer.preview(doc.outerHTML, [url], scaleWrap);
-      URL.revokeObjectURL(url);
+      let flow;
+      try { flow = await previewer.preview(doc.outerHTML, [url], stage); }
+      finally { URL.revokeObjectURL(url); }
+      /* The flow is final — edits re-render wholesale, so each page's
+         resize-relayout observer must retire now: a direct manuscript edit
+         resizes the live wrapper and the observer would re-walk a source
+         tree our contenteditable mutations no longer match (findEndToken
+         crashes on execCommand-inserted nodes that carry no data-ref). */
+      try { (flow.pages || []).forEach(p => p.removeListeners && p.removeListeners()); } catch {}
+      scaleWrap.innerHTML = "";
+      while (stage.firstChild) scaleWrap.appendChild(stage.firstChild);
+      stage.remove();
+      if (oldPreviewer) { try { oldPreviewer.polisher.destroy(); } catch {} }
+      oldStyles.forEach(s => { if (s.isConnected) s.remove(); });
+      pageTotal = flow.total;
       $("#pgInfo").textContent = flow.total + (flow.total === 1 ? " page" : " pages");
       applyZoom();
+      LiveEdit.arm();
+      LiveEdit.restoreView(view);
+      updatePageIndicator();
       refreshOutline();
     } catch (e) {
       console.error("[DocForge] render failed", e);
@@ -618,6 +650,18 @@ Land the piece: return to the opening image or question and say what it means no
     rendering = false;
     $("#busy").classList.remove("on");
     if (renderPending) { renderPending = false; doRender(); }
+  }
+
+  /* the folio readout follows the reader: "p. 4 · 12 pages" */
+  function updatePageIndicator() {
+    if (!pageTotal) return;
+    const top = $("#previewScroll").getBoundingClientRect().top + 8;
+    const pages = scaleWrap.querySelectorAll(".pagedjs_page");
+    let cur = 1;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].getBoundingClientRect().bottom > top) { cur = i + 1; break; }
+    }
+    $("#pgInfo").textContent = `p. ${cur} · ${pageTotal} page${pageTotal === 1 ? "" : "s"}`;
   }
 
   async function ensureFresh() {
@@ -642,8 +686,37 @@ Land the piece: return to the opening image or question and say what it means no
     if (el) el.textContent = state.settings.title || "Untitled document";
   }
 
+  /* ---------------- document history ----------------
+     One undo history for the whole document, whichever side edited it.
+     Entries are source snapshots; edits within ~a second amend the open
+     entry so a typing burst is one undo step. Only real source changes
+     record — settings tweaks and the synchronization between the two
+     panes never mint history. */
+  const hist = { stack: [], idx: -1, t: 0 };
+  function recordSource() {
+    if (hist.idx >= 0 && hist.stack[hist.idx] === state.source) return;
+    const now = Date.now();
+    if (hist.idx >= 0 && now - hist.t < 900) {
+      hist.stack[hist.idx] = state.source;          // amend the open entry
+    } else {
+      hist.stack.length = ++hist.idx;               // truncate any redo tail
+      hist.stack.push(state.source);
+      if (hist.stack.length > 150) { hist.stack.shift(); hist.idx--; }
+    }
+    hist.t = now;
+  }
+  function applyHistory(src) {
+    state.source = src;
+    editor.value = src;
+    markDirty();                                    // sees an equal snapshot — records nothing
+    doRender();
+  }
+  function docUndo() { if (hist.idx > 0) { hist.t = 0; applyHistory(hist.stack[--hist.idx]); } }
+  function docRedo() { if (hist.idx < hist.stack.length - 1) { hist.t = 0; applyHistory(hist.stack[++hist.idx]); } }
+
   function markDirty() {
     updateDocTitle();
+    recordSource();
     clearTimeout(autosaveTimer);
     $("#saveState").textContent = "…";
     $("#saveState").className = "";
@@ -1081,6 +1154,7 @@ Land the piece: return to the opening image or question and say what it means no
   const safeName = () => (state.settings.title || "document").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "document";
 
   function saveProject() {
+    LiveEdit.flush();
     const data = { app: "docforge", v: 1, savedAt: new Date().toISOString(), settings: state.settings, source: state.source, attachments: state.attachments };
     downloadBlob(new Blob([JSON.stringify(data)], { type: "application/json" }), safeName() + ".docforge.json");
     toast("Project file saved");
@@ -1367,6 +1441,9 @@ Land the piece: return to the opening image or question and say what it means no
       { g: "View", l: "Replace in document", h: "Ctrl H", run: () => { findBar(true); $("#replInput").focus(); } },
       { g: "View", l: "Toggle outline", h: "", run: () => $("#btnOutline").click() },
       { g: "View", l: "Toggle document settings", h: "", run: () => $("#btnSettings").click() },
+      { g: "View", l: document.body.classList.contains("focus-mode") ? "Leave focus mode" : "Focus mode — just the manuscript", h: "Ctrl ⇧ Enter", run: toggleFocus },
+      { g: "View", l: "Undo", h: "Ctrl Z", run: docUndo },
+      { g: "View", l: "Redo", h: "Ctrl ⇧ Z", run: docRedo },
       { g: "View", l: document.documentElement.hasAttribute("data-light") ? "Switch to the night desk (dark)" : "Switch to the day desk (light)", h: "", run: () => $("#btnDark").click() },
       { g: "View", l: "Keyboard shortcuts", h: "Ctrl /", run: () => openOv($("#keysOverlay")) },
       { g: "View", l: "Help — writing & exporting", h: "", run: () => openOv($("#helpOverlay")) },
@@ -1674,6 +1751,43 @@ Land the piece: return to the opening image or question and say what it means no
     });
   }
 
+  /* ---------------- focus mode — just the manuscript ---------------- */
+  function toggleFocus() {
+    document.body.classList.toggle("focus-mode");
+    applyZoom();
+    updatePageIndicator();
+  }
+
+  /* ---------------- pane divider ---------------- */
+  function bindDivider() {
+    const div = $("#paneDivider"), ep = $("#editorPane"), main = $("#main");
+    const saved = parseFloat(safeLS.get("docforge.split"));
+    if (saved >= 22 && saved <= 65) ep.style.flex = `0 0 ${saved}%`;
+    let raf = 0, pct = null;
+    div.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      div.setPointerCapture(e.pointerId);
+      div.classList.add("dragging");
+      const move = ev => {
+        const r = main.getBoundingClientRect();
+        pct = Math.max(22, Math.min(65, ((ev.clientX - r.left) / r.width) * 100));
+        if (!raf) raf = requestAnimationFrame(() => {
+          raf = 0;
+          ep.style.flex = `0 0 ${pct}%`;
+          if (zoomMode === "fit") applyZoom();
+        });
+      };
+      const up = () => {
+        div.classList.remove("dragging");
+        div.removeEventListener("pointermove", move);
+        if (pct != null) safeLS.set("docforge.split", pct.toFixed(1));
+        applyZoom(); updatePageIndicator();
+      };
+      div.addEventListener("pointermove", move);
+      div.addEventListener("pointerup", up, { once: true });
+    });
+  }
+
   /* ---------------- chrome theme ----------------
      The chrome ships dark; this offers a light variant. App surfaces only — the
      document pages stay paper-white in either. */
@@ -1823,6 +1937,15 @@ Land the piece: return to the opening image or question and say what it means no
     });
     document.addEventListener("keydown", e => {
       const mod = e.ctrlKey || e.metaKey;
+      /* one document history for both panes — but chrome fields keep their own */
+      const inDocument = e.target === editor || (e.target.closest && e.target.closest("#scaleWrap"));
+      if (mod && !e.altKey && e.key.toLowerCase() === "z" && inDocument) {
+        e.preventDefault();
+        e.shiftKey ? docRedo() : docUndo();
+        return;
+      }
+      if (mod && !e.altKey && e.key.toLowerCase() === "y" && inDocument) { e.preventDefault(); docRedo(); return; }
+      if (mod && e.shiftKey && e.key === "Enter") { e.preventDefault(); toggleFocus(); return; }
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); saveProject(); }
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
       if (mod && e.key.toLowerCase() === "k") {
@@ -1910,6 +2033,27 @@ Land the piece: return to the opening image or question and say what it means no
     ).join("");
     buildFontSelects();
     bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk();
+    bindDivider();
+    LiveEdit.attach({
+      scaleWrap,
+      scroller: $("#previewScroll"),
+      getSource: () => state.source,
+      setSource(src) { state.source = src; editor.value = src; markDirty(); scheduleLiveRender(); },
+      scheduleRender: scheduleLiveRender,
+      revert() { toast("That part of the manuscript is generated — edit it from the source panel", "warn"); doRender(); },
+      editPending: scheduleLiveRender,
+      undo: docUndo,
+      redo: docRedo,
+      toast,
+    });
+    // the source pane must never act on a source the manuscript hasn't written yet
+    editor.addEventListener("focus", () => LiveEdit.flush());
+    {
+      let raf = 0;
+      $("#previewScroll").addEventListener("scroll", () => {
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; updatePageIndicator(); });
+      }, { passive: true });
+    }
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;
@@ -1928,6 +2072,7 @@ Land the piece: return to the opening image or question and say what it means no
       state.source = TEMPLATES.welcome.source;
     }
     editor.value = state.source;
+    hist.stack = [state.source]; hist.idx = 0;   // history baseline
     // Icon-only controls speak their tooltip to assistive tech too.
     $$("button[title]:not([aria-label])").forEach(b => {
       if (!b.textContent.trim()) b.setAttribute("aria-label", b.title);

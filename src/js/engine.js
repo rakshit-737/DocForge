@@ -438,11 +438,14 @@ const Engine = (() => {
     const notes = {};
     const cites = {};
     const out = [];
+    const nos = [];   // original line index of each kept line — feeds the source map
     let fence = null, current = null; // current: {store, key} while a definition continues
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const keep = () => { out.push(line); nos.push(i); };
       const fm = line.match(/^(```+|~~~+)/);
-      if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
-      if (fm) { fence = fm[1]; current = null; out.push(line); continue; }
+      if (fence) { keep(); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
+      if (fm) { fence = fm[1]; current = null; keep(); continue; }
 
       const def = line.match(RE_FN_DEF);
       if (def) { current = { store: notes, key: def[1] }; notes[def[1]] = def[2]; continue; }
@@ -452,9 +455,9 @@ const Engine = (() => {
       if (current && /^[ \t]+\S/.test(line)) { current.store[current.key] += " " + line.trim(); continue; }
       if (current && !line.trim()) { current = null; continue; }
       current = null;
-      out.push(line);
+      keep();
     }
-    return { lines: out, notes, cites };
+    return { lines: out, notes, cites, nos };
   }
 
   /* Pre-process custom tokens outside code fences. `inherited` carries footnote and
@@ -470,12 +473,19 @@ const Engine = (() => {
     if (inherited && inherited.citeDefs) Object.assign(inherited.citeDefs, fx.cites);
     const lines = fx.lines;
     const out = [];
+    /* Source map for direct manuscript editing: one {s, e} of ORIGINAL source
+       lines per emitted line, filled only when the caller passes an array
+       (nested callout recursion flattens and doesn't need one). */
+    const map = inherited && Array.isArray(inherited.lineMap) ? inherited.lineMap : null;
+    let curS = 0, curE = 0;
+    const push = (...ls) => { for (const l of ls) { out.push(l); if (map) map.push({ s: curS, e: curE }); } };
     let fence = null;
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
+      curS = curE = fx.nos[i];
       const fm = line.match(/^(```+|~~~+)/);
-      if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
-      if (fm) { fence = fm[1]; out.push(line); continue; }
+      if (fence) { push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
+      if (fm) { fence = fm[1]; push(line); continue; }
 
       // Display math: a standalone $$ … $$ block, possibly spanning several lines.
       if (/^\s*\$\$/.test(line)) {
@@ -487,7 +497,8 @@ const Engine = (() => {
           if (j < lines.length) body += "\n" + lines[j].replace(/\$\$\s*$/, "");
           i = j;
         }
-        out.push("", `<div class="math-display" data-tex="${esc(body.trim())}"></div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="math-display" data-tex="${esc(body.trim())}"></div>`, "");
         continue;
       }
 
@@ -495,7 +506,7 @@ const Engine = (() => {
       if (line.includes("[^")) {
         line = outsideCode(line, seg => seg.replace(/\[\^([^\]\s]+)\]/g, (m, id) =>
           notes[id] == null ? m
-            : `<span class="footnote">${marked.parseInline(notes[id], mdOpts(settings))}</span>`));
+            : `<span class="footnote" data-fn="${esc(id)}">${marked.parseInline(notes[id], mdOpts(settings))}</span>`));
       }
 
       // Citations: [@key] / [@key, p. 3] become empty spans postprocess fills in.
@@ -513,23 +524,23 @@ const Engine = (() => {
       // Inline math, outside code spans.
       if (line.includes("$")) line = outsideCode(line, mathToSpans);
 
-      if (RE_REFS.test(line)) { out.push("", `<div data-refs="1"></div>`, ""); continue; }
+      if (RE_REFS.test(line)) { push("", `<div data-refs="1"></div>`, ""); continue; }
 
-      if (RE_TOC.test(line)) { out.push("", `<div data-toc="1"></div>`, ""); continue; }
-      if (RE_LOF.test(line)) { out.push("", `<div data-list="fig"></div>`, ""); continue; }
-      if (RE_LOT.test(line)) { out.push("", `<div data-list="tbl"></div>`, ""); continue; }
-      if (RE_BREAK.test(line)) { out.push("", `<div class="page-break"></div>`, ""); continue; }
+      if (RE_TOC.test(line)) { push("", `<div data-toc="1"></div>`, ""); continue; }
+      if (RE_LOF.test(line)) { push("", `<div data-list="fig"></div>`, ""); continue; }
+      if (RE_LOT.test(line)) { push("", `<div data-list="tbl"></div>`, ""); continue; }
+      if (RE_BREAK.test(line)) { push("", `<div class="page-break"></div>`, ""); continue; }
       const sm = line.match(RE_SHOT);
       if (sm) {
         const o = parseOpts(sm[2]);
-        out.push("", `<figure class="shot${o.noborder ? " noborder" : ""}" data-caption="${esc(sm[1] || "")}" ` +
+        push("", `<figure class="shot${o.noborder ? " noborder" : ""}" data-caption="${esc(sm[1] || "")}" ` +
           `data-key="${esc(o.img || "")}"${o.w ? ` data-req-w="${esc(o.w)}"` : ""}${o.id ? ` id="${esc(o.id)}"` : ""}></figure>`, "");
         continue;
       }
       const tm = line.match(RE_TABLE_CAP);
       if (tm) {
         const o = parseOpts(tm[2]);
-        out.push("", `<div data-tablecap="${esc(tm[1] || "")}"${o.id ? ` data-id="${esc(o.id)}"` : ""}></div>`, "");
+        push("", `<div data-tablecap="${esc(tm[1] || "")}"${o.id ? ` data-id="${esc(o.id)}"` : ""}></div>`, "");
         continue;
       }
       // Flatten to one line so the block survives re-parsing, but keep the newlines
@@ -545,7 +556,8 @@ const Engine = (() => {
         const title = (cm[2] || "").trim() || CO_LABELS[type];
         const { inner, end } = collectContainer(lines, i);
         i = end; // skip past close (or EOF)
-        out.push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
         continue;
       }
       // :::center / :::right / :::left / :::justify — Word's paragraph alignment group.
@@ -554,10 +566,11 @@ const Engine = (() => {
         const dir = am[1].toLowerCase();
         const { inner, end } = collectContainer(lines, i);
         i = end;
-        out.push("", `<div class="align-${dir}">${flatten(inner)}</div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="align-${dir}">${flatten(inner)}</div>`, "");
         continue;
       }
-      out.push(line);
+      push(line);
     }
     return out.join("\n");
   }
@@ -649,6 +662,7 @@ const Engine = (() => {
     wrap.innerHTML = `<div class="refs-title">References</div>` + keys.map((k, i) =>
       `<p class="ref">${apa ? "" : `<span class="ref-n">[${i + 1}]</span> `}${marked.parseInline(smartText(defs[k]))}</p>`
     ).join("");
+    if (host.dataset && host.dataset.ss != null) { wrap.dataset.ss = host.dataset.ss; wrap.dataset.se = host.dataset.se; }
     host.replaceWith(wrap);
   }
 
@@ -696,6 +710,7 @@ const Engine = (() => {
       const m = h.textContent.match(/\s*\{#([A-Za-z][\w:.-]*)\}\s*$/);
       if (m) {
         h.id = m[1];
+        h.dataset.label = m[1];   // an explicit label must survive a round-trip through direct editing
         // strip the label out of the visible text, wherever it ended up
         const last = [...h.childNodes].reverse().find(n => n.nodeType === 3 && /\{#/.test(n.nodeValue));
         if (last) last.nodeValue = last.nodeValue.replace(/\s*\{#[A-Za-z][\w:.-]*\}\s*$/, "");
@@ -745,7 +760,9 @@ const Engine = (() => {
       tb.prepend(cap);
       tb.dataset.tbl = tblNo;
       tb.dataset.caption = capText;
-      if (marker.dataset.id) tb.id = marker.dataset.id;
+      if (marker.dataset.id) { tb.id = marker.dataset.id; tb.dataset.explicitId = "1"; }
+      // the caption line belongs to the table's source span from here on
+      if (marker.dataset.ss != null) tb.dataset.ss = marker.dataset.ss;
       marker.remove();
     });
 
@@ -755,6 +772,7 @@ const Engine = (() => {
       if (p.childNodes.length !== 1) return;
       const fig = document.createElement("figure");
       fig.className = "img";
+      if (p.dataset.ss != null) { fig.dataset.ss = p.dataset.ss; fig.dataset.se = p.dataset.se; }
       p.replaceWith(fig);
       fig.appendChild(img);
       if (img.alt) fig.dataset.caption = img.alt;
@@ -852,6 +870,8 @@ const Engine = (() => {
       html += `</nav>`;
       wrap.innerHTML = html;
       if (!items.length) wrap.innerHTML = "";
+      if (marker.dataset.ss != null) { wrap.dataset.ss = marker.dataset.ss; wrap.dataset.se = marker.dataset.se; }
+      wrap.dataset.kind = kind;   // the serializer emits [lof] / [lot] from this
       marker.replaceWith(wrap);
     });
 
@@ -870,8 +890,18 @@ const Engine = (() => {
       });
       html += `</nav>`;
       wrap.innerHTML = html;
+      if (tocMarker.dataset.ss != null) { wrap.dataset.ss = tocMarker.dataset.ss; wrap.dataset.se = tocMarker.dataset.se; }
       tocMarker.replaceWith(wrap);
     }
+
+    /* 6. direct-editing prep: generated or non-invertible islands must not take
+       the caret — their text is derived (TOC folios, reference labels, resolved
+       cross-references, KaTeX output, figure furniture, auto heading numbers),
+       so an edit there could never be written back to source. */
+    root.querySelectorAll(
+      ".toc-wrap, .refs, figure, .math-display, .math-inline, span.footnote, a.xref, span.cite, .hnum, .page-break"
+    ).forEach(el => el.setAttribute("contenteditable", "false"));
+
     return { figures: fig, headings: heads.length };
   }
 
@@ -883,7 +913,7 @@ const Engine = (() => {
       s.metaExtra ? `<div>${esc(s.metaExtra)}</div>` : "",
       dateStr ? `<div class="m-dim">${esc(dateStr)}</div>` : "",
     ].join("");
-    return `<section class="cover">` +
+    return `<section class="cover" contenteditable="false">` +
       (s.kicker ? `<div class="cv-kicker">${esc(s.kicker)}</div>` : "") +
       `<h1 class="cv-title">${esc(s.title || "Untitled document")}</h1>` +
       (s.subtitle ? `<div class="cv-sub">${esc(s.subtitle)}</div>` : "") +
@@ -899,10 +929,22 @@ const Engine = (() => {
     } catch { return iso; }
   }
 
-  /* ---------- main render ---------- */
+  /* ---------- main render ----------
+     The body is assembled token by token rather than in one marked.parse pass,
+     so every top-level block can carry its span of ORIGINAL source lines
+     (data-ss / data-se). That stamp is what lets the manuscript be edited
+     directly: a changed block serializes back to Markdown and splices into
+     exactly those lines. One lexer pass first (inline tokens and reference
+     links resolve there), then each top-level token renders separately. */
   function render(source, settings, attachments) {
     const citeDefs = {};
-    const body = marked.parse(preprocess(source, settings, { citeDefs }), mdOpts(settings));
+    const lineMap = [];
+    const pre = preprocess(source, settings, { citeDefs, lineMap });
+    /* marked.parse merges options over its defaults, but the low-level
+       lexer/parser pair REPLACES them — spread the defaults back in or
+       gfm (tables, strikethrough) silently switches off. */
+    const opts = { ...marked.defaults, ...mdOpts(settings) };
+    const tokens = marked.lexer(pre, opts);
     const doc = document.createElement("div");
     doc.className = "doc" +
       (settings.justify ? " justify" : "") +
@@ -913,7 +955,23 @@ const Engine = (() => {
     if (settings.cover) doc.insertAdjacentHTML("beforeend", coverHtml(settings));
     const content = document.createElement("div");
     content.className = "content";
-    content.innerHTML = body;
+    const tpl = document.createElement("template");
+    let preLine = 0;
+    for (const tok of tokens) {
+      const nl = (tok.raw.match(/\n/g) || []).length;
+      const startLine = preLine;
+      const endLine = preLine + Math.max(0, nl - (tok.raw.endsWith("\n") ? 1 : 0));
+      preLine += nl;
+      const html = marked.parser([tok], opts);
+      if (!html) continue;
+      tpl.innerHTML = html;
+      const s = lineMap[Math.min(startLine, lineMap.length - 1)];
+      const e = lineMap[Math.min(endLine, lineMap.length - 1)];
+      if (s && e) {
+        for (const el of tpl.content.children) { el.dataset.ss = s.s; el.dataset.se = e.e; }
+      }
+      content.appendChild(tpl.content);
+    }
     doc.appendChild(content);
     const meta = postprocess(content, settings, attachments, citeDefs);
     return { doc, meta };

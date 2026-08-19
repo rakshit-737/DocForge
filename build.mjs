@@ -65,6 +65,7 @@ const docxImport = read("src/js/docx-import.js");
 const pdfImport = read("src/js/pdf-import.js");
 const pdfEditor = read("src/js/pdf-editor.js");
 const fileImport = read("src/js/file-import.js");
+const liveEdit = read("src/js/live-edit.js");
 const main = read("src/js/main.js");
 
 let html = read("src/index.html");
@@ -88,6 +89,7 @@ put("/*@DOCXIMPORT@*/", guard(docxImport));
 put("/*@PDFIMPORT@*/", guard(pdfImport));
 put("/*@PDFEDITOR@*/", guard(pdfEditor));
 put("/*@FILEIMPORT@*/", guard(fileImport));
+put("/*@LIVEEDIT@*/", guard(liveEdit));
 put("/*@MAIN@*/", guard(main));
 
 mkdirSync("dist", { recursive: true });

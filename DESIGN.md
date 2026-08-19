@@ -287,6 +287,12 @@ Fixed-position sheets: `--bg3`, 2px radius, `--elev-m`, 12px padding, `menuIn` e
 ### Drop affordance — copy landing on the desk
 While a file is held over the editor, `#dropHint` lays an ink-ruled landing zone over the writing surface (2px dashed `--rule` on `--bg` at 93%, serif italic title, one-line format list; `fade` in at `--dur`), naming what dropping will do. Counted dragenter/dragleave so child churn can't flicker it; `pointer-events: none` so the editor stays the drop target. Ink, not red — dropping is composition, not an editorial mark.
 
+### The manuscript is an editing surface
+Every galley's content area is `contenteditable`: the affordances are an ink caret, a warm-gray selection and the text cursor — no outlines, no boxes ("of course I can edit this", never "this is a contenteditable div"). Generated islands (TOC, references, resolved cross-references, KaTeX, figures, auto heading numbers) are `contenteditable="false"` and keep the arrow cursor. Mechanics live in `live-edit.js`: every top-level block carries its source-line span (`data-ss`/`data-se`, stamped token-by-token in `Engine.render`); an edit serializes the affected blocks back to Markdown and splices exactly those lines, on a 250ms pause so typing costs nothing. Recomposition happens offscreen (the old galleys never blank), then the viewport re-anchors to the topmost visible block — fragment-aware — and the caret re-lands by (block, text-offset). The folio readout follows the reader: "p. 4 · 12 pages". Both panes name themselves with mono `.pane-tag` lines (statusbar "source", instrument row "manuscript").
+
+### Pane divider & focus mode
+`#paneDivider` is a 5px seam between the panes, invisible until hover shows a 1px `--rule` line; dragging resizes the split (22–65%, persisted as `docforge.split`). Ctrl+Shift+Enter clears the desk: `body.focus-mode` hides the source pane, drawer and divider — the manuscript alone, full width.
+
 ### Toasts — proof slips
 Inverted slips: ink ground (`--tx`), `--bg2` text, 600 weight; ochre ground for warnings. 2px radius, `--elev-m`, bottom-center stack. Lifecycle in `main.js`: `pop` in (160ms rise), hold 3400ms by default — `toast(msg, type, ms)` takes a duration for slips that must linger (the print instructions hold 8000ms) — then `.out`, a 300ms ease-in drop, removed 400ms later. Exits are faster than entrances: the slip is *taken away*.
 

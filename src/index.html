@@ -292,10 +292,11 @@ finish review, the verdict, and DESIGN.md
           <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
           <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
         </div>
-        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
+        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar — once there are pages, you can click straight into the manuscript and type<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
       </div>
     </div>
     <div id="statusbar">
+      <span class="pane-tag">source</span>
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
@@ -304,9 +305,12 @@ finish review, the verdict, and DESIGN.md
     <div id="lintPanel" hidden></div>
   </section>
 
+  <div id="paneDivider" aria-hidden="true"></div>
+
   <section id="previewPane">
     <div id="previewBar">
       <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
+      <span class="pane-tag">manuscript · click any text to edit</span>
       <span id="busy" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="grow"></span>
       <div id="pvCluster" aria-label="Pages and zoom">
@@ -452,6 +456,8 @@ finish review, the verdict, and DESIGN.md
       <h4>Importing Word & PDF files</h4>
       <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code>, <code>.txt</code>, <code>.html</code>, <code>.csv</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.epub</code>, <code>.ipynb</code> and images. Word documents keep headings, lists, tables, images and inline styling; spreadsheets become tables per sheet, decks become a section per slide with speaker notes, and notebooks keep their prose and code cells.</p>
       <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot, size and <b>in the PDF's own font</b> (embedded fonts only carry the characters the document already uses; type a character the font's subset lacks and that line falls back to the closest standard face, with a notice). The toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
+      <h4>Editing the manuscript directly</h4>
+      <p>The pages on the right are a real editing surface: <b>click into any paragraph, heading, list, table or callout and type</b> — the Markdown source keeps itself in step, and the pages recompose around your caret when you pause. Generated furniture (the contents page, reference list, resolved cross-references, equations, figures) is read-only on the page — edit those from the source panel. Both panes share one document and one undo history (<b>Ctrl+Z</b> anywhere).</p>
       <h4>Editor</h4>
       <p><b>Ctrl+K</b> opens the command palette — every action in the app, searchable by name · <b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
@@ -477,7 +483,9 @@ finish review, the verdict, and DESIGN.md
     <div class="mbody">
       <table>
         <tr><td><code>Ctrl</code> <code>K</code></td><td>Command palette — every action, searchable</td></tr>
-        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline</td></tr>
+        <tr><td><code>Ctrl</code> <code>Z</code> / <code>Ctrl</code> <code>Y</code></td><td>Undo / redo — one history for both panes</td></tr>
+        <tr><td><code>Ctrl</code> <code>Shift</code> <code>Enter</code></td><td>Focus mode — just the manuscript</td></tr>
+        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline — in the source or the manuscript</td></tr>
         <tr><td><code>Ctrl</code> <code>F</code> / <code>Ctrl</code> <code>H</code></td><td>Find / replace</td></tr>
         <tr><td><code>Ctrl</code> <code>S</code></td><td>Save project file</td></tr>
         <tr><td><code>Ctrl</code> <code>P</code></td><td>Export PDF</td></tr>
@@ -537,6 +545,9 @@ finish review, the verdict, and DESIGN.md
 </script>
 <script>
 /*@FILEIMPORT@*/
+</script>
+<script>
+/*@LIVEEDIT@*/
 </script>
 <script>
 /*@MAIN@*/

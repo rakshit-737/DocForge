@@ -612,6 +612,46 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 }
 .pagedjs_pages { display: block; }
 
+/* ---------------- direct manuscript editing ----------------
+   The page is a real editing surface: an ink caret and a quiet warm-gray
+   selection are the whole affordance — no outlines, no boxes. Generated
+   islands (TOC, references, figures, equations) keep the arrow cursor. */
+.pagedjs_page_content { caret-color: #1a1a17; cursor: text; }
+.pagedjs_page_content:focus, .pagedjs_page_content:focus-visible { outline: none; }
+.pagedjs_page ::selection { background: rgba(26, 26, 23, 0.16); }
+.pagedjs_page [contenteditable="false"] { cursor: default; }
+
+/* pane tags — the two columns name themselves, in the desk's teletype voice */
+.pane-tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tx3);
+  white-space: nowrap;
+  user-select: none;
+}
+@media (max-width: 1080px) { #previewBar .pane-tag { display: none; } }
+
+/* pane divider — a seam the hand can find, invisible until it matters */
+#paneDivider {
+  flex: none;
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+  position: relative;
+  z-index: 6;
+}
+#paneDivider::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; left: 2px; width: 1px;
+  background: transparent;
+  transition: background 0.16s ease-out;
+}
+#paneDivider:hover::after, #paneDivider.dragging::after { background: var(--rule); }
+@media (max-width: 900px) { #paneDivider { display: none; } }
+
+/* focus mode — the desk clears, the manuscript stays */
+body.focus-mode #editorPane, body.focus-mode #settings, body.focus-mode #paneDivider { display: none; }
+
 /* clickable screenshot placeholders in preview */
 .doc .shot { cursor: pointer; position: relative; }
 .doc .shot:hover .shot-box { border-color: var(--a600); box-shadow: 0 0 0 3pt var(--a100); }
@@ -1389,10 +1429,11 @@ finish review, the verdict, and DESIGN.md
           <code>**bold**</code><code>*italic*</code><code>==highlight==</code>
           <code>- list item</code><code>[toc]</code><code>[pagebreak]</code>
         </div>
-        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
+        <p class="es-more">Or pick a whole document from <b>Templates</b> in the top bar — once there are pages, you can click straight into the manuscript and type<span class="es-kbd"> · <kbd>Ctrl</kbd><kbd>/</kbd> for shortcuts</span></p>
       </div>
     </div>
     <div id="statusbar">
+      <span class="pane-tag">source</span>
       <span id="wordCount">0 words</span>
       <button id="lintBadge" title="Document checks" hidden></button>
       <span class="grow"></span>
@@ -1401,9 +1442,12 @@ finish review, the verdict, and DESIGN.md
     <div id="lintPanel" hidden></div>
   </section>
 
+  <div id="paneDivider" aria-hidden="true"></div>
+
   <section id="previewPane">
     <div id="previewBar">
       <button class="btn small ghost" id="btnOutline" title="Outline — jump to a section" aria-label="Outline" aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h12M4 12h16M4 18h9"/><circle cx="20" cy="6" r="0.8" fill="currentColor" stroke="none"/></svg></button>
+      <span class="pane-tag">manuscript · click any text to edit</span>
       <span id="busy" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="grow"></span>
       <div id="pvCluster" aria-label="Pages and zoom">
@@ -1549,6 +1593,8 @@ finish review, the verdict, and DESIGN.md
       <h4>Importing Word & PDF files</h4>
       <p><b>Open</b> (or drop a file on the editor) also accepts <code>.docx</code>, <code>.pdf</code>, <code>.md</code>, <code>.txt</code>, <code>.html</code>, <code>.csv</code>, <code>.xlsx</code>, <code>.pptx</code>, <code>.epub</code>, <code>.ipynb</code> and images. Word documents keep headings, lists, tables, images and inline styling; spreadsheets become tables per sheet, decks become a section per slide with speaker notes, and notebooks keep their prose and code cells.</p>
       <p>A PDF offers two roads. <b>Edit in place</b> keeps the exact printed layout: <b>double-click any line to rewrite it</b> — it reappears at the same spot, size and <b>in the PDF's own font</b> (embedded fonts only carry the characters the document already uses; type a character the font's subset lacks and that line falls back to the closest standard face, with a notice). The toolbar adds free text, white-out, highlights and images; Export rebuilds the same PDF with your edits on top. Text doesn't reflow, and a rewritten line's original characters technically remain beneath the cover, so don't use it to redact secrets. <b>Convert to editable text</b> rebuilds the content as a DocForge document you can rewrite freely (layout reflows; scanned PDFs need OCR first).</p>
+      <h4>Editing the manuscript directly</h4>
+      <p>The pages on the right are a real editing surface: <b>click into any paragraph, heading, list, table or callout and type</b> — the Markdown source keeps itself in step, and the pages recompose around your caret when you pause. Generated furniture (the contents page, reference list, resolved cross-references, equations, figures) is read-only on the page — edit those from the source panel. Both panes share one document and one undo history (<b>Ctrl+Z</b> anywhere).</p>
       <h4>Editor</h4>
       <p><b>Ctrl+K</b> opens the command palette — every action in the app, searchable by name · <b>Ctrl+F</b> find / <b>Ctrl+H</b> replace · <b>☰</b> above the preview lists your sections — click one to jump · pasted Word/web content converts to Markdown automatically · the <b>checks</b> badge (bottom left) lists things that would break the export — click a line to jump to it · the moon button switches the app chrome between dark and light; the document itself always prints on white.</p>
       <h4>Exporting</h4>
@@ -1574,7 +1620,9 @@ finish review, the verdict, and DESIGN.md
     <div class="mbody">
       <table>
         <tr><td><code>Ctrl</code> <code>K</code></td><td>Command palette — every action, searchable</td></tr>
-        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline</td></tr>
+        <tr><td><code>Ctrl</code> <code>Z</code> / <code>Ctrl</code> <code>Y</code></td><td>Undo / redo — one history for both panes</td></tr>
+        <tr><td><code>Ctrl</code> <code>Shift</code> <code>Enter</code></td><td>Focus mode — just the manuscript</td></tr>
+        <tr><td><code>Ctrl</code> <code>B</code> / <code>Ctrl</code> <code>I</code> / <code>Ctrl</code> <code>U</code></td><td>Bold / italic / underline — in the source or the manuscript</td></tr>
         <tr><td><code>Ctrl</code> <code>F</code> / <code>Ctrl</code> <code>H</code></td><td>Find / replace</td></tr>
         <tr><td><code>Ctrl</code> <code>S</code></td><td>Save project file</td></tr>
         <tr><td><code>Ctrl</code> <code>P</code></td><td>Export PDF</td></tr>
@@ -2170,11 +2218,14 @@ const Engine = (() => {
     const notes = {};
     const cites = {};
     const out = [];
+    const nos = [];   // original line index of each kept line — feeds the source map
     let fence = null, current = null; // current: {store, key} while a definition continues
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const keep = () => { out.push(line); nos.push(i); };
       const fm = line.match(/^(```+|~~~+)/);
-      if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
-      if (fm) { fence = fm[1]; current = null; out.push(line); continue; }
+      if (fence) { keep(); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
+      if (fm) { fence = fm[1]; current = null; keep(); continue; }
 
       const def = line.match(RE_FN_DEF);
       if (def) { current = { store: notes, key: def[1] }; notes[def[1]] = def[2]; continue; }
@@ -2184,9 +2235,9 @@ const Engine = (() => {
       if (current && /^[ \t]+\S/.test(line)) { current.store[current.key] += " " + line.trim(); continue; }
       if (current && !line.trim()) { current = null; continue; }
       current = null;
-      out.push(line);
+      keep();
     }
-    return { lines: out, notes, cites };
+    return { lines: out, notes, cites, nos };
   }
 
   /* Pre-process custom tokens outside code fences. `inherited` carries footnote and
@@ -2202,12 +2253,19 @@ const Engine = (() => {
     if (inherited && inherited.citeDefs) Object.assign(inherited.citeDefs, fx.cites);
     const lines = fx.lines;
     const out = [];
+    /* Source map for direct manuscript editing: one {s, e} of ORIGINAL source
+       lines per emitted line, filled only when the caller passes an array
+       (nested callout recursion flattens and doesn't need one). */
+    const map = inherited && Array.isArray(inherited.lineMap) ? inherited.lineMap : null;
+    let curS = 0, curE = 0;
+    const push = (...ls) => { for (const l of ls) { out.push(l); if (map) map.push({ s: curS, e: curE }); } };
     let fence = null;
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
+      curS = curE = fx.nos[i];
       const fm = line.match(/^(```+|~~~+)/);
-      if (fence) { out.push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
-      if (fm) { fence = fm[1]; out.push(line); continue; }
+      if (fence) { push(line); if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; continue; }
+      if (fm) { fence = fm[1]; push(line); continue; }
 
       // Display math: a standalone $$ … $$ block, possibly spanning several lines.
       if (/^\s*\$\$/.test(line)) {
@@ -2219,7 +2277,8 @@ const Engine = (() => {
           if (j < lines.length) body += "\n" + lines[j].replace(/\$\$\s*$/, "");
           i = j;
         }
-        out.push("", `<div class="math-display" data-tex="${esc(body.trim())}"></div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="math-display" data-tex="${esc(body.trim())}"></div>`, "");
         continue;
       }
 
@@ -2227,7 +2286,7 @@ const Engine = (() => {
       if (line.includes("[^")) {
         line = outsideCode(line, seg => seg.replace(/\[\^([^\]\s]+)\]/g, (m, id) =>
           notes[id] == null ? m
-            : `<span class="footnote">${marked.parseInline(notes[id], mdOpts(settings))}</span>`));
+            : `<span class="footnote" data-fn="${esc(id)}">${marked.parseInline(notes[id], mdOpts(settings))}</span>`));
       }
 
       // Citations: [@key] / [@key, p. 3] become empty spans postprocess fills in.
@@ -2245,23 +2304,23 @@ const Engine = (() => {
       // Inline math, outside code spans.
       if (line.includes("$")) line = outsideCode(line, mathToSpans);
 
-      if (RE_REFS.test(line)) { out.push("", `<div data-refs="1"></div>`, ""); continue; }
+      if (RE_REFS.test(line)) { push("", `<div data-refs="1"></div>`, ""); continue; }
 
-      if (RE_TOC.test(line)) { out.push("", `<div data-toc="1"></div>`, ""); continue; }
-      if (RE_LOF.test(line)) { out.push("", `<div data-list="fig"></div>`, ""); continue; }
-      if (RE_LOT.test(line)) { out.push("", `<div data-list="tbl"></div>`, ""); continue; }
-      if (RE_BREAK.test(line)) { out.push("", `<div class="page-break"></div>`, ""); continue; }
+      if (RE_TOC.test(line)) { push("", `<div data-toc="1"></div>`, ""); continue; }
+      if (RE_LOF.test(line)) { push("", `<div data-list="fig"></div>`, ""); continue; }
+      if (RE_LOT.test(line)) { push("", `<div data-list="tbl"></div>`, ""); continue; }
+      if (RE_BREAK.test(line)) { push("", `<div class="page-break"></div>`, ""); continue; }
       const sm = line.match(RE_SHOT);
       if (sm) {
         const o = parseOpts(sm[2]);
-        out.push("", `<figure class="shot${o.noborder ? " noborder" : ""}" data-caption="${esc(sm[1] || "")}" ` +
+        push("", `<figure class="shot${o.noborder ? " noborder" : ""}" data-caption="${esc(sm[1] || "")}" ` +
           `data-key="${esc(o.img || "")}"${o.w ? ` data-req-w="${esc(o.w)}"` : ""}${o.id ? ` id="${esc(o.id)}"` : ""}></figure>`, "");
         continue;
       }
       const tm = line.match(RE_TABLE_CAP);
       if (tm) {
         const o = parseOpts(tm[2]);
-        out.push("", `<div data-tablecap="${esc(tm[1] || "")}"${o.id ? ` data-id="${esc(o.id)}"` : ""}></div>`, "");
+        push("", `<div data-tablecap="${esc(tm[1] || "")}"${o.id ? ` data-id="${esc(o.id)}"` : ""}></div>`, "");
         continue;
       }
       // Flatten to one line so the block survives re-parsing, but keep the newlines
@@ -2277,7 +2336,8 @@ const Engine = (() => {
         const title = (cm[2] || "").trim() || CO_LABELS[type];
         const { inner, end } = collectContainer(lines, i);
         i = end; // skip past close (or EOF)
-        out.push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
         continue;
       }
       // :::center / :::right / :::left / :::justify — Word's paragraph alignment group.
@@ -2286,10 +2346,11 @@ const Engine = (() => {
         const dir = am[1].toLowerCase();
         const { inner, end } = collectContainer(lines, i);
         i = end;
-        out.push("", `<div class="align-${dir}">${flatten(inner)}</div>`, "");
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="align-${dir}">${flatten(inner)}</div>`, "");
         continue;
       }
-      out.push(line);
+      push(line);
     }
     return out.join("\n");
   }
@@ -2381,6 +2442,7 @@ const Engine = (() => {
     wrap.innerHTML = `<div class="refs-title">References</div>` + keys.map((k, i) =>
       `<p class="ref">${apa ? "" : `<span class="ref-n">[${i + 1}]</span> `}${marked.parseInline(smartText(defs[k]))}</p>`
     ).join("");
+    if (host.dataset && host.dataset.ss != null) { wrap.dataset.ss = host.dataset.ss; wrap.dataset.se = host.dataset.se; }
     host.replaceWith(wrap);
   }
 
@@ -2428,6 +2490,7 @@ const Engine = (() => {
       const m = h.textContent.match(/\s*\{#([A-Za-z][\w:.-]*)\}\s*$/);
       if (m) {
         h.id = m[1];
+        h.dataset.label = m[1];   // an explicit label must survive a round-trip through direct editing
         // strip the label out of the visible text, wherever it ended up
         const last = [...h.childNodes].reverse().find(n => n.nodeType === 3 && /\{#/.test(n.nodeValue));
         if (last) last.nodeValue = last.nodeValue.replace(/\s*\{#[A-Za-z][\w:.-]*\}\s*$/, "");
@@ -2477,7 +2540,9 @@ const Engine = (() => {
       tb.prepend(cap);
       tb.dataset.tbl = tblNo;
       tb.dataset.caption = capText;
-      if (marker.dataset.id) tb.id = marker.dataset.id;
+      if (marker.dataset.id) { tb.id = marker.dataset.id; tb.dataset.explicitId = "1"; }
+      // the caption line belongs to the table's source span from here on
+      if (marker.dataset.ss != null) tb.dataset.ss = marker.dataset.ss;
       marker.remove();
     });
 
@@ -2487,6 +2552,7 @@ const Engine = (() => {
       if (p.childNodes.length !== 1) return;
       const fig = document.createElement("figure");
       fig.className = "img";
+      if (p.dataset.ss != null) { fig.dataset.ss = p.dataset.ss; fig.dataset.se = p.dataset.se; }
       p.replaceWith(fig);
       fig.appendChild(img);
       if (img.alt) fig.dataset.caption = img.alt;
@@ -2584,6 +2650,8 @@ const Engine = (() => {
       html += `</nav>`;
       wrap.innerHTML = html;
       if (!items.length) wrap.innerHTML = "";
+      if (marker.dataset.ss != null) { wrap.dataset.ss = marker.dataset.ss; wrap.dataset.se = marker.dataset.se; }
+      wrap.dataset.kind = kind;   // the serializer emits [lof] / [lot] from this
       marker.replaceWith(wrap);
     });
 
@@ -2602,8 +2670,18 @@ const Engine = (() => {
       });
       html += `</nav>`;
       wrap.innerHTML = html;
+      if (tocMarker.dataset.ss != null) { wrap.dataset.ss = tocMarker.dataset.ss; wrap.dataset.se = tocMarker.dataset.se; }
       tocMarker.replaceWith(wrap);
     }
+
+    /* 6. direct-editing prep: generated or non-invertible islands must not take
+       the caret — their text is derived (TOC folios, reference labels, resolved
+       cross-references, KaTeX output, figure furniture, auto heading numbers),
+       so an edit there could never be written back to source. */
+    root.querySelectorAll(
+      ".toc-wrap, .refs, figure, .math-display, .math-inline, span.footnote, a.xref, span.cite, .hnum, .page-break"
+    ).forEach(el => el.setAttribute("contenteditable", "false"));
+
     return { figures: fig, headings: heads.length };
   }
 
@@ -2615,7 +2693,7 @@ const Engine = (() => {
       s.metaExtra ? `<div>${esc(s.metaExtra)}</div>` : "",
       dateStr ? `<div class="m-dim">${esc(dateStr)}</div>` : "",
     ].join("");
-    return `<section class="cover">` +
+    return `<section class="cover" contenteditable="false">` +
       (s.kicker ? `<div class="cv-kicker">${esc(s.kicker)}</div>` : "") +
       `<h1 class="cv-title">${esc(s.title || "Untitled document")}</h1>` +
       (s.subtitle ? `<div class="cv-sub">${esc(s.subtitle)}</div>` : "") +
@@ -2631,10 +2709,22 @@ const Engine = (() => {
     } catch { return iso; }
   }
 
-  /* ---------- main render ---------- */
+  /* ---------- main render ----------
+     The body is assembled token by token rather than in one marked.parse pass,
+     so every top-level block can carry its span of ORIGINAL source lines
+     (data-ss / data-se). That stamp is what lets the manuscript be edited
+     directly: a changed block serializes back to Markdown and splices into
+     exactly those lines. One lexer pass first (inline tokens and reference
+     links resolve there), then each top-level token renders separately. */
   function render(source, settings, attachments) {
     const citeDefs = {};
-    const body = marked.parse(preprocess(source, settings, { citeDefs }), mdOpts(settings));
+    const lineMap = [];
+    const pre = preprocess(source, settings, { citeDefs, lineMap });
+    /* marked.parse merges options over its defaults, but the low-level
+       lexer/parser pair REPLACES them — spread the defaults back in or
+       gfm (tables, strikethrough) silently switches off. */
+    const opts = { ...marked.defaults, ...mdOpts(settings) };
+    const tokens = marked.lexer(pre, opts);
     const doc = document.createElement("div");
     doc.className = "doc" +
       (settings.justify ? " justify" : "") +
@@ -2645,7 +2735,23 @@ const Engine = (() => {
     if (settings.cover) doc.insertAdjacentHTML("beforeend", coverHtml(settings));
     const content = document.createElement("div");
     content.className = "content";
-    content.innerHTML = body;
+    const tpl = document.createElement("template");
+    let preLine = 0;
+    for (const tok of tokens) {
+      const nl = (tok.raw.match(/\n/g) || []).length;
+      const startLine = preLine;
+      const endLine = preLine + Math.max(0, nl - (tok.raw.endsWith("\n") ? 1 : 0));
+      preLine += nl;
+      const html = marked.parser([tok], opts);
+      if (!html) continue;
+      tpl.innerHTML = html;
+      const s = lineMap[Math.min(startLine, lineMap.length - 1)];
+      const e = lineMap[Math.min(endLine, lineMap.length - 1)];
+      if (s && e) {
+        for (const el of tpl.content.children) { el.dataset.ss = s.s; el.dataset.se = e.e; }
+      }
+      content.appendChild(tpl.content);
+    }
     doc.appendChild(content);
     const meta = postprocess(content, settings, attachments, citeDefs);
     return { doc, meta };
@@ -6291,6 +6397,504 @@ const FileImport = (() => {
 </script>
 <script>
 /* ============================================================
+   live-edit.js — direct editing on the paginated manuscript
+
+   The galley is a real editing surface. Every top-level block carries
+   its span of source lines (data-ss / data-se, stamped by Engine.render),
+   and Paged.js fragments of one logical block share a data-ref. An edit:
+
+     native contenteditable change (typing stays instant)
+        → affected source-line range located from the selection
+        → the range's blocks serialized DOM → Markdown
+        → spliced into state.source at exactly those lines
+        → stamps shifted, re-render deferred to an idle pause
+
+   Source stays the single truth: left edits re-render the manuscript,
+   right edits rewrite the source. Neither view ever writes to the other
+   directly, so there is no loop to break. Around every re-render the
+   viewport is anchored to the topmost visible block and the caret to a
+   (block, text-offset) pair, both resolved against the fresh DOM.
+   ============================================================ */
+"use strict";
+
+const LiveEdit = (() => {
+
+  let hooks = null;      // { scaleWrap, scroller, getSource, setSource, scheduleRender, revert, undo, redo, toast }
+  let pending = null;    // source-line range captured at beforeinput (survives deletions/merges)
+
+  /* ================= DOM → Markdown ================= */
+
+  const EMPTYABLE = new Set(["STRONG", "B", "EM", "I", "DEL", "S", "U", "MARK", "SUB", "SUP"]);
+
+  function inlineMd(node) {
+    let out = "";
+    for (const ch of node.childNodes) {
+      if (ch.nodeType === 3) out += ch.nodeValue;
+      else if (ch.nodeType === 1) out += elMd(ch);
+    }
+    return out;
+  }
+
+  function elMd(ch) {
+    const cl = ch.classList;
+    if (cl.contains("hnum")) return "";                          // auto heading number
+    if (cl.contains("footnote")) return `[^${ch.dataset.fn || "1"}]`;
+    if (cl.contains("cite")) return `[@${ch.dataset.key || "key"}${ch.dataset.loc ? ", " + ch.dataset.loc : ""}]`;
+    if (cl.contains("xref")) return `[#${(ch.getAttribute("href") || "#").slice(1)}]`;
+    if (cl.contains("math-inline")) return `$${ch.dataset.tex || ""}$`;
+    if (cl.contains("dfspan")) {
+      const d = ch.dataset, a = [];
+      if (d.color) a.push(`color=${d.color}`);
+      if (d.bg) a.push(`bg=${d.bg}`);
+      if (d.size) a.push(`size=${d.size}`);
+      if (d.font) a.push(`font="${d.font}"`);
+      if (d.u) a.push("u");
+      if (d.sc) a.push("sc");
+      if (d.caps) a.push("caps");
+      const inner = inlineMd(ch);
+      return a.length ? `[${inner}]{${a.join(" ")}}` : inner;
+    }
+    const inner = () => inlineMd(ch);
+    const wrap = (m, mEnd) => {
+      const t = inner();
+      return t.trim() ? m + t + (mEnd || m) : t;   // an emptied <strong></strong> must not leave bare ** in the source
+    };
+    switch (ch.tagName) {
+      case "BR": return "\n";
+      case "STRONG": case "B": return wrap("**");
+      case "EM": case "I": return wrap("*");
+      case "DEL": case "S": return wrap("~~");
+      case "U": return wrap("++");
+      case "SUB": return wrap("~");
+      case "SUP": return wrap("^");
+      case "CODE": return "`" + ch.textContent + "`";
+      case "MARK": {
+        const hl = ch.dataset.hl;
+        return hl && hl !== "yellow" ? wrap(`=={${hl}}`, "==") : wrap("==");
+      }
+      case "A": {
+        const href = ch.getAttribute("href") || "";
+        return href && !href.startsWith("#") ? `[${inner()}](${href})` : inner();
+      }
+      case "IMG": return `![${ch.alt || ""}](${ch.getAttribute("src") || ""})`;
+      default: return inner();
+    }
+  }
+
+  function listMd(list, depth) {
+    const ordered = list.tagName === "OL";
+    const pad = "  ".repeat(depth);
+    const lines = [];
+    let n = 0;
+    for (const li of list.children) {
+      if (li.tagName !== "LI") continue;
+      n++;
+      let inline = "";
+      const subs = [];
+      for (const ch of li.childNodes) {
+        if (ch.nodeType === 1 && /^(UL|OL|P|PRE|TABLE|BLOCKQUOTE|H[1-6]|FIGURE|DIV)$/.test(ch.tagName)) { subs.push(ch); continue; }
+        inline += ch.nodeType === 3 ? ch.nodeValue : elMd(ch);
+      }
+      lines.push(pad + (ordered ? `${n}. ` : "- ") + inline.replace(/\s+/g, " ").trim());
+      for (const sub of subs) {
+        if (sub.tagName === "UL" || sub.tagName === "OL") lines.push(listMd(sub, depth + 1));
+        else {
+          const md = blockMd(sub);
+          if (md.trim()) lines.push(md.split("\n").map(l => pad + "  " + l).join("\n"));
+        }
+      }
+    }
+    return lines.join("\n");
+  }
+
+  function tableMd(tb) {
+    const lines = [];
+    if (tb.dataset.tbl && (tb.dataset.caption || tb.dataset.explicitId)) {
+      const id = tb.dataset.explicitId && tb.id ? ` | #${tb.id}` : "";
+      lines.push(`[table: ${tb.dataset.caption || ""}${id}]`);
+    }
+    const cellMd = td => inlineMd(td).replace(/\|/g, "\\|").replace(/\s+/g, " ").trim();
+    const rows = [...tb.querySelectorAll(":scope > thead > tr, :scope > tbody > tr, :scope > tr")]
+      .filter(tr => !tr.closest("thead[data-repeated-header]"));
+    rows.forEach(tr => lines.push("| " + [...tr.children].map(cellMd).join(" | ") + " |"));
+    if (rows.length) {
+      const aligns = [...rows[0].children].map(c => c.getAttribute("align"));
+      const sep = "| " + aligns.map(a =>
+        a === "center" ? ":---:" : a === "right" ? "---:" : a === "left" ? ":---" : "---").join(" | ") + " |";
+      lines.splice(lines[0].startsWith("[table:") ? 2 : 1, 0, sep);
+    }
+    return lines.join("\n");
+  }
+
+  function childrenMd(el) {
+    if (!el) return "";
+    return [...el.children].map(blockMd).filter(s => s.trim()).join("\n\n");
+  }
+
+  function blockMd(el) {
+    const cl = el.classList;
+    if (cl.contains("toc-wrap")) return cl.contains("list-wrap") ? (el.dataset.kind === "tbl" ? "[lot]" : "[lof]") : "[toc]";
+    if (cl.contains("refs")) return "[references]";
+    if (cl.contains("page-break")) return "[pagebreak]";
+    if (cl.contains("math-display")) return "$$\n" + (el.dataset.tex || "") + "\n$$";
+    if (cl.contains("callout")) {
+      const type = ["note", "tip", "warning", "important"].find(t => cl.contains(t)) || "note";
+      const title = (el.querySelector(":scope > .co-title")?.textContent || "").trim();
+      return `:::${type}${title ? " " + title : ""}\n${childrenMd(el.querySelector(":scope > .co-body"))}\n:::`;
+    }
+    const alignCls = [...cl].find(c => /^align-(center|right|left|justify)$/.test(c));
+    if (alignCls) return `:::${alignCls.slice(6)}\n${childrenMd(el)}\n:::`;
+    if (el.tagName === "FIGURE") {
+      if (cl.contains("shot")) {
+        const opts = [];
+        if (el.dataset.key) opts.push(`img:${el.dataset.key}`);
+        if (el.dataset.reqW) opts.push(`w:${el.dataset.reqW}`);
+        if (cl.contains("noborder")) opts.push("noborder");
+        if (el.id && !/^fig-auto-/.test(el.id)) opts.push(`#${el.id}`);
+        return `[screenshot: ${el.dataset.caption || ""}${opts.length ? " | " + opts.join(" | ") : ""}]`;
+      }
+      const img = el.querySelector("img");
+      return img ? `![${el.dataset.caption || img.alt || ""}](${img.getAttribute("src") || ""})` : "";
+    }
+    if (/^H[1-6]$/.test(el.tagName)) {
+      const label = el.dataset.label ? ` {#${el.dataset.label}}` : "";
+      return "#".repeat(+el.tagName[1]) + " " + inlineMd(el).replace(/\s+/g, " ").trim() + label;
+    }
+    if (el.tagName === "P") return inlineMd(el).trim();
+    if (el.tagName === "HR") return "---";
+    if (el.tagName === "BLOCKQUOTE") return childrenMd(el).split("\n").map(l => ("> " + l).trimEnd()).join("\n");
+    if (el.tagName === "PRE") {
+      const code = el.querySelector("code") || el;
+      const lang = ((code.className || "").match(/language-([\w+-]+)/) || [])[1] || "";
+      return "```" + lang + "\n" + code.textContent.replace(/\n$/, "") + "\n```";
+    }
+    if (el.tagName === "UL" || el.tagName === "OL") return listMd(el, 0);
+    if (el.tagName === "TABLE") return tableMd(el);
+    if (el.tagName === "DIV" || el.tagName === "SECTION") return childrenMd(el);
+    return inlineMd(el).trim();
+  }
+
+  /* A logical block may lie across pages as fragments sharing one data-ref.
+     Serialize each and stitch: inline blocks joined with a space (Paged.js
+     collapses the whitespace at the break), structural blocks line-wise with
+     a merge when the continuation starts mid-item. */
+  function serializeLogical(frags) {
+    if (frags.length === 1) return blockMd(frags[0]);
+    const tag = frags[0].tagName;
+    if (/^(P|H[1-6])$/.test(tag)) {
+      return frags.map(blockMd).reduce((a, b) => {
+        if (!a) return b;
+        if (!b) return a;
+        return a + (/\s$/.test(a) || /^\s/.test(b) ? "" : " ") + b;
+      }, "");
+    }
+    let lines = blockMd(frags[0]).split("\n");
+    for (let i = 1; i < frags.length; i++) {
+      // continuation fragments carry cloned attributes — drop their duplicate
+      // caption line and separator row before stitching
+      let bLines = blockMd(frags[i]).split("\n").filter(l => !/^\|\s*:?-{3}/.test(l) && !/^\[table:/.test(l));
+      const contFirst = frags[i].firstElementChild && frags[i].firstElementChild.hasAttribute("data-split-from");
+      if (contFirst && lines.length && bLines.length && tag !== "TABLE") {
+        const b0 = bLines[0].replace(/^\s*(?:[-*]|\d+\.)\s+/, "").replace(/^>\s?/, "");
+        lines[lines.length - 1] += (/\s$/.test(lines[lines.length - 1]) ? "" : " ") + b0;
+        bLines = bLines.slice(1);
+      }
+      lines = lines.concat(bLines);
+    }
+    if (tag === "OL") {     // fragment-local numbering restarts — renumber the top level
+      let n = 0;
+      lines = lines.map(l => /^\d+\. /.test(l) ? `${++n}. ` + l.replace(/^\d+\. /, "") : l);
+    }
+    return lines.join("\n");
+  }
+
+  /* ================= locating blocks ================= */
+
+  const TOP_SEL = ".pagedjs_page .content > [data-ss]";
+
+  function topEntries() {
+    /* Fold same-data-ref elements into one logical block ONLY when the later
+       one is a genuine Paged.js continuation (data-split-from). A browser
+       Enter-split clones the node WITH its data-ref — those clones are new,
+       separate blocks and must serialize as two paragraphs, not be glued. */
+    const byRef = new Map();
+    const out = [];
+    for (const el of hooks.scaleWrap.querySelectorAll(TOP_SEL)) {
+      const ref = el.getAttribute("data-ref") || "";
+      if (ref && byRef.has(ref) && el.hasAttribute("data-split-from")) {
+        byRef.get(ref).frags.push(el);
+        continue;
+      }
+      const entry = { el, frags: [el], ss: +el.dataset.ss, se: +el.dataset.se };
+      if (ref && !byRef.has(ref)) byRef.set(ref, entry);
+      out.push(entry);
+    }
+    return out;
+  }
+
+  function blockOf(node) {
+    let el = node && (node.nodeType === 1 ? node : node.parentElement);
+    if (!el) return null;
+    const stamped = el.closest(".content > [data-ss]");
+    if (stamped) return stamped;
+    // fresh, unstamped element (a paragraph typed after the last block):
+    // anchor on the nearest stamped sibling so its content joins that range
+    const top = el.closest(".content > *");
+    if (!top) return null;
+    for (let p = top.previousElementSibling; p; p = p.previousElementSibling) if (p.dataset.ss != null) return p;
+    for (let n = top.nextElementSibling; n; n = n.nextElementSibling) if (n.dataset.ss != null) return n;
+    return null;
+  }
+
+  function rangeOfSelection() {
+    const sel = document.getSelection();
+    if (!sel || !sel.anchorNode || !hooks.scaleWrap.contains(sel.anchorNode)) return null;
+    const a = blockOf(sel.anchorNode);
+    const f = sel.focusNode && hooks.scaleWrap.contains(sel.focusNode) ? blockOf(sel.focusNode) : a;
+    const els = [a, f].filter(Boolean);
+    if (!els.length) return null;
+    return {
+      ss: Math.min(...els.map(e => +e.dataset.ss)),
+      se: Math.max(...els.map(e => +e.dataset.se)),
+    };
+  }
+
+  const union = (a, b) => !a ? b : !b ? a : { ss: Math.min(a.ss, b.ss), se: Math.max(a.se, b.se) };
+
+  /* ================= write-back ================= */
+
+  function syncRange(ss, se) {
+    const entries = topEntries();
+    let lo = -1, hi = -1;
+    entries.forEach((en, i) => {
+      if (en.se >= ss && en.ss <= se) { if (lo < 0) lo = i; hi = i; }
+    });
+    if (lo < 0) { hooks.revert(); return; }
+
+    /* fold in fresh unstamped siblings sitting inside or against the window —
+       DOM-ordered .content children between (and touching) the slice */
+    const sliceEls = entries.slice(lo, hi + 1);
+    const first = sliceEls[0].frags[0], last = sliceEls[sliceEls.length - 1].frags.at(-1);
+    const domSlice = [];
+    const pages = [...hooks.scaleWrap.querySelectorAll(".pagedjs_page .content")];
+    let on = false;
+    outer: for (const pageContent of pages) {
+      for (const child of pageContent.children) {
+        if (child === first) on = true;
+        if (on && child.nodeType === 1) domSlice.push(child);
+        if (child === last) { // keep swallowing trailing unstamped siblings
+          for (let n = child.nextElementSibling; n && n.dataset.ss == null; n = n.nextElementSibling) domSlice.push(n);
+          break outer;
+        }
+      }
+    }
+    // serialize in DOM order; true Paged continuations fold into their first
+    // appearance, browser-made clones stay separate blocks
+    const seenRef = new Set();
+    const parts = [];
+    for (const el of domSlice) {
+      const ref = el.getAttribute("data-ref") || "";
+      if (ref && seenRef.has(ref) && el.hasAttribute("data-split-from")) continue;
+      if (ref) seenRef.add(ref);
+      const en = sliceEls.find(x => x.frags[0] === el);
+      parts.push({ el, frags: en ? en.frags : [el], md: en ? serializeLogical(en.frags) : blockMd(el) });
+    }
+
+    const rangeSS = Math.min(ss, ...sliceEls.map(e => e.ss));
+    const rangeSE = Math.max(se, ...sliceEls.map(e => e.se));
+    const lines = hooks.getSource().split("\n");
+    const kept = parts.filter(p => p.md.trim() !== "");
+    // an emptied block renders nothing and keeps a stale stamp — remove it now
+    // so a follow-up edit before the re-render can't splice against it
+    parts.filter(p => p.md.trim() === "").forEach(p => p.el.remove());
+    const newLines = kept.length ? kept.map(p => p.md).join("\n\n").split("\n") : [];
+    const from = Math.max(0, Math.min(rangeSS, lines.length - 1));
+    const to = Math.max(from, Math.min(rangeSE, lines.length - 1));
+    lines.splice(from, to - from + 1, ...newLines);
+    const delta = newLines.length - (to - from + 1);
+    hooks.setSource(lines.join("\n"));
+
+    // restamp the edited window, then shift everything after it
+    let cursor = from;
+    for (const p of kept) {
+      const span = p.md.split("\n").length;
+      for (const t of p.frags) { t.dataset.ss = cursor; t.dataset.se = cursor + span - 1; }
+      cursor += span + 1;
+    }
+    for (const el of hooks.scaleWrap.querySelectorAll("[data-ss]")) {
+      const elSS = +el.dataset.ss;
+      if (elSS > to && !domSlice.includes(el)) {
+        el.dataset.ss = elSS + delta;
+        el.dataset.se = +el.dataset.se + delta;
+      }
+    }
+  }
+
+  /* ================= caret & viewport ================= */
+
+  function editableTextNodes(root) {
+    const out = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      let p = n.parentElement, skip = false;
+      while (p && p !== root) {
+        if (p.getAttribute && p.getAttribute("contenteditable") === "false") { skip = true; break; }
+        p = p.parentElement;
+      }
+      if (!skip) out.push(n);
+    }
+    return out;
+  }
+
+  function captureCaret() {
+    const sel = document.getSelection();
+    if (!sel || !sel.rangeCount || !sel.focusNode || !hooks.scaleWrap.contains(sel.focusNode)) return null;
+    const block = blockOf(sel.focusNode);
+    if (!block || block.dataset.ss == null) return null;
+    const entry = topEntries().find(e => e.frags.includes(block));
+    const frags = entry ? entry.frags : [block];
+    let off = 0;
+    for (const frag of frags) {
+      for (const t of editableTextNodes(frag)) {
+        if (t === sel.focusNode) return { ss: +block.dataset.ss, off: off + sel.focusOffset };
+        off += t.nodeValue.length;
+      }
+    }
+    return { ss: +block.dataset.ss, off };
+  }
+
+  function restoreCaret(c) {
+    if (!c) return;
+    const entries = topEntries();
+    const entry = entries.find(e => e.ss === c.ss) ||
+      entries.reduce((best, e) => e.ss <= c.ss && (!best || e.ss > best.ss) ? e : best, null);
+    if (!entry) return;
+    let remaining = c.off;
+    let target = null, local = 0;
+    for (const frag of entry.frags) {
+      for (const t of editableTextNodes(frag)) {
+        if (remaining <= t.nodeValue.length) { target = t; local = remaining; break; }
+        remaining -= t.nodeValue.length;
+      }
+      if (target) break;
+    }
+    if (!target) {
+      const all = entry.frags.flatMap(editableTextNodes);
+      target = all.at(-1);
+      local = target ? target.nodeValue.length : 0;
+    }
+    if (!target) return;
+    const pc = target.parentElement.closest(".pagedjs_page_content");
+    if (pc) pc.focus({ preventScroll: true });
+    const sel = document.getSelection();
+    try { sel.collapse(target, Math.min(local, target.nodeValue.length)); } catch {}
+  }
+
+  function captureAnchor() {
+    const contTop = hooks.scroller.getBoundingClientRect().top;
+    const els = [...hooks.scaleWrap.querySelectorAll(TOP_SEL)];
+    for (let i = 0; i < els.length; i++) {
+      const r = els[i].getBoundingClientRect();
+      if (r.height && r.bottom > contTop + 1) {
+        const ss = +els[i].dataset.ss;
+        // a block split across pages shares one ss — remember WHICH fragment
+        // was on screen, or the restore lands a page early
+        let fragIdx = 0;
+        for (let j = i - 1; j >= 0 && +els[j].dataset.ss === ss; j--) fragIdx++;
+        return { ss, fragIdx, delta: r.top - contTop };
+      }
+    }
+    return null;
+  }
+
+  function restoreAnchor(a) {
+    if (!a) return;
+    const els = [...hooks.scaleWrap.querySelectorAll(TOP_SEL)];
+    const matches = els.filter(el => +el.dataset.ss === a.ss);
+    let best = null;
+    if (matches.length) {
+      best = matches[Math.min(a.fragIdx || 0, matches.length - 1)];
+    } else {
+      for (const el of els) {
+        const ss = +el.dataset.ss;
+        if (ss <= a.ss || !best) best = el;
+        if (ss > a.ss) break;
+      }
+    }
+    if (!best) return;
+    const d = best.getBoundingClientRect().top - hooks.scroller.getBoundingClientRect().top;
+    hooks.scroller.scrollTop += d - a.delta;
+  }
+
+  function captureView() {
+    if (!hooks) return null;
+    return { anchor: captureAnchor(), caret: captureCaret() };
+  }
+  function restoreView(v) {
+    if (!hooks || !v) return;
+    if (v.caret) restoreCaret(v.caret);
+    restoreAnchor(v.anchor);
+  }
+
+  /* ================= events ================= */
+
+  /* Typing must cost nothing: each keystroke only widens the pending source
+     window (two closest() calls); serialization and the source splice run on
+     a short pause — and always flush before anything reads the source. */
+  let flushTimer = 0;
+  let lost = false;   // an edit landed somewhere unmappable — revert at flush
+
+  function flush() {
+    clearTimeout(flushTimer); flushTimer = 0;
+    if (!hooks) return;
+    if (lost) { lost = false; pending = null; hooks.revert(); return; }
+    if (!pending) return;
+    const r = pending; pending = null;
+    syncRange(r.ss, r.se);
+  }
+
+  function onBeforeInput(e) {
+    const t = e.inputType || "";
+    if (t === "historyUndo") { e.preventDefault(); flush(); hooks.undo(); return; }
+    if (t === "historyRedo") { e.preventDefault(); flush(); hooks.redo(); return; }
+    pending = union(pending, rangeOfSelection());
+    if (t === "insertFromPaste" || t === "insertFromDrop") {
+      // plain text only — arbitrary pasted HTML would not survive the round-trip
+      e.preventDefault();
+      const text = (e.dataTransfer || e.clipboardData)?.getData("text/plain") ?? "";
+      if (text) document.execCommand("insertText", false, text);
+    }
+  }
+
+  function onInput() {
+    const r = union(pending, rangeOfSelection());
+    if (!r) { lost = true; }
+    pending = r;
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flush, 250);
+    hooks.editPending();   // keeps the deferred re-render pushed out while typing
+  }
+
+  function arm() {
+    if (!hooks) return;
+    hooks.scaleWrap.querySelectorAll(".pagedjs_area > .pagedjs_page_content").forEach(pc => {
+      pc.setAttribute("contenteditable", "true");
+      pc.setAttribute("spellcheck", "false");
+    });
+  }
+
+  function attach(h) {
+    hooks = h;
+    hooks.scaleWrap.addEventListener("beforeinput", onBeforeInput);
+    hooks.scaleWrap.addEventListener("input", onInput);
+  }
+
+  return { attach, arm, captureView, restoreView, flush };
+})();
+
+</script>
+<script>
+/* ============================================================
    main.js — app state, UI, preview loop, exports
    ============================================================ */
 "use strict";
@@ -6883,25 +7487,57 @@ Land the piece: return to the opening image or question and say what it means no
     clearTimeout(renderTimer);
     renderTimer = setTimeout(doRender, 420);
   }
+  /* Direct manuscript edits keep the DOM current natively, so their rebuild
+     can wait for a genuine pause — typing never races the compositor. */
+  function scheduleLiveRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(doRender, 1300);
+  }
 
+  let pageTotal = 0;
   async function doRender() {
-    clearTimeout(renderTimer); renderTimer = null;
     if (rendering) { renderPending = true; return; }
+    LiveEdit.flush();   // any manuscript edit still pending reaches the source first
+    clearTimeout(renderTimer); renderTimer = null;
     rendering = true;
     $("#busy").classList.add("on");
+    // where is the reader, and where is their caret? restored after the swap
+    const view = LiveEdit.captureView();
     try {
       const { doc } = Engine.render(state.source, state.settings, state.attachments);
       lastContentEl = doc.querySelector(".content").cloneNode(true);
       const css = DOC_CSS + Engine.dynamicCss(state.settings);
-      document.querySelectorAll("style[data-pagedjs-inserted-styles]").forEach(s => s.remove());
-      if (previewer) { try { previewer.polisher.destroy(); } catch {} }
-      scaleWrap.innerHTML = "";
+      /* Compose the new galleys offscreen while the old ones stay on the
+         stone — the reader never sees a blank deck, and the scroll container
+         never collapses to zero (which is what threw them back to page 1). */
+      const oldPreviewer = previewer;
+      const oldStyles = [...document.querySelectorAll("style[data-pagedjs-inserted-styles]")];
+      const stage = document.createElement("div");
+      stage.style.cssText = "position:absolute;left:-100000px;top:0;";
+      if (scaleWrap.style.zoom) stage.style.zoom = scaleWrap.style.zoom;   // measurements match the live deck
+      $("#previewScroll").appendChild(stage);
       previewer = new Paged.Previewer();
       const url = URL.createObjectURL(new Blob([css], { type: "text/css" }));
-      const flow = await previewer.preview(doc.outerHTML, [url], scaleWrap);
-      URL.revokeObjectURL(url);
+      let flow;
+      try { flow = await previewer.preview(doc.outerHTML, [url], stage); }
+      finally { URL.revokeObjectURL(url); }
+      /* The flow is final — edits re-render wholesale, so each page's
+         resize-relayout observer must retire now: a direct manuscript edit
+         resizes the live wrapper and the observer would re-walk a source
+         tree our contenteditable mutations no longer match (findEndToken
+         crashes on execCommand-inserted nodes that carry no data-ref). */
+      try { (flow.pages || []).forEach(p => p.removeListeners && p.removeListeners()); } catch {}
+      scaleWrap.innerHTML = "";
+      while (stage.firstChild) scaleWrap.appendChild(stage.firstChild);
+      stage.remove();
+      if (oldPreviewer) { try { oldPreviewer.polisher.destroy(); } catch {} }
+      oldStyles.forEach(s => { if (s.isConnected) s.remove(); });
+      pageTotal = flow.total;
       $("#pgInfo").textContent = flow.total + (flow.total === 1 ? " page" : " pages");
       applyZoom();
+      LiveEdit.arm();
+      LiveEdit.restoreView(view);
+      updatePageIndicator();
       refreshOutline();
     } catch (e) {
       console.error("[DocForge] render failed", e);
@@ -6910,6 +7546,18 @@ Land the piece: return to the opening image or question and say what it means no
     rendering = false;
     $("#busy").classList.remove("on");
     if (renderPending) { renderPending = false; doRender(); }
+  }
+
+  /* the folio readout follows the reader: "p. 4 · 12 pages" */
+  function updatePageIndicator() {
+    if (!pageTotal) return;
+    const top = $("#previewScroll").getBoundingClientRect().top + 8;
+    const pages = scaleWrap.querySelectorAll(".pagedjs_page");
+    let cur = 1;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i].getBoundingClientRect().bottom > top) { cur = i + 1; break; }
+    }
+    $("#pgInfo").textContent = `p. ${cur} · ${pageTotal} page${pageTotal === 1 ? "" : "s"}`;
   }
 
   async function ensureFresh() {
@@ -6934,8 +7582,37 @@ Land the piece: return to the opening image or question and say what it means no
     if (el) el.textContent = state.settings.title || "Untitled document";
   }
 
+  /* ---------------- document history ----------------
+     One undo history for the whole document, whichever side edited it.
+     Entries are source snapshots; edits within ~a second amend the open
+     entry so a typing burst is one undo step. Only real source changes
+     record — settings tweaks and the synchronization between the two
+     panes never mint history. */
+  const hist = { stack: [], idx: -1, t: 0 };
+  function recordSource() {
+    if (hist.idx >= 0 && hist.stack[hist.idx] === state.source) return;
+    const now = Date.now();
+    if (hist.idx >= 0 && now - hist.t < 900) {
+      hist.stack[hist.idx] = state.source;          // amend the open entry
+    } else {
+      hist.stack.length = ++hist.idx;               // truncate any redo tail
+      hist.stack.push(state.source);
+      if (hist.stack.length > 150) { hist.stack.shift(); hist.idx--; }
+    }
+    hist.t = now;
+  }
+  function applyHistory(src) {
+    state.source = src;
+    editor.value = src;
+    markDirty();                                    // sees an equal snapshot — records nothing
+    doRender();
+  }
+  function docUndo() { if (hist.idx > 0) { hist.t = 0; applyHistory(hist.stack[--hist.idx]); } }
+  function docRedo() { if (hist.idx < hist.stack.length - 1) { hist.t = 0; applyHistory(hist.stack[++hist.idx]); } }
+
   function markDirty() {
     updateDocTitle();
+    recordSource();
     clearTimeout(autosaveTimer);
     $("#saveState").textContent = "…";
     $("#saveState").className = "";
@@ -7373,6 +8050,7 @@ Land the piece: return to the opening image or question and say what it means no
   const safeName = () => (state.settings.title || "document").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "document";
 
   function saveProject() {
+    LiveEdit.flush();
     const data = { app: "docforge", v: 1, savedAt: new Date().toISOString(), settings: state.settings, source: state.source, attachments: state.attachments };
     downloadBlob(new Blob([JSON.stringify(data)], { type: "application/json" }), safeName() + ".docforge.json");
     toast("Project file saved");
@@ -7659,6 +8337,9 @@ Land the piece: return to the opening image or question and say what it means no
       { g: "View", l: "Replace in document", h: "Ctrl H", run: () => { findBar(true); $("#replInput").focus(); } },
       { g: "View", l: "Toggle outline", h: "", run: () => $("#btnOutline").click() },
       { g: "View", l: "Toggle document settings", h: "", run: () => $("#btnSettings").click() },
+      { g: "View", l: document.body.classList.contains("focus-mode") ? "Leave focus mode" : "Focus mode — just the manuscript", h: "Ctrl ⇧ Enter", run: toggleFocus },
+      { g: "View", l: "Undo", h: "Ctrl Z", run: docUndo },
+      { g: "View", l: "Redo", h: "Ctrl ⇧ Z", run: docRedo },
       { g: "View", l: document.documentElement.hasAttribute("data-light") ? "Switch to the night desk (dark)" : "Switch to the day desk (light)", h: "", run: () => $("#btnDark").click() },
       { g: "View", l: "Keyboard shortcuts", h: "Ctrl /", run: () => openOv($("#keysOverlay")) },
       { g: "View", l: "Help — writing & exporting", h: "", run: () => openOv($("#helpOverlay")) },
@@ -7966,6 +8647,43 @@ Land the piece: return to the opening image or question and say what it means no
     });
   }
 
+  /* ---------------- focus mode — just the manuscript ---------------- */
+  function toggleFocus() {
+    document.body.classList.toggle("focus-mode");
+    applyZoom();
+    updatePageIndicator();
+  }
+
+  /* ---------------- pane divider ---------------- */
+  function bindDivider() {
+    const div = $("#paneDivider"), ep = $("#editorPane"), main = $("#main");
+    const saved = parseFloat(safeLS.get("docforge.split"));
+    if (saved >= 22 && saved <= 65) ep.style.flex = `0 0 ${saved}%`;
+    let raf = 0, pct = null;
+    div.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      div.setPointerCapture(e.pointerId);
+      div.classList.add("dragging");
+      const move = ev => {
+        const r = main.getBoundingClientRect();
+        pct = Math.max(22, Math.min(65, ((ev.clientX - r.left) / r.width) * 100));
+        if (!raf) raf = requestAnimationFrame(() => {
+          raf = 0;
+          ep.style.flex = `0 0 ${pct}%`;
+          if (zoomMode === "fit") applyZoom();
+        });
+      };
+      const up = () => {
+        div.classList.remove("dragging");
+        div.removeEventListener("pointermove", move);
+        if (pct != null) safeLS.set("docforge.split", pct.toFixed(1));
+        applyZoom(); updatePageIndicator();
+      };
+      div.addEventListener("pointermove", move);
+      div.addEventListener("pointerup", up, { once: true });
+    });
+  }
+
   /* ---------------- chrome theme ----------------
      The chrome ships dark; this offers a light variant. App surfaces only — the
      document pages stay paper-white in either. */
@@ -8115,6 +8833,15 @@ Land the piece: return to the opening image or question and say what it means no
     });
     document.addEventListener("keydown", e => {
       const mod = e.ctrlKey || e.metaKey;
+      /* one document history for both panes — but chrome fields keep their own */
+      const inDocument = e.target === editor || (e.target.closest && e.target.closest("#scaleWrap"));
+      if (mod && !e.altKey && e.key.toLowerCase() === "z" && inDocument) {
+        e.preventDefault();
+        e.shiftKey ? docRedo() : docUndo();
+        return;
+      }
+      if (mod && !e.altKey && e.key.toLowerCase() === "y" && inDocument) { e.preventDefault(); docRedo(); return; }
+      if (mod && e.shiftKey && e.key === "Enter") { e.preventDefault(); toggleFocus(); return; }
       if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); saveProject(); }
       if (mod && e.key.toLowerCase() === "p") { e.preventDefault(); exportPdf(); }
       if (mod && e.key.toLowerCase() === "k") {
@@ -8202,6 +8929,27 @@ Land the piece: return to the opening image or question and say what it means no
     ).join("");
     buildFontSelects();
     bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk();
+    bindDivider();
+    LiveEdit.attach({
+      scaleWrap,
+      scroller: $("#previewScroll"),
+      getSource: () => state.source,
+      setSource(src) { state.source = src; editor.value = src; markDirty(); scheduleLiveRender(); },
+      scheduleRender: scheduleLiveRender,
+      revert() { toast("That part of the manuscript is generated — edit it from the source panel", "warn"); doRender(); },
+      editPending: scheduleLiveRender,
+      undo: docUndo,
+      redo: docRedo,
+      toast,
+    });
+    // the source pane must never act on a source the manuscript hasn't written yet
+    editor.addEventListener("focus", () => LiveEdit.flush());
+    {
+      let raf = 0;
+      $("#previewScroll").addEventListener("scroll", () => {
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; updatePageIndicator(); });
+      }, { passive: true });
+    }
 
     const saved = safeLS.get(LS_KEY);
     let restored = false;
@@ -8220,6 +8968,7 @@ Land the piece: return to the opening image or question and say what it means no
       state.source = TEMPLATES.welcome.source;
     }
     editor.value = state.source;
+    hist.stack = [state.source]; hist.idx = 0;   // history baseline
     // Icon-only controls speak their tooltip to assistive tech too.
     $$("button[title]:not([aria-label])").forEach(b => {
       if (!b.textContent.trim()) b.setAttribute("aria-label", b.title);

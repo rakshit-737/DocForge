@@ -603,6 +603,46 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 }
 .pagedjs_pages { display: block; }
 
+/* ---------------- direct manuscript editing ----------------
+   The page is a real editing surface: an ink caret and a quiet warm-gray
+   selection are the whole affordance — no outlines, no boxes. Generated
+   islands (TOC, references, figures, equations) keep the arrow cursor. */
+.pagedjs_page_content { caret-color: #1a1a17; cursor: text; }
+.pagedjs_page_content:focus, .pagedjs_page_content:focus-visible { outline: none; }
+.pagedjs_page ::selection { background: rgba(26, 26, 23, 0.16); }
+.pagedjs_page [contenteditable="false"] { cursor: default; }
+
+/* pane tags — the two columns name themselves, in the desk's teletype voice */
+.pane-tag {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tx3);
+  white-space: nowrap;
+  user-select: none;
+}
+@media (max-width: 1080px) { #previewBar .pane-tag { display: none; } }
+
+/* pane divider — a seam the hand can find, invisible until it matters */
+#paneDivider {
+  flex: none;
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+  position: relative;
+  z-index: 6;
+}
+#paneDivider::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; left: 2px; width: 1px;
+  background: transparent;
+  transition: background 0.16s ease-out;
+}
+#paneDivider:hover::after, #paneDivider.dragging::after { background: var(--rule); }
+@media (max-width: 900px) { #paneDivider { display: none; } }
+
+/* focus mode — the desk clears, the manuscript stays */
+body.focus-mode #editorPane, body.focus-mode #settings, body.focus-mode #paneDivider { display: none; }
+
 /* clickable screenshot placeholders in preview */
 .doc .shot { cursor: pointer; position: relative; }
 .doc .shot:hover .shot-box { border-color: var(--a600); box-shadow: 0 0 0 3pt var(--a100); }
