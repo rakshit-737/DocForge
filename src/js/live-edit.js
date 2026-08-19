@@ -425,7 +425,13 @@ const LiveEdit = (() => {
     }
     if (!best) return;
     const d = best.getBoundingClientRect().top - hooks.scroller.getBoundingClientRect().top;
-    hooks.scroller.scrollTop += d - a.delta;
+    const shift = d - a.delta;
+    let z = 1;
+    if (hooks.scaleWrap.style.transform && hooks.scaleWrap.style.transform.includes("scale(")) {
+      const m = hooks.scaleWrap.style.transform.match(/scale\(([^)]+)\)/);
+      if (m) z = parseFloat(m[1]) || 1;
+    }
+    hooks.scroller.scrollTop += shift / z;
   }
 
   function captureView() {

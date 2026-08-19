@@ -990,6 +990,9 @@ Land the piece: return to the opening image or question and say what it means no
     ul: () => linePrefix("- "), ol: () => linePrefix("", true), quote: () => linePrefix("> "),
     link: () => surround("[", "](https://)", "link text"),
     table: () => insertBlock("| Column | Column | Column |\n| --- | --- | --- |\n| Cell | Cell | Cell |\n| Cell | Cell | Cell |"),
+    equation: () => insertBlock("$$\nE = mc^2\n$$"),
+    footnote: insertFootnote,
+    citation: insertCitation,
     callout: () => insertBlock(":::note Optional title\nYour note text here.\n:::"),
     shot: () => insertBlock("[screenshot: Describe what the screenshot shows]"),
     image: () => { imgMode = { type: "insert" }; $("#imgInput").click(); },
@@ -1101,6 +1104,74 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   /* ---------------- highlight & text-colour menus ---------------- */
+  function bindFloatingToolbar() {
+    const ftb = $("#floatTb");
+    if (!ftb) return;
+
+    function updateFtb() {
+      const sel = document.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) {
+        ftb.hidden = true;
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      if (!scaleWrap.contains(range.commonAncestorContainer)) {
+        ftb.hidden = true;
+        return;
+      }
+      const text = sel.toString().trim();
+      if (!text) {
+        ftb.hidden = true;
+        return;
+      }
+
+      const rect = range.getBoundingClientRect();
+      if (!rect || (!rect.width && !rect.height)) {
+        ftb.hidden = true;
+        return;
+      }
+
+      ftb.hidden = false;
+      const ftbW = ftb.offsetWidth || 210;
+      const ftbH = ftb.offsetHeight || 32;
+
+      let top = rect.top - ftbH - 8;
+      if (top < 10) top = rect.bottom + 8;
+
+      let left = rect.left + (rect.width / 2) - (ftbW / 2);
+      left = Math.max(10, Math.min(innerWidth - ftbW - 10, left));
+
+      ftb.style.top = top + "px";
+      ftb.style.left = left + "px";
+    }
+
+    let ftbDebounce = 0;
+    document.addEventListener("selectionchange", () => {
+      clearTimeout(ftbDebounce);
+      ftbDebounce = setTimeout(updateFtb, 120);
+    });
+
+    $("#previewScroll")?.addEventListener("scroll", () => { ftb.hidden = true; }, { passive: true });
+
+    ftb.addEventListener("click", e => {
+      const btn = e.target.closest("[data-fact]");
+      if (!btn) return;
+      const act = btn.dataset.fact;
+      if (act === "bold") document.execCommand("bold");
+      else if (act === "italic") document.execCommand("italic");
+      else if (act === "underline") document.execCommand("underline");
+      else if (act === "strike") document.execCommand("strikeThrough");
+      else if (act === "hl") document.execCommand("hiliteColor", false, "#f5d90a");
+      else if (act === "clearfmt") document.execCommand("removeFormat");
+      else if (act === "link") {
+        const url = prompt("Link URL:", "https://");
+        if (url) document.execCommand("createLink", false, url);
+      }
+      scaleWrap.dispatchEvent(new Event("input", { bubbles: true }));
+      setTimeout(updateFtb, 50);
+    });
+  }
+
   function bindColorMenus() {
     const hlMenu = $("#hlMenu"), fcMenu = $("#fcMenu");
     const openAt = (menu, btn) => {
@@ -1521,17 +1592,43 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   /* ---------------- outline navigator ---------------- */
-  let outlineOpen = false;
+  let outlineOpen = false, activeOlTab = "head";
   function refreshOutline() {
     if (!outlineOpen) return;
-    const panel = $("#outlinePanel");
-    const heads = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(h1,h2,h3)[id]")];
-    if (!heads.length) { panel.innerHTML = `<div class="ol-empty">No headings yet</div>`; return; }
-    panel.innerHTML = heads.map((h, i) =>
-      `<button class="ol-item l${h.tagName[1]}" data-i="${i}">${Engine.esc(h.textContent)}</button>`).join("");
-    panel.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
-      heads[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    const list = $("#olList");
+    if (!list) return;
+
+    if (activeOlTab === "head") {
+      const heads = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(h1,h2,h3)")];
+      if (!heads.length) { list.innerHTML = `<div class="ol-empty">No headings yet</div>`; return; }
+      list.innerHTML = heads.map((h, i) =>
+        `<button class="ol-item l${h.tagName[1]}" data-i="${i}">${Engine.esc(h.textContent.trim())}</button>`).join("");
+      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
+        heads[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    } else if (activeOlTab === "figtbl") {
+      const items = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(figure.shot, table[data-caption], [data-tbl])")];
+      if (!items.length) { list.innerHTML = `<div class="ol-empty">No figures or tables</div>`; return; }
+      list.innerHTML = items.map((el, i) => {
+        const isFig = el.tagName === "FIGURE";
+        const cap = el.dataset.caption || el.querySelector("figcaption")?.textContent || (isFig ? "Figure" : "Table");
+        return `<button class="ol-item l1" data-i="${i}"><b>${isFig ? "Fig" : "Tbl"}:</b> ${Engine.esc(cap.trim())}</button>`;
+      }).join("");
+      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
+        items[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    } else if (activeOlTab === "notes") {
+      const notes = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content .footnote, .pagedjs_page_content [data-note='footnote']")];
+      if (!notes.length) { list.innerHTML = `<div class="ol-empty">No footnotes</div>`; return; }
+      list.innerHTML = notes.map((n, i) => {
+        const fn = n.dataset.fn || String(i + 1);
+        const txt = n.textContent.trim().slice(0, 40);
+        return `<button class="ol-item l1" data-i="${i}"><b>[^{${fn}}]:</b> ${Engine.esc(txt)}…</button>`;
+      }).join("");
+      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
+        notes[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   /* ---------------- find & replace ---------------- */
@@ -1754,6 +1851,9 @@ Land the piece: return to the opening image or question and say what it means no
   /* ---------------- focus mode — just the manuscript ---------------- */
   function toggleFocus() {
     document.body.classList.toggle("focus-mode");
+    const isFocus = document.body.classList.contains("focus-mode");
+    const btn = $("#btnFocusExit");
+    if (btn) btn.hidden = !isFocus;
     applyZoom();
     updatePageIndicator();
   }
@@ -1880,6 +1980,7 @@ Land the piece: return to the opening image or question and say what it means no
       upd();
       requestAnimationFrame(upd); /* fonts/layout can shift widths after boot */
     });
+    $("#btnFocusExit").onclick = toggleFocus;
     $("#zoomIn").onclick = () => { zoomMode = "man"; zoomVal = Math.min(2, (zoomVal || 1) + 0.1); applyZoom(); };
     $("#zoomOut").onclick = () => { zoomMode = "man"; zoomVal = Math.max(0.25, (zoomVal || 1) - 0.1); applyZoom(); };
     $("#zoomFit").onclick = () => { zoomMode = "fit"; applyZoom(); };
@@ -1887,6 +1988,14 @@ Land the piece: return to the opening image or question and say what it means no
     editor.addEventListener("input", () => { state.source = editor.value; markDirty(); scheduleRender(); });
 
     /* outline */
+    $$("#outlinePanel .ol-tab").forEach(tab => {
+      tab.onclick = () => {
+        $$("#outlinePanel .ol-tab").forEach(t => t.classList.remove("on"));
+        tab.classList.add("on");
+        activeOlTab = tab.dataset.tab;
+        refreshOutline();
+      };
+    });
     $("#btnOutline").onclick = () => {
       outlineOpen = !outlineOpen;
       $("#outlinePanel").hidden = !outlineOpen;
@@ -1963,8 +2072,14 @@ Land the piece: return to the opening image or question and say what it means no
         ov.classList.contains("open") ? closeOv(ov) : openOv(ov);
       }
       if (e.key === "Escape") {
-        $$(".overlay.open").forEach(o => o.__cancel ? o.__cancel() : closeOv(o));
-        if (tplMenu.style.display === "block") { closeTpl(); tplBtn.focus(); }
+        const openOv = document.querySelector(".overlay.open");
+        if (openOv) {
+          $$(".overlay.open").forEach(o => o.__cancel ? o.__cancel() : closeOv(o));
+        } else if (document.body.classList.contains("focus-mode")) {
+          toggleFocus();
+        } else if (tplMenu.style.display === "block") {
+          closeTpl(); tplBtn.focus();
+        }
       }
     });
     window.addEventListener("resize", () => { if (zoomMode === "fit") applyZoom(); });
@@ -2032,7 +2147,7 @@ Land the piece: return to the opening image or question and say what it means no
       `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
     ).join("");
     buildFontSelects();
-    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk();
+    bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk(); bindFloatingToolbar();
     bindDivider();
     LiveEdit.attach({
       scaleWrap,
