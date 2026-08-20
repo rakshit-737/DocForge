@@ -51,6 +51,9 @@ finish review, the verdict, and DESIGN.md
     <button class="btn icon" id="btnSaveProj" title="Save project file (Ctrl+S)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
     </button>
+    <button class="btn icon" id="btnSaveMd" title="Download as Markdown (.md) — imports convert on open, this hands the result back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5"/><path d="M4 20h16"/></svg>
+    </button>
   </div>
   <button class="btn icon" id="btnHelp" title="Help & syntax">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.8"/><circle cx="12" cy="17.2" r="0.4" fill="currentColor"/></svg>
@@ -474,6 +477,7 @@ finish review, the verdict, and DESIGN.md
       <h4>Exporting</h4>
       <p><b>PDF</b> — click <b>PDF</b>, then choose <i>Save as PDF</i> as the destination in the print dialog. Best in Chrome or Edge. If the dialog shows “Headers and footers”, untick it (DocForge prints its own).</p>
       <p><b>Word</b> — click <b>Word</b> for a real <code>.docx</code>. If Word asks to <i>update fields</i> when opening, click <b>Yes</b> — that fills in the table of contents page numbers.</p>
+      <p><b>Markdown</b> — the download arrow in the file tray (or <i>Export Markdown</i> in the palette) hands the document back as a plain <code>.md</code> file. Combined with Open, that's a converter: drop in a Word file, PDF, spreadsheet, deck, book or notebook, and download it as Markdown with its structure kept.</p>
       <h4>Your work</h4>
       <p>Everything autosaves in this browser. <b>Save</b> downloads a <code>.docforge.json</code> project file — including attached images — that you can reopen on any computer with <b>Open</b>. This app is a single offline file: no account, no server, yours forever.</p>
     </div>

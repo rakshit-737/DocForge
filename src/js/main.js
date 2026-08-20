@@ -1224,6 +1224,15 @@ Land the piece: return to the opening image or question and say what it means no
   }
   const safeName = () => (state.settings.title || "document").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "document";
 
+  /* The MarkItDown hand-back: whatever came in (.docx, .pdf, .xlsx, .pptx,
+     .epub, .ipynb, …) already lives here as Markdown — this returns it as a
+     plain .md file. */
+  function exportMd() {
+    LiveEdit.flush();
+    downloadBlob(new Blob([state.source], { type: "text/markdown" }), safeName() + ".md");
+    toast("Markdown file downloaded — the document, as plain .md");
+  }
+
   function saveProject() {
     LiveEdit.flush();
     const data = { app: "docforge", v: 1, savedAt: new Date().toISOString(), settings: state.settings, source: state.source, attachments: state.attachments };
@@ -1498,6 +1507,7 @@ Land the piece: return to the opening image or question and say what it means no
       { g: "File", l: "Rename document", h: "", run: () => $("#docTitle").click() },
       { g: "Export", l: "Export PDF", h: "Ctrl P", run: () => $("#btnPdf").click() },
       { g: "Export", l: "Export Word (.docx)", h: "", run: () => $("#btnDocx").click() },
+      { g: "Export", l: "Export Markdown (.md)", h: "", run: exportMd },
       { g: "Insert", l: "Insert table", h: "", run: TOOL_ACTS.table },
       { g: "Insert", l: "Insert equation", h: "", run: () => insertBlock("$$\nE = mc^2\n$$") },
       { g: "Insert", l: "Insert figure (screenshot placeholder)", h: "", run: TOOL_ACTS.shot },
@@ -1916,6 +1926,7 @@ Land the piece: return to the opening image or question and say what it means no
     $("#btnHelp").onclick = () => openOv($("#helpOverlay"));
     $$("[data-close]").forEach(b => b.onclick = () => closeOv(b.closest(".overlay")));
     $("#btnSaveProj").onclick = saveProject;
+    $("#btnSaveMd").onclick = exportMd;
     $("#btnOpen").onclick = () => $("#projInput").click();
     $("#btnNew").onclick = async () => { if (await confirmModal("Start a new document?", "The editor will be replaced with a blank document. Your current work stays in autosave until you type again — use Save first if you want a backup file.")) applyTemplate("blank"); };
     $("#btnPdf").onclick = exportPdf;

@@ -49,6 +49,15 @@ md = await importFixture("sample.ipynb");
 ok(md.includes("# Analysis"), "ipynb: markdown cell");
 ok(md.includes("```python") && md.includes("print(math.pi)"), "ipynb: fenced code cell");
 
+// the converter hand-back: import a workbook, download it as .md
+await importFixture("sample.xlsx");
+const dl = page.waitForEvent("download", { timeout: 30000 });
+await page.click("#btnSaveMd");
+const mdPath = await (await dl).path();
+const mdText = (await import("node:fs")).readFileSync(mdPath, "utf8");
+ok(mdText.includes("## Results") && mdText.includes("| Test | Expected | Observed |"),
+  "Export Markdown returns the converted document as a structured .md file");
+
 // each import must render pages, not just fill the editor
 const pages = await page.locator(".pagedjs_page").count();
 ok(pages > 0, `renders after import (${pages} pages)`);
