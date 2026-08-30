@@ -1179,9 +1179,29 @@ Land the piece: return to the opening image or question and say what it means no
     state.source = editor.value; markDirty(); scheduleRender();
   }
 
-  const applyHl = name => wrapInline(name === "yellow" ? "==" : `=={${name}}`, "==", "highlighted text");
-  const applyColor = hexc => wrapInline("[", `]{color=${hexc}}`, "coloured text");
-  const applyFont = name => wrapInline("[", `]{font="${name}"}`, "text");
+  /* The four run-level controls that have no execCommand behind them. Each styles the
+     manuscript selection where there is one, and otherwise wraps the source — so the
+     same button works from either pane, which is what every other toolbar mark does.
+     The span is built exactly as engine.js builds it (same data-* keys, same inline
+     style), so the galley shows the change at once and it round-trips unchanged. */
+  const styleRun = (data, style) => LiveEdit.styleSelection({ tag: "span", className: "dfspan", data, style });
+
+  const applyHl = name => {
+    if (LiveEdit.styleSelection({ tag: "mark", data: { hl: name }, style: `background:#${Engine.HL_COLORS[name] || "FFFF00"}` })) return;
+    wrapInline(name === "yellow" ? "==" : `=={${name}}`, "==", "highlighted text");
+  };
+  const applyColor = hexc => {
+    if (styleRun({ color: hexc.replace("#", "").toUpperCase() }, `color:${hexc}`)) return;
+    wrapInline("[", `]{color=${hexc}}`, "coloured text");
+  };
+  const applyFont = name => {
+    if (styleRun({ font: name }, `font-family:${Engine.sysStack(name)}`)) return;
+    wrapInline("[", `]{font="${name}"}`, "text");
+  };
+  const applySize = pt => {
+    if (styleRun({ size: pt }, `font-size:${pt}pt`)) return;
+    wrapInline("[", `]{size=${pt}}`, "text");
+  };
 
   const TOOL_ACTS = {
     bold: () => surround("**", "**", "bold text"),
@@ -1417,7 +1437,7 @@ Land the piece: return to the opening image or question and say what it means no
     });
     /* Selection typeface / size — the select snaps back to its placeholder after use. */
     $("#tbFont").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) applyFont(v); });
-    $("#tbSize").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) wrapInline("[", `]{size=${v}}`, "text"); });
+    $("#tbSize").addEventListener("change", e => { const v = e.target.value; e.target.value = ""; if (v) applySize(v); });
   }
 
   /* ---------------- project save / open ---------------- */

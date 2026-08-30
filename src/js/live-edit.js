@@ -484,6 +484,58 @@ const LiveEdit = (() => {
     hooks.editPending();   // keeps the deferred re-render pushed out while typing
   }
 
+  /* Apply a run-level style to the manuscript selection.
+
+     Bold, italic and the rest reach the galley through execCommand, which fires real
+     beforeinput/input events and so goes through the machinery above. Typeface, size,
+     colour and highlight have no execCommand that emits markup this serializer knows,
+     so they used to act on the source textarea instead — and with the selection in the
+     galley, the textarea had none: the mark landed at the caret as a stray
+     `[text]{font="…"}`, and the selected words never changed.
+
+     Instead, build the element the parser itself would have built — `span.dfspan`
+     carrying the data-* attributes plus the matching inline style, or `<mark data-hl>`
+     — so elMd serializes it back through the branch that already exists and nothing
+     new has to be understood at either end. The touched block is unioned into `pending`
+     BEFORE the DOM moves, because that is where its source span can still be read.
+
+     Returns false when the selection is not an editable run of the manuscript, which is
+     the caller's cue to fall back to wrapping the source. */
+  function styleSelection({ tag = "span", className = "", data = {}, style = "" }) {
+    if (!hooks) return false;
+    const sel = document.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    const root = range.commonAncestorContainer;
+    if (!hooks.scaleWrap.contains(root)) return false;
+    const host = root.nodeType === 1 ? root : root.parentElement;
+    if (!host || !host.closest('[contenteditable="true"]')) return false;
+
+    const touched = rangeOfSelection();
+    if (!touched) return false;
+    pending = union(pending, touched);
+
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    for (const [k, v] of Object.entries(data)) if (v != null && v !== false) node.dataset[k] = v === true ? "1" : v;
+    if (style) node.setAttribute("style", style);
+    // surroundContents throws when the range straddles an element boundary
+    // (half a bold run, say); extract-and-insert handles that shape.
+    try { range.surroundContents(node); }
+    catch { node.appendChild(range.extractContents()); range.insertNode(node); }
+    if (!node.textContent) { node.remove(); return false; }
+
+    const after = document.createRange();
+    after.selectNodeContents(node);
+    sel.removeAllRanges();
+    sel.addRange(after);
+
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flush, 250);
+    hooks.editPending();
+    return true;
+  }
+
   function arm() {
     if (!hooks) return;
     hooks.scaleWrap.querySelectorAll(".pagedjs_area > .pagedjs_page_content").forEach(pc => {
@@ -498,5 +550,5 @@ const LiveEdit = (() => {
     hooks.scaleWrap.addEventListener("input", onInput);
   }
 
-  return { attach, arm, captureView, restoreView, flush };
+  return { attach, arm, captureView, restoreView, flush, styleSelection };
 })();
