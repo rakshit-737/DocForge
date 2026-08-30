@@ -18,11 +18,38 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags — /classic is built from v1-classic
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # current main
+      - run: npm ci
+      - run: node build.mjs
+
+      # the frozen classic edition, built from the v1-classic tag in its own worktree
+      - name: Build /classic from v1-classic
+        run: |
+          git worktree add classic-src v1-classic
+          cd classic-src
+          npm ci
+          node build.mjs
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site/dist _site/classic
+          cp index.html _site/
+          cp dist/DocForge.html _site/dist/
+          cp classic-src/dist/DocForge.html _site/classic/index.html
+          cp classic-src/dist/DocForge.html _site/classic/DocForge.html
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
