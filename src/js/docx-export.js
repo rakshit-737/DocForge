@@ -330,6 +330,21 @@ const DocxExport = (() => {
       blocks.push(new Paragraph({ spacing: { after: 40 }, children: [] }));
     }
 
+    /* `:::banner` — the title plate, mirroring doc.css: a one-cell table shaded deep
+       slate, first line large and white, the rest small in the light accent tint.
+       Spans inside still override colour and size, exactly as they do on the page. */
+    function banner(el) {
+      const kids = [...el.children].filter(c => c.textContent.trim());
+      const inner = kids.map((c, i) => new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: i === kids.length - 1 ? 0 : 70 },
+        children: runs(c, i === 0
+          ? { bold: true, size: HP(17), color: "FFFFFF", font: f.head }
+          : { size: HP(10.5), color: hex(t.a200) }),
+      }));
+      boxTable(inner.length ? inner : [new Paragraph({ children: [] })], { fill: "1F2733", border: "1F2733" });
+    }
+
     function callout(el) {
       const type = ["note", "tip", "warning", "important"].find(c => el.classList.contains(c)) || "note";
       const colors = { note: "2458C5", tip: "0E7A52", warning: "B26205", important: "BB2432" };
@@ -522,6 +537,7 @@ const DocxExport = (() => {
         if (el.classList.contains("list-wrap")) return captionList(el);
         if (el.classList.contains("toc-wrap")) return toc();
         if (el.classList.contains("callout")) return callout(el);
+        if (el.classList.contains("banner")) return banner(el);
         // :::center / :::right / :::left / :::justify — alignment rides the context down.
         const alClass = [...el.classList].find(c => c.startsWith("align-"));
         if (alClass) {

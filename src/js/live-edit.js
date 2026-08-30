@@ -144,6 +144,7 @@ const LiveEdit = (() => {
       const title = (el.querySelector(":scope > .co-title")?.textContent || "").trim();
       return `:::${type}${title ? " " + title : ""}\n${childrenMd(el.querySelector(":scope > .co-body"))}\n:::`;
     }
+    if (cl.contains("banner")) return `:::banner\n${childrenMd(el)}\n:::`;
     const alignCls = [...cl].find(c => /^align-(center|right|left|justify)$/.test(c));
     if (alignCls) return `:::${alignCls.slice(6)}\n${childrenMd(el)}\n:::`;
     if (el.tagName === "FIGURE") {

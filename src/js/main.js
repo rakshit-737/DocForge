@@ -1815,7 +1815,7 @@ Land the piece: return to the opening image or question and say what it means no
       const fm = line.match(/^(```+|~~~+)/);
       if (fence) { if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; return; }
       if (fm) { fence = fm[1]; return; }
-      if (/^:::(note|tip|warning|important|center|right|left|justify)\b/i.test(line)) { coDepth++; coLine = n; }
+      if (/^:::(note|tip|warning|important|center|right|left|justify|banner)\b/i.test(line)) { coDepth++; coLine = n; }
       else if (/^:::\s*$/.test(line)) coDepth = Math.max(0, coDepth - 1);
       if (/^#{5,}\s/.test(line)) warns.push([n, "Heading level 5+ — styled plainly and never listed in the contents. Consider #### or bold text."]);
       if (/^\s*<(?!\/?(b|i|em|strong|code|br)\b)[a-z][^>]*>/i.test(line)) warns.push([n, "Raw HTML — it will be ignored or printed as text. Use the toolbar marks instead."]);

@@ -58,6 +58,7 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 | `[toc]` / `[lof]` / `[lot]` | Contents / list of figures / list of tables |
 | `[pagebreak]` | New page |
 | `:::tip Title` … `:::` | Callout box |
+| `:::banner` … `:::` | Title plate — filled band, first line large |
 
 ## Fonts
 
