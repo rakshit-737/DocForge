@@ -179,10 +179,17 @@ Everything runs in this one file — no account, no internet, nothing to install
 :::
 `,
     },
+    /* The one template that names a system face rather than an embedded one. Coursework
+       is submitted in Times New Roman because the rubric says so, and no lookalike
+       passes for it — so the .docx names it and Word supplies its own copy, which is
+       exact on any machine with Office. The cost is that it cannot travel inside the
+       file the way the embedded faces do: on a device without it the preview and the
+       printed PDF fall back, and the linter says so by name. Settings → Body typeface
+       switches back to an embedded face for anyone who would rather have parity. */
     assignment: {
       label: "Assignment / lab report",
-      desc: "Ruled title page, particulars table, numbered tasks with captioned figures.",
-      patch: { theme: "academic", accent: "#c2410c", numbered: true, justify: true, h1break: false, cover: false, header: true, pageNums: true, borderStyle: "thickthin", borderWeight: "bold", borderColor: "ink", title: "Cloud Architecture Design", subtitle: "Digital Assignment 1 · Hands-on lab experiment", kicker: "CSE3001", metaExtra: "Reg. No. 00XYZ0000", author: "Your Name" },
+      desc: "Times New Roman, ruled title page, numbered tasks with captioned figures.",
+      patch: { theme: "academic", accent: "#c2410c", numbered: true, justify: true, h1break: false, cover: false, header: true, pageNums: true, borderStyle: "thickthin", borderWeight: "bold", borderColor: "ink", fontHead: "sys:Times New Roman", fontBody: "sys:Times New Roman", title: "Cloud Architecture Design", subtitle: "Digital Assignment 1 · Hands-on lab experiment", kicker: "CSE3001", metaExtra: "Reg. No. 00XYZ0000", author: "Your Name" },
       source: titlePage({
         org: "Your Institute of Technology, City",
         unit: "School of Computer Science and Engineering",
