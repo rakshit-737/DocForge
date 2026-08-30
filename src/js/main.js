@@ -23,7 +23,7 @@
   const DEFAULTS = {
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
-    cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
+    cover: false, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
     hardWrap: false, citeStyle: "ieee",
     borderStyle: "none", borderWeight: "medium", borderColor: "ink",
     fontHead: "theme", fontBody: "theme",
@@ -2207,6 +2207,12 @@ Land the piece: return to the opening image or question and say what it means no
     syncSettingsUI(); updateCounts(); refreshLint();
     if (window.self !== window.top) $("#embedHint").classList.add("on");
     doRender();
+    /* First visit: open the manual once, after the desk has settled.
+       Never again after that, and never inside an embedded preview. */
+    if (window.self === window.top && !safeLS.get("docforge.helped")) {
+      safeLS.set("docforge.helped", "1");
+      setTimeout(() => openOv($("#helpOverlay")), 700);
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

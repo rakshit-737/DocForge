@@ -15,7 +15,8 @@ export async function open(browser, { viewport = { width: 1560, height: 980 } } 
   page.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 300)); });
   page.__errors = errors;
   await page.goto(DIST);
-  await page.evaluate(() => localStorage.clear());
+  // fresh state, minus the one-time first-run manual (tested by firstrun-smoke)
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem("docforge.helped", "1"); });
   await page.reload();
   await page.waitForSelector(".pagedjs_page", { timeout: 40000 });
   return page;

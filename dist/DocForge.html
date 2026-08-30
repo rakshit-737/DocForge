@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f4f2ec">
+<!-- the nameplate initial over the masthead's double ink rule, on newsprint — inline, like everything else -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f4f2ec'/%3E%3Ctext x='31' y='44' font-family='Georgia,serif' font-size='44' font-weight='700' text-anchor='middle' fill='%231a1a17'%3ED%3C/text%3E%3Crect x='13' y='51' width='38' height='4' fill='%2326261f'/%3E%3Crect x='13' y='58' width='38' height='2' fill='%2326261f'/%3E%3C/svg%3E">
 <title>DocForge — Document Studio</title>
 <meta name="description" content="Turn plain text into beautifully formatted PDFs and Word documents — cover pages, table of contents, screenshot placeholders. Single file, works offline.">
 <style>
@@ -7031,7 +7033,7 @@ const LiveEdit = (() => {
   const DEFAULTS = {
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
     theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
-    cover: true, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
+    cover: false, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
     hardWrap: false, citeStyle: "ieee",
     borderStyle: "none", borderWeight: "medium", borderColor: "ink",
     fontHead: "theme", fontBody: "theme",
@@ -9215,6 +9217,12 @@ Land the piece: return to the opening image or question and say what it means no
     syncSettingsUI(); updateCounts(); refreshLint();
     if (window.self !== window.top) $("#embedHint").classList.add("on");
     doRender();
+    /* First visit: open the manual once, after the desk has settled.
+       Never again after that, and never inside an embedded preview. */
+    if (window.self === window.top && !safeLS.get("docforge.helped")) {
+      safeLS.set("docforge.helped", "1");
+      setTimeout(() => openOv($("#helpOverlay")), 700);
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
