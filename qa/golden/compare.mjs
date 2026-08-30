@@ -50,8 +50,14 @@ function firstXmlDiff(aPath, bPath) {
   return "(hash differs but lines match — encoding/EOL difference)";
 }
 
-/** dirA = baseline, dirB = current. */
-export function compare(dirA, dirB, { reportDir = null } = {}) {
+/** dirA = baseline, dirB = current.
+    `exempt` names cases that exercise a construct the baseline edition does not have —
+    they are captured on both sides but not compared, because the baseline renders the
+    markup as literal text and the difference is the feature, not a regression. The
+    dev-facing `--compare before after` passes no exemptions, so those cases are still
+    fully covered between two builds of the current tree. */
+export function compare(dirA, dirB, { reportDir = null, exempt = [] } = {}) {
+  const skip = new Set(exempt);
   const mA = JSON.parse(readFileSync(join(dirA, "manifest.json"), "utf8"));
   const mB = JSON.parse(readFileSync(join(dirB, "manifest.json"), "utf8"));
   const failures = [];
@@ -62,6 +68,15 @@ export function compare(dirA, dirB, { reportDir = null } = {}) {
   const ids = new Set([...Object.keys(mA.cases), ...Object.keys(mB.cases)]);
   for (const id of ids) {
     const a = mA.cases[id], b = mB.cases[id];
+    if (skip.has(id)) {
+      // Exempt from comparison, never from rendering: the current side must still
+      // capture cleanly, or the new construct is broken and nothing would say so.
+      if (!b) fail(id, "exempt case missing from the current capture");
+      else if (b.failed) fail(id, `exempt case failed to capture: ${b.failed}`);
+      else if (b.errors.length) fail(id, `console errors in current: ${b.errors.slice(0, 3).join(" | ")}`);
+      else notes.push(`${id}: exempt — post-baseline construct, not compared`);
+      continue;
+    }
     if (!a || !b) { fail(id, `present only in ${a ? "baseline" : "current"}`); continue; }
     if (a.failed || b.failed) { fail(id, `capture failed — baseline: ${a.failed || "ok"}; current: ${b.failed || "ok"}`); continue; }
     if (b.errors.length) fail(id, `console errors in current: ${b.errors.slice(0, 3).join(" | ")}`);

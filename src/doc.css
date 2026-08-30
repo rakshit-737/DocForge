@@ -194,6 +194,34 @@
 .doc .callout.warning   { --co: #b26205; --co-bg: #fdf4e7; }
 .doc .callout.important { --co: #bb2432; --co-bg: #fcedee; }
 
+/* ---------- title plate ---------- */
+/* `:::banner` — the filled band a title page hangs its subject on. The fill is a
+   fixed deep slate, not an accent tint, so the plate reads the same under every
+   accent; the accent survives in the subordinate lines. Mirrored in the .docx as a
+   one-cell shaded table (docx-export.js, banner()). */
+.doc .banner {
+  background: #1f2733;
+  color: #ffffff;
+  padding: 9pt 14pt 10pt;
+  margin: 13.1pt 0;
+  text-align: center;
+  break-inside: avoid;
+}
+.doc .banner > p { margin: 0 0 3.5pt; text-align: center; }
+.doc .banner > p:last-child { margin-bottom: 0; }
+.doc .banner > p:first-child {
+  font-family: var(--font-head);
+  font-size: 17pt;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.008em;
+  text-wrap: balance;
+}
+.doc .banner > p:not(:first-child) { font-size: 10.5pt; line-height: 1.45; color: var(--a200); }
+.doc .banner a { color: var(--a200); }
+/* justified body text must not reach inside the plate */
+.doc.justify .content .banner p { text-align: center; }
+
 /* ---------- figures & screenshot placeholders ---------- */
 .doc figure {
   margin: 13.1pt 0 13.1pt;

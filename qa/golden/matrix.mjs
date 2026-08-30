@@ -52,6 +52,15 @@ export const CASES = [
   { id: "adversarial", doc: "corpus/17-adversarial.md", settings: s({ theme: "modern", page: "A4", margins: "normal", cover: false, pageNums: true }) },
   { id: "cover-frontmatter", doc: "corpus/18-cover-frontmatter.md", settings: s({ theme: "executive", accent: "#1f3a5f", page: "A4", margins: "normal", cover: true, header: true, pageNums: true, title: "The Cover Exercise", subtitle: "Front-matter fields, all of them", kicker: "Confidential draft", metaExtra: "Course 42 — Winter term", date: "2025-03-31" }) },
 
+  // ---- document-wide typeface pickers: an embedded pair and a Word-catalogue pair ----
+  // The Word faces need not exist on the capture machine: both sides render on the same
+  // one, so a fallback is a fallback in the baseline and the current alike.
+  { id: "fonts-embedded-pair", doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", fontHead: "mont", fontBody: "garamond", cover: true, header: true, pageNums: true, numbered: true }) },
+  { id: "fonts-word-catalog", doc: "corpus/01-inline-marks.md", settings: s({ theme: "academic", page: "A4", margins: "normal", fontHead: "sys:Georgia", fontBody: "sys:Times New Roman", cover: false, header: true, pageNums: true, justify: true }) },
+
+  // ---- the title plate; `:::banner` postdates v1-classic, so the merge gate exempts it ----
+  { id: "banner-plate", postBaseline: true, doc: "corpus/19-banner-plate.md", settings: s({ theme: "academic", accent: "#c2410c", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, numbered: true, justify: true, borderStyle: "thickthin", borderWeight: "bold", borderColor: "ink" }) },
+
   // ---- typography knobs: base size and line spacing off the defaults ----
   { id: "type-large-loose", doc: "corpus/01-inline-marks.md", settings: s({ theme: "executive", page: "A4", margins: "normal", baseSize: "12", lineSpacing: "1.5", cover: false, pageNums: true }) },
   { id: "type-small-single", doc: "corpus/10-code.md", settings: s({ theme: "minimal", page: "A4", margins: "narrow", baseSize: "10", lineSpacing: "1", cover: false, pageNums: true }) },

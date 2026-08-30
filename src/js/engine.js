@@ -379,9 +379,13 @@ const Engine = (() => {
   }
   const RE_CO_OPEN = /^:::(note|tip|warning|important)(?:\s+(.*))?$/i;
   const RE_AL_OPEN = /^:::(center|right|left|justify)\s*$/i;
+  /* A title plate: a filled band the full width of the text block, first line set
+     large, the rest small in a light accent tint. The fill is a fixed deep slate
+     rather than an accent tint, so it reads as a plate under every accent colour. */
+  const RE_BN_OPEN = /^:::banner\s*$/i;
   /* Any line the parser would actually open a container on — and only those.
      `:::center trailing words` is plain text, so it must not count as nesting. */
-  const RE_BLOCK_OPEN = /^:::(note|tip|warning|important)\b|^:::(center|right|left|justify)\s*$/i;
+  const RE_BLOCK_OPEN = /^:::(note|tip|warning|important)\b|^:::(center|right|left|justify|banner)\s*$/i;
   const RE_CO_CLOSE = /^:::\s*$/;
   const CO_LABELS = { note: "Note", tip: "Tip", warning: "Warning", important: "Important" };
 
@@ -558,6 +562,14 @@ const Engine = (() => {
         i = end; // skip past close (or EOF)
         curE = fx.nos[Math.min(i, fx.nos.length - 1)];
         push("", `<div class="callout ${type}"><div class="co-title">${esc(title)}</div><div class="co-body">${flatten(inner)}</div></div>`, "");
+        continue;
+      }
+      // :::banner — the title plate.
+      if (RE_BN_OPEN.test(line)) {
+        const { inner, end } = collectContainer(lines, i);
+        i = end;
+        curE = fx.nos[Math.min(i, fx.nos.length - 1)];
+        push("", `<div class="banner">${flatten(inner)}</div>`, "");
         continue;
       }
       // :::center / :::right / :::left / :::justify — Word's paragraph alignment group.

@@ -46,16 +46,67 @@
     return out;
   }
 
+  /* ---------------- the template set ----------------
+     One house style, taken from a real submitted lab report: a title page built in
+     the body (so the page border frames it and every line stays editable), a `:::banner`
+     plate carrying the subject, a particulars table, then numbered sections with
+     captioned tables and figures. `cover` stays off in the paged templates — the built-in
+     cover is a different, cleaner design and can carry neither the plate nor the table.
+     The letter and the blank page keep their own shapes. */
+
+  /* Every paged template opens on the same title page. Only the wording changes, so
+     it lives here once: `org` the institution or company, `unit` the department line,
+     `kicker` the course or client code, `title`/`sub` the document itself,
+     `plateTitle`/`plateSub` the two lines of the plate, and `rows` the particulars
+     table. */
+  const titlePage = ({ org, unit, kicker, title, sub, plateTitle, plateSub, rows }) => `:::center
+[**${org}**]{size=15}
+
+${unit}
+:::
+
+---
+
+:::center
+[**${kicker}**]{size=11 caps}
+
+[**${title}**]{size=22}
+
+*${sub}*
+:::
+
+:::banner
+${plateTitle}
+
+${plateSub}
+:::
+
+| Particulars | Details |
+| --- | --- |
+${rows.map(([k, v]) => `| **${k}** | ${v} |`).join("\n")}
+
+[pagebreak]
+`;
+
   const TEMPLATES = {
     welcome: {
       label: "Quick tour (start here)",
       desc: "A five-minute working introduction to everything DocForge does.",
-      patch: { title: "Welcome to DocForge", subtitle: "Type on the left — get a print-ready document on the right.", author: "Your Name", kicker: "Quick tour", theme: "modern", accent: "#2563eb" },
-      source: `[toc]
+      patch: { title: "Welcome to DocForge", subtitle: "Type on the left — get a print-ready document on the right.", author: "Your Name", kicker: "Quick tour", theme: "modern", accent: "#2563eb", cover: false, header: true, pageNums: true },
+      source: titlePage({
+        org: "Your Organisation",
+        unit: "Department or team",
+        kicker: "Quick tour",
+        title: "Welcome to DocForge",
+        sub: "Type on the left — get a print-ready document on the right",
+        plateTitle: "Everything in one file",
+        plateSub: "Cover · Contents · Footnotes · Citations · Equations · Word export",
+        rows: [["Author", "Your Name"], ["Reference", "DF-001"], ["Date", "Today"]],
+      }) + `[toc]
 
 # Getting started
 
-Welcome! **DocForge** turns plain text into a polished, print-ready document — cover page, automatic table of contents, running headers, footers and page numbers included.
+Welcome! **DocForge** turns plain text into a polished, print-ready document — title page, automatic table of contents, running headers, footers and page numbers included.
 
 Write with simple *Markdown* marks (the toolbar inserts them for you):
 
@@ -66,6 +117,16 @@ Write with simple *Markdown* marks (the toolbar inserts them for you):
 :::tip Try it now
 Change anything on the left and watch the pages update. Open **Settings** (top right) to switch the theme, accent colour, page size, typefaces and more.
 :::
+
+## The title page above
+
+The page you just scrolled past is ordinary document content — nothing special about it. It is built from three marks you can reuse anywhere:
+
+- \`:::center\` … \`:::\` centres a run of lines
+- \`[text]{size=22 caps}\` sets one span's size, case, colour or typeface
+- \`:::banner\` … \`:::\` prints the filled plate: first line large and white, the rest small in the accent tint
+
+Settings → **Cover page** offers a designed alternative that numbers itself as front matter; use whichever suits the submission.
 
 ## Screenshot placeholders
 
@@ -80,6 +141,7 @@ Leave it as a tidy placeholder in the printed PDF — or **click the box in the 
 [table: The furniture that makes a document feel finished | #tbl-kit]
 | Feature | How | Notes |
 | --- | --- | --- |
+| Title plate | \`:::banner\` … \`:::\` | Filled band; first line large, the rest in the accent tint |
 | Cover page | Settings → Cover page | Title, subtitle, author, date |
 | Table of contents | \`[toc]\` | Real page numbers with dotted leaders |
 | Captioned tables & figures | \`[table: …]\` above a table | Numbered; cross-reference with \`[#id]\` |
@@ -103,7 +165,7 @@ Hit **PDF** and choose *Save as PDF* in the print dialog. Margins, page numbers 
 
 ## Word
 
-**Word** downloads a real \`.docx\`: styled headings, cover page, tables, figures, footnotes, equations and an auto-updating table of contents. When Word asks to *update fields*, click **Yes** so the contents page fills itself in.
+**Word** downloads a real \`.docx\`: styled headings, the title plate, tables, figures, footnotes, equations and an auto-updating table of contents. When Word asks to *update fields*, click **Yes** so the contents page fills itself in.
 
 # Make it yours
 
@@ -118,64 +180,136 @@ Everything runs in this one file — no account, no internet, nothing to install
 `,
     },
     assignment: {
-      label: "Assignment / academic report",
-      desc: "Numbered sections, cover page, references — ready for submission.",
-      patch: { theme: "academic", accent: "#7f1d1d", numbered: true, justify: true, h1break: true, title: "Assignment Title", subtitle: "A concise one-line description of what this report covers", kicker: "Course Name · CS-101", metaExtra: "Roll No. 00 · Section A", cover: true },
-      source: `[toc]
+      label: "Assignment / lab report",
+      desc: "Ruled title page, particulars table, numbered tasks with captioned figures.",
+      patch: { theme: "academic", accent: "#c2410c", numbered: true, justify: true, h1break: false, cover: false, header: true, pageNums: true, borderStyle: "thickthin", borderWeight: "bold", borderColor: "ink", title: "Cloud Architecture Design", subtitle: "Digital Assignment 1 · Hands-on lab experiment", kicker: "CSE3001", metaExtra: "Reg. No. 00XYZ0000", author: "Your Name" },
+      source: titlePage({
+        org: "Your Institute of Technology, City",
+        unit: "School of Computer Science and Engineering",
+        kicker: "CSE3001",
+        title: "Cloud Architecture Design",
+        sub: "Digital Assignment 1 · Hands-on lab experiment",
+        plateTitle: "Object Storage Configuration",
+        plateSub: "Bucket creation · Static website hosting · Lifecycle policies",
+        rows: [
+          ["Student Name", "Your Name"],
+          ["Registration Number", "00XYZ0000"],
+          ["Course Code & Title", "CSE3001 — Cloud Architecture Design"],
+          ["Faculty", "Dr. Faculty Name"],
+          ["Date of Submission", "31 July 2026"],
+        ],
+      }) + `[toc]
 
-# Introduction
+# Aim
 
-State the problem this assignment addresses and why it matters. Keep it to two or three paragraphs: the context, the goal, and a one-line summary of your approach.[^1]
+State in two or three lines exactly what the experiment sets out to do — the service or technique configured, and the outcome that counts as success.
 
-[^1]: Footnotes are written inline as \`[^1]\` and defined once below the paragraph — the note itself is placed at the foot of the right page, in the PDF and in Word alike.
+# Tools and Services Used
 
-## Objectives
+- **Service or tool** — one line on what it contributed to the experiment.
+- **Second service** — the storage classes, libraries or SDKs the procedure depends on.
+- **Management console / CLI** — the interface every configuration step was carried out in.
+- **HTML / CSS** — the artefacts uploaded or produced, named exactly as they appear later.
 
-1. First objective of the work
-2. Second objective
-3. Third objective
+# Deployment Details
 
-# Background
+[table: The configuration as deployed | #tbl-deploy]
+| Setting | Value |
+| --- | --- |
+| Resource name | your-resource-name |
+| Region | Region label — region-code |
+| Endpoint | http://your-resource-name.example-endpoint.com |
+| Entry / error document | index.html / error.html |
+| Policy or rule | rule-name (applies to all objects) |
 
-Summarise the concepts, papers or tools the reader needs. Cite as you write — the divide-and-conquer analysis follows [@clrs2009], and the report structure follows [@ieee2021] — and the References section numbers, orders and formats itself.
+# Procedure
 
-# Methodology
+1. Signed in to the console and selected the region recorded in [#tbl-deploy].
+2. Created the resource with the name above, noting any default that was changed.
+3. Uploaded the artefacts listed in *Tools and Services Used*.
+4. Enabled the feature under test and set its parameters.
+5. Attached the access policy that the feature requires.
+6. Verified the result end to end, including the failure path.
+7. Created the lifecycle or scheduling rule and recorded its stages.
+8. Captured a screenshot at every stage and compiled them below.
 
-Describe your approach step by step, and point at your own material by number: the setup in [#fig-setup] produces the measurements in [#tbl-results]. Where a formula earns its place, set it properly:
+# Implementation and Observations
 
-$$T(n) = 2T(n/2) + cn = O(n \\log n)$$
+## Task 1 — Creating the resource
 
-[screenshot: System / setup overview | #fig-setup]
+Describe what was created and why each non-default setting was chosen. One short paragraph per task, then the evidence.
 
-# Implementation
+[screenshot: Creation form showing the name, region and the setting that was changed | #fig-create]
 
-Explain the key parts of your implementation. Short, annotated excerpts beat long listings:
+## Task 2 — Uploading the artefacts
 
-\`\`\`python
-def solve(items):
-    """One idea per excerpt — reference the repository for the rest."""
-    return [transform(x) for x in items if keep(x)]
+Name the files, their purpose and the outcome of the upload, then show it.
+
+[screenshot: The uploaded objects listed in the console | #fig-upload]
+
+## Task 3 — Enabling the feature
+
+Record the exact parameters — index and error documents, ports, endpoints — and quote the endpoint the platform generated:
+
+:::center
+**http://your-resource-name.example-endpoint.com**
+:::
+
+[screenshot: The feature enabled, with the generated endpoint visible | #fig-enable]
+
+## Task 4 — Access policy
+
+Everything is private by default, so the first request returned *403 Forbidden*. The policy below grants exactly the one action the feature needs — no more:
+
+\`\`\`json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "service:GetObject",
+      "Resource": "arn:example:::your-resource-name/*"
+    }
+  ]
+}
 \`\`\`
 
-# Results and Discussion
+[screenshot: The saved policy in the permissions tab | #fig-policy]
 
-Present results in captioned tables and figures, then interpret them — what worked, what didn't, and why.
+## Task 5 — Verification
 
-[table: Test outcomes against expected values | #tbl-results]
-| Test case | Expected | Observed | Result |
-| --- | --- | --- | --- |
-| Case 1 | Value | Value | Pass |
-| Case 2 | Value | Value | Pass |
+State what was requested and what came back — including the deliberate failure case, which is the half most reports forget.
 
-[screenshot: Output of the final run | #fig-output]
+[screenshot: The working result, with the URL visible in the address bar | #fig-live]
+
+[screenshot: The custom error page returned for a missing key | #fig-404]
+
+## Task 6 — Lifecycle rule
+
+Set the stages out as a table so the reader can check the arithmetic at a glance:
+
+[table: Stages of rule-name | #tbl-lifecycle]
+| Day 0 | Day 30 | Day 90 | Day 365 |
+| :---: | :---: | :---: | :---: |
+| Object uploaded (Standard) | Transition to Infrequent Access | Transition to Archive | Object expires |
+
+[screenshot: The rule configuration showing the transition timeline | #fig-rule]
 
 :::note Observation
-Call out the single most important finding here so it isn't lost in the prose.
+Call out the single most important finding here so it is not lost in the prose — the unexpected default, the step that failed first, the number that did not match the estimate.
 :::
+
+# Result
+
+The configuration is live and behaves as specified: the entry document is served at the root, the error document is returned for missing keys, and the rule is active on the resource. Reference the figures rather than re-describing them — [#fig-live] and [#fig-rule] carry the evidence.
 
 # Conclusion
 
-Summarise what was achieved against each objective, note limitations, and suggest future work.
+Summarise what was achieved against the aim, in the same order the aim stated it. Name the limitation you met and what you would measure next. The method follows the standard treatment [@clrs2009]; the report format follows [@ieee2021].[^1]
+
+[^1]: Footnotes are written inline as \`[^1]\` and defined once below the paragraph — the note itself lands at the foot of the right page, in the PDF and in Word alike.
 
 [references]
 
@@ -185,9 +319,24 @@ Summarise what was achieved against each objective, note limitations, and sugges
     },
     proposal: {
       label: "Business proposal",
-      desc: "Executive summary, scope, timeline and pricing tables for a client.",
-      patch: { theme: "executive", accent: "#1f3a5f", title: "Project Proposal", subtitle: "Prepared for [Client] — scope, timeline and investment", kicker: "Your Company", metaExtra: "proposal@yourcompany.com", cover: true, h1break: false, numbered: false },
-      source: `# Executive Summary
+      desc: "Title plate, scope, timeline and pricing tables, signature block.",
+      patch: { theme: "executive", accent: "#1f3a5f", title: "Project Proposal", subtitle: "Scope, timeline and investment", kicker: "Your Company", metaExtra: "proposal@yourcompany.com", author: "Your Name", cover: false, header: true, pageNums: true, h1break: false, numbered: false, justify: true, borderStyle: "rule", borderWeight: "fine", borderColor: "ink" },
+      source: titlePage({
+        org: "Your Company Pvt Ltd",
+        unit: "Professional services",
+        kicker: "Proposal · REF-0001",
+        title: "Project Proposal",
+        sub: "Prepared for Client Name",
+        plateTitle: "Platform Modernisation",
+        plateSub: "Discovery · Build · Handover — eight weeks",
+        rows: [
+          ["Prepared for", "Client Name, Designation"],
+          ["Prepared by", "Your Name, Your Company"],
+          ["Reference", "REF-0001"],
+          ["Valid until", "30 days from the date below"],
+          ["Date", "31 July 2026"],
+        ],
+      }) + `# Executive Summary
 
 One paragraph a busy decision-maker can read in thirty seconds: the problem, your solution, the outcome you're promising, and the investment required. Point them straight at the numbers — the packages in [#tbl-price] and the schedule in [#tbl-time].
 
@@ -244,14 +393,14 @@ Payment terms: 50% to begin, 50% on delivery. Prices exclude applicable taxes.
 3. Discovery workshop within one week
 
 :::note Validity
-This proposal is valid for 30 days from the date on the cover.
+This proposal is valid for 30 days from the date on the title page.
 :::
 
 # Acceptance
 
 Signing below confirms the selected package and the terms above.
 
-| For [Client] | For Your Company |
+| For Client Name | For Your Company |
 | --- | --- |
 | Name, designation | Name, designation |
 | Signature | Signature |
@@ -260,9 +409,24 @@ Signing below confirms the selected package and the terms above.
     },
     report: {
       label: "Project / status report",
-      desc: "Progress, metrics, risks and decisions for a working team.",
-      patch: { theme: "modern", accent: "#2563eb", title: "Project Report", subtitle: "Progress, decisions and next steps", kicker: "Team / Department", cover: true, h1break: true },
-      source: `[toc]
+      desc: "Title plate, status slip, metrics table, risks and an actions table.",
+      patch: { theme: "modern", accent: "#2563eb", title: "Project Report", subtitle: "Progress, decisions and next steps", kicker: "Team / Department", author: "Your Name", metaExtra: "Reporting period", cover: false, header: true, pageNums: true, h1break: true, justify: false, borderStyle: "rule", borderWeight: "fine", borderColor: "accent" },
+      source: titlePage({
+        org: "Your Organisation",
+        unit: "Team or department",
+        kicker: "Status report · Q3",
+        title: "Project Report",
+        sub: "Progress, decisions and next steps",
+        plateTitle: "Project Name",
+        plateSub: "Scope on track · Schedule watch · Budget on track",
+        rows: [
+          ["Project", "Project Name"],
+          ["Reporting period", "1 July — 31 July 2026"],
+          ["Prepared by", "Your Name"],
+          ["Distribution", "Steering group"],
+          ["Date", "31 July 2026"],
+        ],
+      }) + `[toc]
 
 # Executive Summary
 
@@ -317,8 +481,8 @@ Name the risk, its impact, and the mitigation you propose.
     },
     letter: {
       label: "Formal letter",
-      desc: "Address block, subject line and a clean sign-off — no cover, no numbers.",
-      patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, title: "Letter", subtitle: "" },
+      desc: "Letterhead, subject line and a clean sign-off — no title page, no numbers.",
+      patch: { theme: "minimal", accent: "#111827", cover: false, header: false, pageNums: false, numbered: false, h1break: false, hardWrap: true, justify: false, borderStyle: "none", title: "Letter", subtitle: "" },
       source: `[Your Name]{size=15 sc}
 Your address line · City, PIN
 your.email@example.com · +91 00000 00000
@@ -355,9 +519,18 @@ Enclosures: 1. Document name · 2. Document name
     },
     article: {
       label: "Article / essay",
-      desc: "A quiet, minimal frame for a piece of writing that stands on its own.",
-      patch: { theme: "minimal", accent: "#111827", title: "Article Title", subtitle: "A one-line standfirst that frames the piece", cover: true, header: true, pageNums: true, h1break: false },
-      source: `# Opening
+      desc: "A quiet title page and a frame for a piece of writing that stands on its own.",
+      patch: { theme: "minimal", accent: "#111827", title: "Article Title", subtitle: "A one-line standfirst that frames the piece", author: "Your Name", kicker: "Essay", cover: false, header: true, pageNums: true, h1break: false, justify: true, borderStyle: "none" },
+      source: titlePage({
+        org: "Publication or Series",
+        unit: "Section or column",
+        kicker: "Essay",
+        title: "Article Title",
+        sub: "A one-line standfirst that frames the piece",
+        plateTitle: "The Question This Piece Answers",
+        plateSub: "Stated once, in the fewest words that still make it interesting",
+        rows: [["Author", "Your Name"], ["Length", "About 2,000 words"], ["Date", "31 July 2026"]],
+      }) + `# Opening
 
 Start with the idea, scene or question that earns the reader's attention. No throat-clearing.
 
@@ -751,7 +924,37 @@ Land the piece: return to the opening image or question and say what it means no
      The two settings selects and the toolbar's selection box all carry the same
      catalogue: the embedded faces (travel inside the file) and the classic Word
      menu (used from this device, written into the .docx by name). */
-  const fontInstalled = name => { try { return document.fonts.check(`12px "${name}"`); } catch { return true; } };
+  /* Is this family actually available to the renderer?
+
+     `document.fonts.check()` cannot answer that: it only knows the @font-face rules
+     this document declared, and Chromium answers `true` for every other name — a
+     family that does not exist anywhere included. Used for this, it marks all ~200
+     Word faces as present, so picking one the machine lacks silently sets the preview
+     and the printed PDF in a fallback while the .docx stays correct.
+
+     So measure instead. A probe string is laid out in the family with a generic
+     behind it; if the family resolves it overrides the generic and the width moves.
+     Three generics with very different metrics are tried, because a face can happen
+     to match one of them exactly (Arial *is* sans-serif on Windows). Widths are
+     stable for the life of the page, so each answer is cached. */
+  const fontInstalled = (() => {
+    const cache = new Map();
+    let ctx = null;
+    try { ctx = document.createElement("canvas").getContext("2d"); } catch { /* no canvas */ }
+    if (!ctx) return () => true;
+    const PROBE = "mmmmmmmmmmlliWWMMwi0Oo—“”";
+    const w = font => { ctx.font = font; return ctx.measureText(PROBE).width; };
+    const GENERIC = ["monospace", "sans-serif", "serif"];
+    const base = GENERIC.map(g => w(`72px ${g}`));
+    return name => {
+      const key = String(name || "");
+      if (cache.has(key)) return cache.get(key);
+      const q = `"${key.replace(/["\\]/g, "")}"`;
+      const found = GENERIC.some((g, i) => w(`72px ${q}, ${g}`) !== base[i]);
+      cache.set(key, found);
+      return found;
+    };
+  })();
 
   function fontOptionsHtml(kind) {
     let h = kind === "settings" ? `<option value="theme">Theme default</option>` : `<option value="">Typeface…</option>`;
@@ -785,7 +988,8 @@ Land the piece: return to the opening image or question and say what it means no
     if (!value || [...sel.options].some(o => o.value === value)) return;
     const o = document.createElement("option");
     o.value = value;
-    o.textContent = value.replace(/^sys:/, "") + " (custom)";
+    const fam = value.replace(/^sys:/, "");
+    o.textContent = fam + " (custom)" + (fontInstalled(fam) ? "" : " · not on this device");
     sel.insertBefore(o, sel.lastElementChild);
   }
 
@@ -1815,7 +2019,7 @@ Land the piece: return to the opening image or question and say what it means no
       const fm = line.match(/^(```+|~~~+)/);
       if (fence) { if (fm && fm[1][0] === fence[0] && fm[1].length >= fence.length) fence = null; return; }
       if (fm) { fence = fm[1]; return; }
-      if (/^:::(note|tip|warning|important|center|right|left|justify)\b/i.test(line)) { coDepth++; coLine = n; }
+      if (/^:::(note|tip|warning|important|center|right|left|justify|banner)\b/i.test(line)) { coDepth++; coLine = n; }
       else if (/^:::\s*$/.test(line)) coDepth = Math.max(0, coDepth - 1);
       if (/^#{5,}\s/.test(line)) warns.push([n, "Heading level 5+ — styled plainly and never listed in the contents. Consider #### or bold text."]);
       if (/^\s*<(?!\/?(b|i|em|strong|code|br)\b)[a-z][^>]*>/i.test(line)) warns.push([n, "Raw HTML — it will be ignored or printed as text. Use the toolbar marks instead."]);
@@ -1833,15 +2037,35 @@ Land the piece: return to the opening image or question and say what it means no
     src.replace(/^\[@([^\]\s,]+)\]:/gm, (m, id) => cites.add(id));
     src.replace(/\{#([\w:.-]+)\}/g, (m, id) => ids.add(id));
     src.replace(/#([A-Za-z][\w:.-]*)/g, (m, id) => ids.add(id)); // figure/table ids declared inline
+    /* A call shown as a specimen is not a call: skip fenced blocks by tracking the
+       fence, and blank out inline code spans (keeping the line length, so any later
+       column arithmetic still holds) before looking for calls in the prose. */
+    let scanFence = null;
     lines.forEach((line, i) => {
-      if (/^(```|~~~)/.test(line)) return;
-      line.replace(/\[\^([^\]\s]+)\](?!:)/g, (m, id) => { if (!defs.has(id)) warns.push([i + 1, `Footnote [^${id}] has no definition line ([^${id}]: …).`]); });
-      line.replace(/\[@([^\]\s,]+)(?:,[^\]]*)?\](?!:)/g, (m, id) => { if (!cites.has(id)) warns.push([i + 1, `Citation [@${id}] has no entry ([@${id}]: …).`]); });
+      const fm = line.match(/^(```+|~~~+)/);
+      if (scanFence) { if (fm && fm[1][0] === scanFence[0] && fm[1].length >= scanFence.length) scanFence = null; return; }
+      if (fm) { scanFence = fm[1]; return; }
+      const scan = line.replace(/`+[^`]*`+/g, m => " ".repeat(m.length));
+      scan.replace(/\[\^([^\]\s]+)\](?!:)/g, (m, id) => { if (!defs.has(id)) warns.push([i + 1, `Footnote [^${id}] has no definition line ([^${id}]: …).`]); });
+      scan.replace(/\[@([^\]\s,]+)(?:,[^\]]*)?\](?!:)/g, (m, id) => { if (!cites.has(id)) warns.push([i + 1, `Citation [@${id}] has no entry ([@${id}]: …).`]); });
+      // A face this machine lacks prints correctly from Word and falls back everywhere else.
+      scan.replace(/\bfont=(?:"([^"]+)"|([^\s"\]}]+))/g, (m, quoted, bare) => {
+        const fam = quoted || bare;
+        if (!fontInstalled(fam)) warns.push([i + 1, `${fam} is not installed on this device — the preview and the printed PDF fall back to a lookalike. The Word file still names ${fam}, so it prints correctly wherever the font exists.`]);
+      });
     });
     return warns;
   }
   function refreshLint() {
     const warns = lintSource(state.source);
+    /* The document-wide faces live in settings, not in the source, so they are checked
+       here rather than in lintSource — same failure, same wording. */
+    for (const k of ["fontHead", "fontBody"]) {
+      const v = state.settings[k];
+      if (typeof v !== "string" || !v.startsWith("sys:")) continue;
+      const fam = v.slice(4);
+      if (!fontInstalled(fam)) warns.push([1, `${fam} (${k === "fontHead" ? "heading" : "body"} typeface) is not installed on this device — the preview and the printed PDF fall back to a lookalike. The Word file still names ${fam}, so it prints correctly wherever the font exists.`]);
+    }
     const badge = $("#lintBadge"), panel = $("#lintPanel");
     badge.hidden = !warns.length;
     badge.textContent = warns.length === 1 ? "1 warning" : warns.length + " warnings";
