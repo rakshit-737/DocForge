@@ -20,13 +20,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # tags — /classic is built from v1-classic
+      - run: corepack enable # before setup-node so its pnpm cache probe finds pnpm
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
       # current main
-      - run: npm ci
+      - run: corepack pnpm install --frozen-lockfile
       - run: node build.mjs
 
       # the frozen classic edition, built from the v1-classic tag in its own worktree

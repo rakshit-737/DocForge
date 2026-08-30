@@ -15,11 +15,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # the baseline is the v1-classic tag, built fresh in this run
+      - run: corepack enable # before setup-node so its pnpm cache probe finds pnpm
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+          node-version-file: .nvmrc
+          cache: pnpm
+      # The v1-classic worktree inside run.mjs still uses its own committed
+      # package-lock via npm ci — only the main checkout is pnpm.
+      - run: corepack pnpm install --frozen-lockfile
       # Both sides render on this same runner, so platform font rasterisation can
       # never masquerade as a document regression.
       - name: Golden comparison against v1-classic

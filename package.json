@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Single-file document studio — beautiful PDFs and Word docs from plain text",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "turbo build && node build.mjs",
+    "build:classic": "node build.mjs",
+    "lint": "biome check .",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "golden": "node qa/golden/run.mjs --against v1-classic"
   },
   "keywords": [],
   "author": "",
@@ -19,5 +24,12 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "playwright-core": "^1.62.1"
+  },
+  "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e",
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.11",
+    "turbo": "^2.10.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
