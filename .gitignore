@@ -7,6 +7,14 @@ qa/wdout/
 qa/out/
 publish.sh
 publish.bat
-.opencode
 tools/.fontcache/
-.impeccable/live/
+
+# build artifacts — built in CI, never committed
+dist/
+
+# AI-tool droppings and editor state
+.opencode/
+.impeccable/
+.superbrain/
+.claude/
+.vscode/
