@@ -47,7 +47,8 @@ function normaliseDocx(members) {
     let relsXml = relsBytes.toString("utf8");
     const ids = [...relsXml.matchAll(/<Relationship [^>]*Id="([^"]+)"/g)].map(m => m[1]);
     const map = new Map(ids.map((id, i) => [id, `nrel${i + 1}`]));
-    const rewrite = xml => xml.replace(/\brId[A-Za-z0-9]+\b/g, id => map.get(id) ?? id);
+    // docx-lib ids use the nanoid alphabet — letters, digits, "-" and "_" — match all of it
+    const rewrite = xml => xml.replace(/\brId[\w-]+/g, id => map.get(id) ?? id);
     out.set(relsName, Buffer.from(rewrite(relsXml)));
     const part = out.get(partName);
     if (part) out.set(partName, Buffer.from(rewrite(part.toString("utf8"))));
@@ -91,6 +92,22 @@ async function captureOnce(b, distUrl, outDir, c, scale) {
     const source = readFileSync(resolve(HERE, c.doc), "utf8");
     page = await openApp(b, distUrl);
     await applyDoc(page, { source, settings: c.settings });
+
+    // Pin the preview to MANUAL zoom (out then in lands back on 1.0 in "man" mode).
+    // In fit mode every resize/observer re-runs applyZoom, and the screenshot loop's
+    // auto-scroll can spawn a scrollbar → re-fit → later pages captured smaller.
+    await page.click("#zoomOut");
+    await page.click("#zoomIn");
+    // Then wait for true layout quiescence: page count + last-page height stable for 600ms.
+    await page.waitForFunction(() => {
+      const pages = document.querySelectorAll(".pagedjs_page");
+      const last = pages[pages.length - 1];
+      const sig = pages.length + ":" + (last ? Math.round(last.getBoundingClientRect().height) : 0);
+      if (window.__goldenSig === sig) return Date.now() - window.__goldenSigAt > 600;
+      window.__goldenSig = sig;
+      window.__goldenSigAt = Date.now();
+      return false;
+    }, null, { timeout: 90000, polling: 250 });
 
     // (a) rendered preview pages
     const pages = page.locator(".pagedjs_page");
