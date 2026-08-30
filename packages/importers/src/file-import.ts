@@ -20,7 +20,7 @@
 const u16 = (d: DataView, o: number): number => d.getUint16(o, true);
 const u32 = (d: DataView, o: number): number => d.getUint32(o, true);
 
-async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
+async function inflateRaw(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array> {
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }

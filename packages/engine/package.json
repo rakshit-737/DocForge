@@ -1,20 +1,18 @@
 {
-  "name": "@docforge/importers",
+  "name": "@docforge/engine",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./global": "./src/global.ts"
-  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {
-    "happy-dom": "^20.0.0",
-    "jsdom": "^28.0.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "happy-dom": "^20.0.0",
+    "marked": "^18.0.7",
+    "katex": "^0.18.1",
+    "highlight.js": "^11.11.1"
   }
 }

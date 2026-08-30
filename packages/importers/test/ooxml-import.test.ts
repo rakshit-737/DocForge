@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 /* xlsx / pptx / epub converters against tiny in-test constructed packages.
    Entries are STORED (method 0) so these DOMParser-dependent tests never
    depend on happy-dom's Blob/stream plumbing; deflate is covered by the

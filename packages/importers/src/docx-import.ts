@@ -33,7 +33,8 @@ async function lib(): Promise<MammothLib> {
     }
     await mammothLoading;
     window.__MAMMOTH_SRC__ = null; // the string is dead weight once eval'd
-    return window.mammoth as MammothLib;
+    // Fresh read: control-flow narrowing can't see the import mutate window.
+    return (window as { mammoth?: MammothLib }).mammoth as MammothLib;
   }
   throw new Error("Word import is not bundled in this build");
 }

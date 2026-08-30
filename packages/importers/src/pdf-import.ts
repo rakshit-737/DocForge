@@ -52,9 +52,11 @@ async function lib(): Promise<PdfjsLib> {
   // The source strings are megabytes each — drop them now that they're parsed.
   try { delete window.__PDFJS_WORKER_SRC__; } catch { window.__PDFJS_WORKER_SRC__ = null; }
   try { delete window.__PDFJS_SRC__; } catch { window.__PDFJS_SRC__ = null; }
-  if (!window.pdfjsLib) throw new Error("PDF support is not bundled in this build");
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = ""; // defensive; fake-worker path never reads it
-  return window.pdfjsLib;
+  // Fresh read: control-flow narrowing can't see the imports mutate window.
+  const pdfjsLib = (window as { pdfjsLib?: PdfjsLib }).pdfjsLib;
+  if (!pdfjsLib) throw new Error("PDF support is not bundled in this build");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = ""; // defensive; fake-worker path never reads it
+  return pdfjsLib;
 }
 
 /* ---------- line reconstruction ---------- */
