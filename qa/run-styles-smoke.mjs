@@ -73,17 +73,39 @@ for (const [name, run, expect] of fromGalley) {
   ok(!/\[text\]|\[coloured text\]|highlighted text/.test(s), `${name}: no stray placeholder appended`);
 }
 
-/* ---- the galley must actually show it, not just the source ---- */
+/* ---- the galley must actually show it, not just the source ----
+   Measure the ink, not the computed stack: `font-family` reports what was *asked*
+   for, and a stack that never resolved reads identically to one that did — the same
+   trap document.fonts.check fell into. Courier New against the proportional default
+   moves the run's width by a third or more, so a real substitution is unmistakable
+   and a silent no-op cannot pass. */
+const inkOf = needle => page.evaluate(n => {
+  const el = [...document.querySelectorAll(".pagedjs_page .content p")].find(e => e.textContent.includes(n));
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let node = null;
+  while (walk.nextNode()) if (walk.currentNode.textContent.includes(n)) { node = walk.currentNode; break; }
+  if (!node) return null;
+  const i = node.textContent.indexOf(n);
+  const r = document.createRange();
+  r.setStart(node, i);
+  r.setEnd(node, i + n.length);
+  return Math.round(r.getBoundingClientRect().width * 100) / 100;
+}, needle);
+
 await setDoc(DOC);
+const inkBefore = await inkOf(TARGET);
 await selectInGalley(TARGET);
 await page.selectOption("#tbFont", "Courier New");
 await settle(page);
+const inkAfter = await inkOf(TARGET);
 const shown = await page.evaluate(() => {
   const s = document.querySelector(".pagedjs_page .dfspan[data-font]");
   return s && { text: s.textContent, family: getComputedStyle(s).fontFamily.split(",")[0] };
 });
 ok(shown && shown.text === TARGET && shown.family === '"Courier New"',
-  `the galley renders the new face — ${JSON.stringify(shown)}`);
+  `the galley asks for the new face — ${JSON.stringify(shown)}`);
+ok(inkBefore && inkAfter && Math.abs(inkAfter - inkBefore) / inkBefore > 0.15,
+  `the run is visibly reset, not merely restyled — ${inkBefore}px → ${inkAfter}px`);
 
 /* the mark must survive a re-render unchanged, or it is not really in the source */
 const settled = await source();
