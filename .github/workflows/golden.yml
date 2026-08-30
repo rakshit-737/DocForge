@@ -1,0 +1,38 @@
+name: Golden master
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: golden-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  golden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the baseline is the v1-classic tag, built fresh in this run
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Both sides render on this same runner, so platform font rasterisation can
+      # never masquerade as a document regression.
+      - name: Golden comparison against v1-classic
+        run: node qa/golden/run.mjs --against v1-classic
+        env:
+          PW_CHROMIUM: /usr/bin/google-chrome
+      - name: Upload diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-report
+          path: |
+            qa/out/golden/diff/
+            qa/out/golden/*/manifest.json
+          if-no-files-found: ignore
+          retention-days: 14
