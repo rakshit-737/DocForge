@@ -1,7 +1,12 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["packages/**", "apps/**", "!**/coverage", "!**/coverage"]
+    "includes": [
+      "packages/**",
+      "apps/**",
+      "!**/coverage",
+      "!packages/engine/test/fixtures/classic-engine.js"
+    ]
   },
   "formatter": {
     "enabled": true,
