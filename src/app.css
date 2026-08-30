@@ -80,7 +80,15 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+/* The shell is a fixed viewport, never a scrolling document. `overflow: hidden`
+   on <body> alone does not do that: with html's overflow `visible` the value is
+   propagated to the viewport and <body> itself reverts to `visible`, so a tall
+   drawer's content still counts towards the document's scroll height. The
+   viewport then stays programmatically scrollable — scroll anchoring after a
+   re-render (toggling Cover page, say) slid the whole desk up and left a blank
+   band below it. Declaring it on <html> stops the propagation: <body> clips its
+   own children and the document has nothing left to scroll. */
+html, body { height: 100%; overflow: hidden; }
 body {
   margin: 0;
   height: 100dvh; /* mobile URL-bar collapse; falls back to the 100% above */
@@ -295,7 +303,7 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 .frow { display: flex; gap: 8px; }
 .frow .field { flex: 1; }
 
-.toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; cursor: pointer; user-select: none; }
+.toggle { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; cursor: pointer; user-select: none; }
 .toggle span.lbl { font-size: 12.8px; color: var(--tx); }
 .tg {
   width: 40px; height: 22px; border-radius: var(--rm); background: var(--bg);
@@ -308,7 +316,10 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
   transition: left 0.16s ease-out, background 0.16s ease-out;
 }
 /* visually hidden, never display:none — the checkbox must stay in the
-   tab order and the accessibility tree; the plate wears its focus ring */
+   tab order and the accessibility tree; the plate wears its focus ring.
+   The row is `position: relative` for it: without a positioned parent these
+   absolute boxes hang off #main, escape the drawer's overflow clip, and make
+   the whole shell scrollable. */
 .toggle input {
   position: absolute; opacity: 0;
   width: 1px; height: 1px; margin: 0; pointer-events: none;
@@ -1162,7 +1173,7 @@ body.pdf-mode #pdfEditor { display: flex; animation: deskIn var(--dur2) var(--ea
 
 /* ---------------- PRINT: only the pages ---------------- */
 @media print {
-  body { overflow: visible; background: #fff; }
+  html, body { overflow: visible; background: #fff; }
   #topbar, #settings, #editorPane, #previewBar, #toasts, .overlay, #imgMenu, .popmenu, #embedHint, #outlinePanel, #lintPanel, #pdfEditor { display: none !important; }
   body.pdf-mode #main { display: block !important; }
   #main, #previewPane, #previewScroll { display: block; height: auto; overflow: visible; padding: 0; background: #fff; }
