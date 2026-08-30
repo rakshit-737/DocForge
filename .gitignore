@@ -18,3 +18,6 @@ dist/
 .superbrain/
 .claude/
 .vscode/
+
+# vitest coverage reports
+coverage/

@@ -5,8 +5,11 @@ declare module "node:buffer" {
   export class Buffer extends Uint8Array {
     static from(data: ArrayBuffer | Uint8Array | string, encoding?: string): Buffer;
     static alloc(size: number): Buffer;
+    static concat(list: Uint8Array[]): Buffer;
     readUInt16LE(offset: number): number;
     readUInt32LE(offset: number): number;
+    writeUInt16LE(value: number, offset: number): number;
+    writeUInt32LE(value: number, offset: number): number;
     toString(encoding?: string, start?: number, end?: number): string;
     subarray(start?: number, end?: number): Buffer;
     equals(other: Uint8Array): boolean;

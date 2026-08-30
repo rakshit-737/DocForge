@@ -54,17 +54,30 @@ const importLibs =
   "window.__PDFJS_WORKER_SRC__=" + JSON.stringify(pdfWorker) + ";\n" +
   "window.__PDFLIB_SRC__=" + JSON.stringify(pdfLibLib) + ";";
 
-// app sources
+// app sources — the ported modules build from packages/* (TypeScript, bundled to
+// self-registering IIFEs whose global.ts entries assign the same globals the old
+// IIFE files declared); the chrome (live-edit, main) still reads raw until Phase 2.
+const bundlePkg = entry => buildSync({
+  entryPoints: [entry],
+  bundle: true, write: false, minify: false,
+  format: "iife", platform: "browser", target: "es2022",
+}).outputFiles[0].text;
+
 const appCss = read("src/app.css");
 const docCss = read("src/doc.css");
-const engine = read("src/js/engine.js");
-const docxFonts = read("src/js/docx-fonts.js");
-const mathmlOmml = read("src/js/mathml-omml.js");
-const docxExport = read("src/js/docx-export.js");
-const docxImport = read("src/js/docx-import.js");
-const pdfImport = read("src/js/pdf-import.js");
-const pdfEditor = read("src/js/pdf-editor.js");
-const fileImport = read("src/js/file-import.js");
+const engine = bundlePkg("packages/engine/src/global.ts");
+const mathmlOmml = bundlePkg("packages/mathml-omml/src/global.ts");
+// One bundle assigns DocxExport AND DocxFonts (mathml-omml rides inside it as a
+// workspace import) — it fills the @DOCXEXPORT@ slot; @DOCXFONTS@ empties.
+const docxFonts = "";
+const docxExport = bundlePkg("packages/export-docx/src/global.ts");
+// One bundle assigns FileImport, DocxImport AND PdfImport. It must run before the
+// PDF editor (which reads the PdfImport global), so it fills the earliest of the
+// three importer slots; the later two empty.
+const docxImport = bundlePkg("packages/importers/src/global.ts");
+const pdfImport = "";
+const fileImport = "";
+const pdfEditor = bundlePkg("packages/pdf-editor/src/global.ts");
 const liveEdit = read("src/js/live-edit.js");
 const main = read("src/js/main.js");
 

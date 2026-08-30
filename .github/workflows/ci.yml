@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable # before setup-node so its pnpm cache probe finds pnpm
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Lint
+        run: corepack pnpm exec biome check .
+      - name: Typecheck
+        run: corepack pnpm -r --filter "!@docforge/config" exec tsc -p tsconfig.json
+      - name: Unit tests (with the engine byte-parity suite armed)
+        run: corepack pnpm -r --filter "!@docforge/config" exec vitest run
+        env:
+          RUN_PARITY: "1"
+      - name: Build single-file edition
+        run: node build.mjs

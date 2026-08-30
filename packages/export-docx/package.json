@@ -15,10 +15,11 @@
     "@docforge/mathml-omml": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^7.0.2",
-    "vitest": "^4.1.11",
-    "happy-dom": "^20.0.0",
+    "@vitest/coverage-v8": "4.1.11",
     "docx": "^9.7.1",
-    "katex": "^0.18.1"
+    "happy-dom": "^20.0.0",
+    "katex": "^0.18.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
