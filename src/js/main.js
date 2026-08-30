@@ -751,7 +751,37 @@ Land the piece: return to the opening image or question and say what it means no
      The two settings selects and the toolbar's selection box all carry the same
      catalogue: the embedded faces (travel inside the file) and the classic Word
      menu (used from this device, written into the .docx by name). */
-  const fontInstalled = name => { try { return document.fonts.check(`12px "${name}"`); } catch { return true; } };
+  /* Is this family actually available to the renderer?
+
+     `document.fonts.check()` cannot answer that: it only knows the @font-face rules
+     this document declared, and Chromium answers `true` for every other name — a
+     family that does not exist anywhere included. Used for this, it marks all ~200
+     Word faces as present, so picking one the machine lacks silently sets the preview
+     and the printed PDF in a fallback while the .docx stays correct.
+
+     So measure instead. A probe string is laid out in the family with a generic
+     behind it; if the family resolves it overrides the generic and the width moves.
+     Three generics with very different metrics are tried, because a face can happen
+     to match one of them exactly (Arial *is* sans-serif on Windows). Widths are
+     stable for the life of the page, so each answer is cached. */
+  const fontInstalled = (() => {
+    const cache = new Map();
+    let ctx = null;
+    try { ctx = document.createElement("canvas").getContext("2d"); } catch { /* no canvas */ }
+    if (!ctx) return () => true;
+    const PROBE = "mmmmmmmmmmlliWWMMwi0Oo—“”";
+    const w = font => { ctx.font = font; return ctx.measureText(PROBE).width; };
+    const GENERIC = ["monospace", "sans-serif", "serif"];
+    const base = GENERIC.map(g => w(`72px ${g}`));
+    return name => {
+      const key = String(name || "");
+      if (cache.has(key)) return cache.get(key);
+      const q = `"${key.replace(/["\\]/g, "")}"`;
+      const found = GENERIC.some((g, i) => w(`72px ${q}, ${g}`) !== base[i]);
+      cache.set(key, found);
+      return found;
+    };
+  })();
 
   function fontOptionsHtml(kind) {
     let h = kind === "settings" ? `<option value="theme">Theme default</option>` : `<option value="">Typeface…</option>`;
@@ -785,7 +815,8 @@ Land the piece: return to the opening image or question and say what it means no
     if (!value || [...sel.options].some(o => o.value === value)) return;
     const o = document.createElement("option");
     o.value = value;
-    o.textContent = value.replace(/^sys:/, "") + " (custom)";
+    const fam = value.replace(/^sys:/, "");
+    o.textContent = fam + " (custom)" + (fontInstalled(fam) ? "" : " · not on this device");
     sel.insertBefore(o, sel.lastElementChild);
   }
 
@@ -1833,15 +1864,35 @@ Land the piece: return to the opening image or question and say what it means no
     src.replace(/^\[@([^\]\s,]+)\]:/gm, (m, id) => cites.add(id));
     src.replace(/\{#([\w:.-]+)\}/g, (m, id) => ids.add(id));
     src.replace(/#([A-Za-z][\w:.-]*)/g, (m, id) => ids.add(id)); // figure/table ids declared inline
+    /* A call shown as a specimen is not a call: skip fenced blocks by tracking the
+       fence, and blank out inline code spans (keeping the line length, so any later
+       column arithmetic still holds) before looking for calls in the prose. */
+    let scanFence = null;
     lines.forEach((line, i) => {
-      if (/^(```|~~~)/.test(line)) return;
-      line.replace(/\[\^([^\]\s]+)\](?!:)/g, (m, id) => { if (!defs.has(id)) warns.push([i + 1, `Footnote [^${id}] has no definition line ([^${id}]: …).`]); });
-      line.replace(/\[@([^\]\s,]+)(?:,[^\]]*)?\](?!:)/g, (m, id) => { if (!cites.has(id)) warns.push([i + 1, `Citation [@${id}] has no entry ([@${id}]: …).`]); });
+      const fm = line.match(/^(```+|~~~+)/);
+      if (scanFence) { if (fm && fm[1][0] === scanFence[0] && fm[1].length >= scanFence.length) scanFence = null; return; }
+      if (fm) { scanFence = fm[1]; return; }
+      const scan = line.replace(/`+[^`]*`+/g, m => " ".repeat(m.length));
+      scan.replace(/\[\^([^\]\s]+)\](?!:)/g, (m, id) => { if (!defs.has(id)) warns.push([i + 1, `Footnote [^${id}] has no definition line ([^${id}]: …).`]); });
+      scan.replace(/\[@([^\]\s,]+)(?:,[^\]]*)?\](?!:)/g, (m, id) => { if (!cites.has(id)) warns.push([i + 1, `Citation [@${id}] has no entry ([@${id}]: …).`]); });
+      // A face this machine lacks prints correctly from Word and falls back everywhere else.
+      scan.replace(/\bfont=(?:"([^"]+)"|([^\s"\]}]+))/g, (m, quoted, bare) => {
+        const fam = quoted || bare;
+        if (!fontInstalled(fam)) warns.push([i + 1, `${fam} is not installed on this device — the preview and the printed PDF fall back to a lookalike. The Word file still names ${fam}, so it prints correctly wherever the font exists.`]);
+      });
     });
     return warns;
   }
   function refreshLint() {
     const warns = lintSource(state.source);
+    /* The document-wide faces live in settings, not in the source, so they are checked
+       here rather than in lintSource — same failure, same wording. */
+    for (const k of ["fontHead", "fontBody"]) {
+      const v = state.settings[k];
+      if (typeof v !== "string" || !v.startsWith("sys:")) continue;
+      const fam = v.slice(4);
+      if (!fontInstalled(fam)) warns.push([1, `${fam} (${k === "fontHead" ? "heading" : "body"} typeface) is not installed on this device — the preview and the printed PDF fall back to a lookalike. The Word file still names ${fam}, so it prints correctly wherever the font exists.`]);
+    }
     const badge = $("#lintBadge"), panel = $("#lintPanel");
     badge.hidden = !warns.length;
     badge.textContent = warns.length === 1 ? "1 warning" : warns.length + " warnings";
