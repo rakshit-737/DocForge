@@ -1,0 +1,3 @@
+# Golden corpus documents are byte-exact test input — never rewrite their line endings.
+qa/golden/corpus/*.md text eol=lf
+qa/torture.md text eol=lf

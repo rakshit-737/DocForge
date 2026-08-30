@@ -50,7 +50,7 @@ export const CASES = [
   { id: "long-mixed", doc: "corpus/14-long-mixed.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: true, header: true, pageNums: true }) },
   { id: "edge-minimal", doc: "corpus/16-edge-minimal.md", settings: s({ theme: "minimal", page: "A4", margins: "normal", cover: false }) },
   { id: "adversarial", doc: "corpus/17-adversarial.md", settings: s({ theme: "modern", page: "A4", margins: "normal", cover: false, pageNums: true }) },
-  { id: "cover-frontmatter", doc: "corpus/18-cover-frontmatter.md", settings: s({ theme: "executive", accent: "#1f3a5f", page: "A4", margins: "normal", cover: true, header: true, pageNums: true, title: "The Cover Exercise", subtitle: "Front-matter fields, all of them", kicker: "Confidential draft", metaExtra: "Course 42 — Winter term" }) },
+  { id: "cover-frontmatter", doc: "corpus/18-cover-frontmatter.md", settings: s({ theme: "executive", accent: "#1f3a5f", page: "A4", margins: "normal", cover: true, header: true, pageNums: true, title: "The Cover Exercise", subtitle: "Front-matter fields, all of them", kicker: "Confidential draft", metaExtra: "Course 42 — Winter term", date: "2025-03-31" }) },
 
   // ---- typography knobs: base size and line spacing off the defaults ----
   { id: "type-large-loose", doc: "corpus/01-inline-marks.md", settings: s({ theme: "executive", page: "A4", margins: "normal", baseSize: "12", lineSpacing: "1.5", cover: false, pageNums: true }) },

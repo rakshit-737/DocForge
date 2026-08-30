@@ -65,6 +65,9 @@ function normaliseDocx(members) {
 async function openApp(browser, distUrl) {
   const ctx = await browser.newContext({ viewport: { width: 1560, height: 980 }, acceptDownloads: true });
   const page = await ctx.newPage();
+  // Under full parallel load the machine starves rAF/goto; generous timeouts, not flakes.
+  page.setDefaultTimeout(90000);
+  page.setDefaultNavigationTimeout(120000);
   const errors = [];
   page.on("pageerror", e => errors.push("PAGEERROR: " + String(e).slice(0, 300)));
   page.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 300)); });
@@ -72,20 +75,21 @@ async function openApp(browser, distUrl) {
   await page.goto(distUrl);
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem("docforge.helped", "1"); });
   await page.reload();
-  await page.waitForSelector(".pagedjs_page", { timeout: 60000 });
+  await page.waitForSelector(".pagedjs_page", { timeout: 90000 });
   return page;
 }
 
-async function runCase(b, distUrl, outDir, c, scale) {
-  const t0 = Date.now();
+async function captureOnce(b, distUrl, outDir, c, scale) {
   const dir = join(outDir, c.id);
+  rmSync(dir, { recursive: true, force: true });
   mkdirSync(join(dir, "preview"), { recursive: true });
   mkdirSync(join(dir, "docx"), { recursive: true });
 
   const entry = { doc: c.doc, settings: c.settings, preview: {}, pdf: {}, docx: { members: {}, binaries: {} }, errors: [], failed: null };
+  let page;
   try {
     const source = readFileSync(resolve(HERE, c.doc), "utf8");
-    const page = await openApp(b, distUrl);
+    page = await openApp(b, distUrl);
     await applyDoc(page, { source, settings: c.settings });
 
     // (a) rendered preview pages
@@ -128,9 +132,23 @@ async function runCase(b, distUrl, outDir, c, scale) {
     }
 
     entry.errors = page.__errors.filter(e => !/favicon/i.test(e));
-    await page.context().close();
-  } catch (e) {
-    entry.failed = String(e).slice(0, 500);
+  } finally {
+    if (page) await page.context().close().catch(() => {});
+  }
+  return entry;
+}
+
+async function runCase(b, distUrl, outDir, c, scale) {
+  const t0 = Date.now();
+  let entry;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      entry = await captureOnce(b, distUrl, outDir, c, scale);
+      break;
+    } catch (e) {
+      if (attempt < 2) { console.log(`  retry ${c.id} — ${String(e).split("\n")[0].slice(0, 160)}`); continue; }
+      entry = { doc: c.doc, settings: c.settings, preview: {}, pdf: {}, docx: { members: {}, binaries: {} }, errors: [], failed: String(e).slice(0, 500) };
+    }
   }
   const secs = ((Date.now() - t0) / 1000).toFixed(1);
   console.log(`  ${entry.failed ? "FAIL" : "ok  "} ${c.id}  (${entry.preview?.pages ?? "?"}p preview, ${entry.pdf?.pages ?? "?"}p pdf, ${secs}s)${entry.failed ? " — " + entry.failed : ""}`);
@@ -148,7 +166,7 @@ export async function capture(distPath, outDir, { only = null, scale = 2, browse
   const b = browser || (await launch());
   const manifest = { app: appSha, scale, cases: {} };
   const queue = CASES.filter(c => !only || only.includes(c.id));
-  const J = jobs || Math.max(1, Math.min(4, os.cpus().length - 1));
+  const J = jobs || Math.max(1, Math.min(3, os.cpus().length - 2));
   console.log(`  ${queue.length} case(s), ${J} at a time`);
 
   try {

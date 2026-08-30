@@ -48,7 +48,7 @@ export async function rasterise(pdfPath, outDir, { scale = 2, maxPages = 40, bro
 
   try {
     await page.goto(`http://127.0.0.1:${port}/__harness`);
-    await page.waitForFunction(() => window.__ready === true, null, { timeout: 20000 });
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 60000 });
 
     const result = await page.evaluate(
       async ({ bytes, scale, maxPages }) => {
@@ -94,7 +94,7 @@ export async function pdfText(pdfPath, { browser } = {}) {
   const page = await (await b.newContext()).newPage();
   try {
     await page.goto(`http://127.0.0.1:${port}/__harness`);
-    await page.waitForFunction(() => window.__ready === true, null, { timeout: 20000 });
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 60000 });
     return await page.evaluate(async bytes => {
       const doc = await window.pdfjs.getDocument({ data: new Uint8Array(bytes) }).promise;
       const pages = [];
