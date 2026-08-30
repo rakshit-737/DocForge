@@ -21,6 +21,12 @@ real UI (headless Chromium), and compares:
 - **docx** — exported archive unzipped; XML members normalised and hashed, embedded-font
   binaries hashed raw, `docProps/` skipped (timestamps)
 
+A case marked `postBaseline: true` in the matrix exercises markup the baseline edition
+does not have — `:::banner` is the first — so the baseline prints it as literal text and
+the difference is the feature, not a regression. Those cases are captured on both sides
+and compared on neither by this gate; `--compare before after` below still covers them in
+full, which is where a change to the new construct has to be checked.
+
 Pass = identical hashes, or PNGs within 0.1% differing pixels (anti-aliasing tolerance).
 Failures get a magenta diff mask in `qa/out/golden/diff/` for review. The baseline is never
 stored in git — it is the tag itself, rebuilt fresh, so both sides rasterise on the same

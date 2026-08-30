@@ -16,6 +16,7 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { capture } from "./capture.mjs";
 import { compare } from "./compare.mjs";
+import { CASES } from "./matrix.mjs";
 import { launch } from "../_browser.mjs";
 
 const argv = process.argv.slice(2);
@@ -52,7 +53,11 @@ if (arg("against", null)) {
     } finally {
       await browser.close();
     }
-    ok = compare(join(OUT, "baseline"), join(OUT, "current"), { reportDir: join(OUT, "diff") }).ok;
+    /* Cases the baseline edition cannot render — they exercise markup added after the
+       tag, so the baseline prints it as literal text. Captured on both sides, compared
+       on neither; `--compare before after` still covers them fully. */
+    const exempt = CASES.filter(c => c.postBaseline).map(c => c.id);
+    ok = compare(join(OUT, "baseline"), join(OUT, "current"), { reportDir: join(OUT, "diff"), exempt }).ok;
   } finally {
     try { sh(`git worktree remove --force "${wt}"`); } catch { rmSync(wt, { recursive: true, force: true }); }
   }
