@@ -96,10 +96,10 @@ function fullSettings(partial: Settings): Settings {
 const cases = (CASES as GoldenCase[]).map((c) => ({ ...c, settings: fullSettings(c.settings) }));
 
 /* happy-dom rewrites import.meta.url off the file: scheme, so locate the repo
-   root by walking up from cwd until src/js/engine.js appears. */
+   root by walking up from cwd until qa/golden/matrix.mjs appears. */
 function repoRoot(): string {
   let d = process.cwd();
-  while (!existsSync(join(d, "src", "js", "engine.js"))) {
+  while (!existsSync(join(d, "qa", "golden", "matrix.mjs"))) {
     const up = dirname(d);
     if (up === d) throw new Error("repo root not found from " + process.cwd());
     d = up;
@@ -109,7 +109,13 @@ function repoRoot(): string {
 const ROOT = repoRoot();
 
 function loadClassic(): ClassicEngine {
-  const src = readFileSync(join(ROOT, "src", "js", "engine.js"), "utf8");
+  /* The classic source retired from src/js once the Phase-1 gate passed; this
+     frozen copy (its last state, banner included) keeps the byte-parity suite
+     guarding every future engine refactor against drift from classic. */
+  const src = readFileSync(
+    join(ROOT, "packages", "engine", "test", "fixtures", "classic-engine.js"),
+    "utf8"
+  );
   // A fresh Marked instance so the classic side's marked.use() calls cannot
   // stack onto the npm singleton the package configured. document / window /
   // NodeFilter resolve from this happy-dom environment for both sides.
