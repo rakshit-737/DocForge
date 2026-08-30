@@ -3,7 +3,7 @@
    Entries are STORED (method 0) so these DOMParser-dependent tests never
    depend on happy-dom's Blob/stream plumbing; deflate is covered by the
    node-environment zip tests. */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { FileImport } from "../src/index.js";
 import { buildZip } from "./_build-zip.js";
 
@@ -46,8 +46,7 @@ const sheet1 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 const sheet2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData/></worksheet>`;
 
-const DATA_TABLE =
-  "| Name | Score |  |\n| --- | --- | --- |\n| Bob |  | 42 |\n| TRUE | FALSE |  |";
+const DATA_TABLE = "| Name | Score |  |\n| --- | --- | --- |\n| Bob |  | 42 |\n| TRUE | FALSE |  |";
 
 describe("xlsx", () => {
   it("converts sheets to headed tables (shared/inline strings, booleans, sparse cells)", async () => {
@@ -156,17 +155,24 @@ describe("pptx", () => {
     const md = await FileImport.pptx(zip);
     expect(md).toBe(
       "# Quarterly Review\n\n" +
-      "- Revenue up\n  - EMEA strongest\n\n" +
-      "Free text box\n\n" +
-      "| Region | Sales |\n| --- | --- |\n| EMEA | 10 |\n\n" +
-      ":::note Speaker notes\nRemember the demo\n:::\n\n" + // bare "1" (a page number) stripped
-      "# Slide 2\n\nJust text"); // no title placeholder -> numbered fallback
+        "- Revenue up\n  - EMEA strongest\n\n" +
+        "Free text box\n\n" +
+        "| Region | Sales |\n| --- | --- |\n| EMEA | 10 |\n\n" +
+        ":::note Speaker notes\nRemember the demo\n:::\n\n" + // bare "1" (a page number) stripped
+        "# Slide 2\n\nJust text",
+    ); // no title placeholder -> numbered fallback
   });
 
   it("throws on a deck without slides", async () => {
     const zip = buildZip([
-      { name: "ppt/presentation.xml", data: `<p:presentation xmlns:p="${P}" xmlns:r="${R}"><p:sldIdLst/></p:presentation>` },
-      { name: "ppt/_rels/presentation.xml.rels", data: `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>` },
+      {
+        name: "ppt/presentation.xml",
+        data: `<p:presentation xmlns:p="${P}" xmlns:r="${R}"><p:sldIdLst/></p:presentation>`,
+      },
+      {
+        name: "ppt/_rels/presentation.xml.rels",
+        data: `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`,
+      },
     ]);
     await expect(FileImport.pptx(zip)).rejects.toThrow("No slides in that deck");
   });
@@ -202,10 +208,13 @@ describe("epub", () => {
       { name: "OEBPS/content.opf", data: contentOpf },
       { name: "OEBPS/ch1.xhtml", data: "<html><body><p>One</p></body></html>" },
       { name: "OEBPS/sub dir/ch2.xhtml", data: "<p>Two</p>" }, // href was URL-encoded
-      { name: "OEBPS/ch3.xhtml", data: "<p>   </p>" },         // converts to blank -> skipped
+      { name: "OEBPS/ch3.xhtml", data: "<p>   </p>" }, // converts to blank -> skipped
     ]);
     const calls: string[] = [];
-    const htmlToMd = (html: string) => { calls.push(html); return html.replace(/<[^>]+>/g, ""); };
+    const htmlToMd = (html: string) => {
+      calls.push(html);
+      return html.replace(/<[^>]+>/g, "");
+    };
     const md = await FileImport.epub(zip, htmlToMd);
     expect(md).toBe("Two\n\n[pagebreak]\n\nOne");
     expect(calls).toHaveLength(3); // ch2, ch1, ch3 — the dangling idref never reaches the converter
@@ -215,16 +224,22 @@ describe("epub", () => {
 
   it("throws without a rootfile", async () => {
     const zip = buildZip([
-      { name: "META-INF/container.xml", data: `<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles/></container>` },
+      {
+        name: "META-INF/container.xml",
+        data: `<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles/></container>`,
+      },
     ]);
-    await expect(FileImport.epub(zip, h => h)).rejects.toThrow("Not an EPUB (no rootfile)");
+    await expect(FileImport.epub(zip, (h) => h)).rejects.toThrow("Not an EPUB (no rootfile)");
   });
 
   it("throws on an empty spine", async () => {
     const zip = buildZip([
       { name: "META-INF/container.xml", data: containerXml },
-      { name: "OEBPS/content.opf", data: `<package xmlns="http://www.idpf.org/2007/opf"><manifest/><spine/></package>` },
+      {
+        name: "OEBPS/content.opf",
+        data: `<package xmlns="http://www.idpf.org/2007/opf"><manifest/><spine/></package>`,
+      },
     ]);
-    await expect(FileImport.epub(zip, h => h)).rejects.toThrow("Empty EPUB spine");
+    await expect(FileImport.epub(zip, (h) => h)).rejects.toThrow("Empty EPUB spine");
   });
 });

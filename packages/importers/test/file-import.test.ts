@@ -1,9 +1,9 @@
 /* Node-environment tests: csv/ipynb need no DOM, and the zip reader gets
    real Blob/Response/DecompressionStream("deflate-raw") from Node itself
    (Node >= 21.2; the repo pins Node 24 LTS). */
-import { describe, it, expect } from "vitest";
-import { FileImport } from "../src/index.js";
+import { describe, expect, it } from "vitest";
 import { _internals } from "../src/file-import.js";
+import { FileImport } from "../src/index.js";
 import { buildZip } from "./_build-zip.js";
 
 describe("csv", () => {
@@ -11,14 +11,26 @@ describe("csv", () => {
     ["comma", "a,b\n1,2", "| a | b |\n| --- | --- |\n| 1 | 2 |"],
     ["semicolon sniffed", "a;b\n1;2", "| a | b |\n| --- | --- |\n| 1 | 2 |"],
     ["tab sniffed", "a\tb\n1\t2", "| a | b |\n| --- | --- |\n| 1 | 2 |"],
-    ["semicolons outnumber commas", "a;b;c,d\n1;2;3,4", "| a | b | c,d |\n| --- | --- | --- |\n| 1 | 2 | 3,4 |"],
+    [
+      "semicolons outnumber commas",
+      "a;b;c,d\n1;2;3,4",
+      "| a | b | c,d |\n| --- | --- | --- |\n| 1 | 2 | 3,4 |",
+    ],
     ["quoted delimiter stays in the cell", '"a,x",b\n1,2', "| a,x | b |\n| --- | --- |\n| 1 | 2 |"],
     ['escaped "" quotes', '"say ""hi""",x', '| say "hi" | x |\n| --- | --- |'],
-    ["CRLF + trailing newline drops the blank record", "a,b\r\n1,2\r\n", "| a | b |\n| --- | --- |\n| 1 | 2 |"],
+    [
+      "CRLF + trailing newline drops the blank record",
+      "a,b\r\n1,2\r\n",
+      "| a | b |\n| --- | --- |\n| 1 | 2 |",
+    ],
     ["BOM stripped", "﻿a,b\n1,2", "| a | b |\n| --- | --- |\n| 1 | 2 |"],
     ["pipes escaped in cells", "a|b,c\n", "| a\\|b | c |\n| --- | --- |"],
     ["no delimiter found falls back to comma", "hello\nworld", "| hello |\n| --- |\n| world |"],
-    ["ragged rows padded to the widest", "a,b,c\n1,2", "| a | b | c |\n| --- | --- | --- |\n| 1 | 2 |  |"],
+    [
+      "ragged rows padded to the widest",
+      "a,b,c\n1,2",
+      "| a | b | c |\n| --- | --- | --- |\n| 1 | 2 |  |",
+    ],
     ["inner whitespace collapsed", "a  b,c", "| a b | c |\n| --- | --- |"],
   ];
   it.each(cases)("%s", (_name, input, expected) => {
@@ -45,8 +57,9 @@ describe("mdTable / mdCell (internal)", () => {
     expect(_internals.mdTable([])).toBe("");
   });
   it("pads, escapes pipes and collapses whitespace", () => {
-    expect(_internals.mdTable([["x|y", "  spaced  out "], ["1"]]))
-      .toBe("| x\\|y | spaced out |\n| --- | --- |\n| 1 |  |");
+    expect(_internals.mdTable([["x|y", "  spaced  out "], ["1"]])).toBe(
+      "| x\\|y | spaced out |\n| --- | --- |\n| 1 |  |",
+    );
   });
   it("stringifies null-ish cells to empty", () => {
     expect(_internals.mdCell(null)).toBe("");
@@ -57,7 +70,14 @@ describe("mdTable / mdCell (internal)", () => {
 
 describe("colIndex (internal)", () => {
   const cases: [ref: string | null, idx: number][] = [
-    ["A1", 0], ["B7", 1], ["Z9", 25], ["AA10", 26], ["AB1", 27], ["9", -1], [null, -1], ["", -1],
+    ["A1", 0],
+    ["B7", 1],
+    ["Z9", 25],
+    ["AA10", 26],
+    ["AB1", 27],
+    ["9", -1],
+    [null, -1],
+    ["", -1],
   ];
   it.each(cases)("%s -> %s", (ref, idx) => {
     expect(_internals.colIndex(ref)).toBe(idx);
@@ -126,7 +146,8 @@ describe("ipynb", () => {
       ],
     });
     expect(FileImport.ipynb(nb)).toBe(
-      "# Title\n\n```python\nprint(1)\n```\n\n```python\na\nb\n```");
+      "# Title\n\n```python\nprint(1)\n```\n\n```python\na\nb\n```",
+    );
   });
 
   it("falls back to language_info.name", () => {
@@ -144,7 +165,8 @@ describe("ipynb", () => {
 
   it("throws on an empty notebook", () => {
     expect(() => FileImport.ipynb("{}")).toThrow("Empty notebook");
-    expect(() => FileImport.ipynb(JSON.stringify({ cells: [{ cell_type: "code", source: " " }] })))
-      .toThrow("Empty notebook");
+    expect(() =>
+      FileImport.ipynb(JSON.stringify({ cells: [{ cell_type: "code", source: " " }] })),
+    ).toThrow("Empty notebook");
   });
 });

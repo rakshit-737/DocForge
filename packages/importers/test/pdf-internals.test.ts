@@ -2,14 +2,32 @@
    additive _internals export — nothing was extracted or changed to test this.
    The pdf.js-dependent flow (toMarkdown / ensureLib) is integration-proved by
    qa/import-smoke.mjs + qa/convert-smoke.mjs at rewire time. */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { _internals, type Line, type PageRec } from "../src/pdf-import.js";
 
-const L = (text: string, x: number, y: number, size = 10, o: Partial<Line> = {}): Line =>
-  ({ text, x, y, size, bold: false, split: false, ...o });
+const L = (text: string, x: number, y: number, size = 10, o: Partial<Line> = {}): Line => ({
+  text,
+  x,
+  y,
+  size,
+  bold: false,
+  split: false,
+  ...o,
+});
 
-const item = (str: string, x: number, y: number, size = 12, extra: Partial<PdfjsTextItem> = {}): PdfjsTextItem =>
-  ({ str, transform: [size, 0, 0, size, x, y], width: 30, fontName: "f1", ...extra });
+const item = (
+  str: string,
+  x: number,
+  y: number,
+  size = 12,
+  extra: Partial<PdfjsTextItem> = {},
+): PdfjsTextItem => ({
+  str,
+  transform: [size, 0, 0, size, x, y],
+  width: 30,
+  fontName: "f1",
+  ...extra,
+});
 
 describe("joinWrapped", () => {
   it.each([
@@ -65,35 +83,42 @@ describe("escProse", () => {
 
 describe("emitList (bullet-indent recovery output)", () => {
   it("flat bullets", () => {
-    expect(_internals.emitList([
-      { t: "li", ordered: false, x: 100, text: "one" },
-      { t: "li", ordered: false, x: 100, text: "two" },
-    ])).toBe("- one\n- two");
+    expect(
+      _internals.emitList([
+        { t: "li", ordered: false, x: 100, text: "one" },
+        { t: "li", ordered: false, x: 100, text: "two" },
+      ]),
+    ).toBe("- one\n- two");
   });
   it("indent >= 18pt nests one level", () => {
-    expect(_internals.emitList([
-      { t: "li", ordered: false, x: 100, text: "one" },
-      { t: "li", ordered: false, x: 120, text: "sub" },
-      { t: "li", ordered: false, x: 117, text: "not deep enough" },
-    ])).toBe("- one\n  - sub\n- not deep enough");
+    expect(
+      _internals.emitList([
+        { t: "li", ordered: false, x: 100, text: "one" },
+        { t: "li", ordered: false, x: 120, text: "sub" },
+        { t: "li", ordered: false, x: 117, text: "not deep enough" },
+      ]),
+    ).toBe("- one\n  - sub\n- not deep enough");
   });
   it("ordered lists count, nested counters reset per group", () => {
-    expect(_internals.emitList([
-      { t: "li", ordered: true, x: 100, text: "a" },
-      { t: "li", ordered: true, x: 120, text: "s1" },
-      { t: "li", ordered: true, x: 120, text: "s2" },
-      { t: "li", ordered: true, x: 100, text: "b" },
-    ])).toBe("1. a\n  1. s1\n  2. s2\n2. b");
+    expect(
+      _internals.emitList([
+        { t: "li", ordered: true, x: 100, text: "a" },
+        { t: "li", ordered: true, x: 120, text: "s1" },
+        { t: "li", ordered: true, x: 120, text: "s2" },
+        { t: "li", ordered: true, x: 100, text: "b" },
+      ]),
+    ).toBe("1. a\n  1. s1\n  2. s2\n2. b");
   });
   it("mixed markers keep separate counters", () => {
-    expect(_internals.emitList([
-      { t: "li", ordered: false, x: 100, text: "one" },
-      { t: "li", ordered: true, x: 100, text: "first" },
-    ])).toBe("- one\n1. first");
+    expect(
+      _internals.emitList([
+        { t: "li", ordered: false, x: 100, text: "one" },
+        { t: "li", ordered: true, x: 100, text: "first" },
+      ]),
+    ).toBe("- one\n1. first");
   });
   it("escapes prose inside items", () => {
-    expect(_internals.emitList([{ t: "li", ordered: false, x: 100, text: "a|b" }]))
-      .toBe("- a\\|b");
+    expect(_internals.emitList([{ t: "li", ordered: false, x: 100, text: "a|b" }])).toBe("- a\\|b");
   });
 });
 
@@ -115,7 +140,10 @@ describe("marker regexes", () => {
 describe("buildLines (line grouping)", () => {
   it("inserts a space across a word gap and merges a baseline", () => {
     const lines = _internals.buildLines(
-      { items: [item("Hello", 50, 700), item("world", 84, 700)], styles: {} }, 612, new Map());
+      { items: [item("Hello", 50, 700), item("world", 84, 700)], styles: {} },
+      612,
+      new Map(),
+    );
     expect(lines).toEqual([
       { text: "Hello world", x: 50, y: 700, size: 12, bold: false, split: false },
     ]);
@@ -123,62 +151,97 @@ describe("buildLines (line grouping)", () => {
 
   it("joins tightly-kerned runs without a space", () => {
     const lines = _internals.buildLines(
-      { items: [item("Hel", 50, 700), item("lo", 82, 700)], styles: {} }, 612, new Map());
+      { items: [item("Hel", 50, 700), item("lo", 82, 700)], styles: {} },
+      612,
+      new Map(),
+    );
     expect(lines[0]!.text).toBe("Hello");
   });
 
   it("splits a baseline at a huge x-gap and flags the pieces", () => {
     const lines = _internals.buildLines(
-      { items: [item("left", 50, 700), item("right", 400, 700)], styles: {} }, 612, new Map());
-    expect(lines.map(l => [l.text, l.split])).toEqual([["left", true], ["right", true]]);
+      { items: [item("left", 50, 700), item("right", 400, 700)], styles: {} },
+      612,
+      new Map(),
+    );
+    expect(lines.map((l) => [l.text, l.split])).toEqual([
+      ["left", true],
+      ["right", true],
+    ]);
   });
 
   it("separates distinct baselines top-down", () => {
     const lines = _internals.buildLines(
-      { items: [item("lower", 50, 690), item("upper", 50, 700)], styles: {} }, 612, new Map());
-    expect(lines.map(l => l.text)).toEqual(["upper", "lower"]);
+      { items: [item("lower", 50, 690), item("upper", 50, 700)], styles: {} },
+      612,
+      new Map(),
+    );
+    expect(lines.map((l) => l.text)).toEqual(["upper", "lower"]);
   });
 
   it("clusters near-identical baselines (within ~a third of the size)", () => {
     const lines = _internals.buildLines(
-      { items: [item("a", 50, 700), item("b", 84, 697)], styles: {} }, 612, new Map());
+      { items: [item("a", 50, 700), item("b", 84, 697)], styles: {} },
+      612,
+      new Map(),
+    );
     expect(lines).toHaveLength(1);
   });
 
   it("detects bold through the boldMap's real font name", () => {
     const boldMap = new Map([["g7", "ABCDEF+Calibri-Bold"]]);
     const lines = _internals.buildLines(
-      { items: [item("Bold", 50, 700, 12, { fontName: "g7" })], styles: {} }, 612, boldMap);
+      { items: [item("Bold", 50, 700, 12, { fontName: "g7" })], styles: {} },
+      612,
+      boldMap,
+    );
     expect(lines[0]!.bold).toBe(true);
   });
 
   it("falls back to the styles map, which rarely says bold", () => {
     const lines = _internals.buildLines(
-      { items: [item("Plain", 50, 700, 12, { fontName: "g8" })], styles: { g8: { fontFamily: "sans-serif" } } },
-      612, new Map());
+      {
+        items: [item("Plain", 50, 700, 12, { fontName: "g8" })],
+        styles: { g8: { fontFamily: "sans-serif" } },
+      },
+      612,
+      new Map(),
+    );
     expect(lines[0]!.bold).toBe(false);
   });
 
   it("skips whitespace-only runs", () => {
     const lines = _internals.buildLines(
-      { items: [item("   ", 50, 700)], styles: {} }, 612, new Map());
+      { items: [item("   ", 50, 700)], styles: {} },
+      612,
+      new Map(),
+    );
     expect(lines).toEqual([]);
   });
 
   it("derives size rotation-proof from the transform", () => {
     const lines = _internals.buildLines(
-      { items: [{ str: "rotated", transform: [0, 12, -12, 0, 50, 700], width: 30, fontName: "f1" }], styles: {} },
-      612, new Map());
+      {
+        items: [{ str: "rotated", transform: [0, 12, -12, 0, 50, 700], width: 30, fontName: "f1" }],
+        styles: {},
+      },
+      612,
+      new Map(),
+    );
     expect(lines[0]!.size).toBe(12);
   });
 });
 
 describe("bodySize", () => {
   it("is the text-length-weighted mode of sizes", () => {
-    const pages: PageRec[] = [{
-      n: 1, width: 612, height: 792,
-      lines: [L("x".repeat(50), 50, 700, 10), L("Big Heading", 50, 680, 18)],
-    }];
+    const pages: PageRec[] = [
+      {
+        n: 1,
+        width: 612,
+        height: 792,
+        lines: [L("x".repeat(50), 50, 700, 10), L("Big Heading", 50, 680, 18)],
+      },
+    ];
     expect(_internals.bodySize(pages)).toBe(10);
   });
   it("defaults to 12 with no lines", () => {
@@ -188,7 +251,9 @@ describe("bodySize", () => {
 
 describe("stripFurniture", () => {
   const page = (n: number): PageRec => ({
-    n, width: 612, height: 792,
+    n,
+    width: 612,
+    height: 792,
     lines: [
       L(`Acme Corp ${2020 + n}`, 50, 780),
       L(`Body content ${n}`, 50, 400),
@@ -200,7 +265,7 @@ describe("stripFurniture", () => {
     const pages = [page(1), page(2), page(3), page(4)];
     expect(_internals.stripFurniture(pages)).toBe(true);
     for (const p of pages) {
-      expect(p.lines.map(l => l.text)).toEqual([`Body content ${p.n}`]);
+      expect(p.lines.map((l) => l.text)).toEqual([`Body content ${p.n}`]);
     }
   });
 
@@ -208,7 +273,10 @@ describe("stripFurniture", () => {
     const pages = [page(1), page(2)];
     expect(_internals.stripFurniture(pages)).toBe(true); // page numbers still go
     for (const p of pages) {
-      expect(p.lines.map(l => l.text)).toEqual([`Acme Corp ${2020 + p.n}`, `Body content ${p.n}`]);
+      expect(p.lines.map((l) => l.text)).toEqual([
+        `Acme Corp ${2020 + p.n}`,
+        `Body content ${p.n}`,
+      ]);
     }
   });
 
@@ -225,21 +293,36 @@ describe("splitColumns", () => {
     const p: PageRec = { n: 1, width: 600, height: 792, lines: [...left, ...right] };
     const res = _internals.splitColumns(p);
     expect(res.multi).toBe(true);
-    expect(res.groups.map(g => g.map(l => l.text))).toEqual([
-      ["l1", "l2", "l3", "l4"], ["r1", "r2", "r3", "r4"],
+    expect(res.groups.map((g) => g.map((l) => l.text))).toEqual([
+      ["l1", "l2", "l3", "l4"],
+      ["r1", "r2", "r3", "r4"],
     ]);
   });
 
   it("leaves single-column pages alone", () => {
     const p: PageRec = {
-      n: 1, width: 600, height: 792,
-      lines: [L("a", 40, 700), L("b", 40, 680), L("c", 40, 660), L("d", 40, 640), L("e", 40, 620), L("f", 40, 600)],
+      n: 1,
+      width: 600,
+      height: 792,
+      lines: [
+        L("a", 40, 700),
+        L("b", 40, 680),
+        L("c", 40, 660),
+        L("d", 40, 640),
+        L("e", 40, 620),
+        L("f", 40, 600),
+      ],
     };
     expect(_internals.splitColumns(p).multi).toBe(false);
   });
 
   it("never splits short pages (< 6 lines)", () => {
-    const p: PageRec = { n: 1, width: 600, height: 792, lines: [L("a", 40, 700), L("b", 320, 700)] };
+    const p: PageRec = {
+      n: 1,
+      width: 600,
+      height: 792,
+      lines: [L("a", 40, 700), L("b", 320, 700)],
+    };
     const res = _internals.splitColumns(p);
     expect(res.multi).toBe(false);
     expect(res.groups).toHaveLength(1);
@@ -317,10 +400,7 @@ describe("groupBlocks", () => {
   });
 
   it("appends a wrapped tail to the list item above", () => {
-    const lines = [
-      L("• a bullet that", 50, 700),
-      L("wraps onward", 58, 685),
-    ];
+    const lines = [L("• a bullet that", 50, 700), L("wraps onward", 58, 685)];
     expect(_internals.groupBlocks(lines, body)).toEqual([
       { t: "li", ordered: false, x: 50, text: "a bullet that wraps onward" },
     ]);

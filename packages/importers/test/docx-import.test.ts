@@ -3,7 +3,7 @@
    window (the classic build's fast path: window.mammoth short-circuits the
    bundle load). The real Blob-URL bundle load is integration-proved by
    qa/import-smoke.mjs at rewire time — node/vitest cannot import blob: URLs. */
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { DocxImport } from "../src/index.js";
 
 const buf = new ArrayBuffer(4);
@@ -33,9 +33,11 @@ describe("cleanup via toHtml", () => {
   });
 
   it("unwraps internal and href-less anchors, keeps external links", async () => {
-    stub('<p><a href="#bm">see section</a> for details</p>' +
-         '<p><a>no href</a></p>' +
-         '<p><a href="https://example.com">external</a></p>');
+    stub(
+      '<p><a href="#bm">see section</a> for details</p>' +
+        "<p><a>no href</a></p>" +
+        '<p><a href="https://example.com">external</a></p>',
+    );
     const { html } = await DocxImport.toHtml(buf);
     expect(html).toContain("see section for details");
     expect(html).not.toContain("#bm");
@@ -70,12 +72,17 @@ describe("tidyMessages via toHtml", () => {
       { message: "Something else" },
     ]);
     const { messages } = await DocxImport.toHtml(buf);
-    expect(messages).toEqual(["An unrecognised paragraph style was ignored: Fancy", "Something else"]);
+    expect(messages).toEqual([
+      "An unrecognised paragraph style was ignored: Fancy",
+      "Something else",
+    ]);
   });
 
   it("dedupes and caps at 8", async () => {
     stub("<p>x</p>", [
-      { message: "dup" }, { message: "dup" }, { message: "dup" },
+      { message: "dup" },
+      { message: "dup" },
+      { message: "dup" },
       ...Array.from({ length: 12 }, (_, i) => ({ message: "warn " + i })),
     ]);
     const { messages } = await DocxImport.toHtml(buf);
@@ -104,9 +111,14 @@ describe("mammoth wiring", () => {
     expect(seen.options.styleMap).toContain("highlight => mark");
 
     // the image callback builds a data: URI from the read base64
-    const handler = seen.options.convertImage.handler as
-      (img: MammothImage) => Promise<{ src: string; alt: string }>;
-    const out = await handler({ contentType: "image/png", altText: "chart", read: async () => "AAA" });
+    const handler = seen.options.convertImage.handler as (
+      img: MammothImage,
+    ) => Promise<{ src: string; alt: string }>;
+    const out = await handler({
+      contentType: "image/png",
+      altText: "chart",
+      read: async () => "AAA",
+    });
     expect(out).toEqual({ src: "data:image/png;base64,AAA", alt: "chart" });
   });
 
@@ -126,16 +138,21 @@ describe("mammoth wiring", () => {
   it("wraps converter failures in the honest .doc hint, keeping the cause", async () => {
     const orig = new Error("boom");
     window.mammoth = {
-      convertToHtml: async () => { throw orig; },
+      convertToHtml: async () => {
+        throw orig;
+      },
     } as unknown as MammothLib;
     const p = DocxImport.toHtml(buf);
     await expect(p).rejects.toThrow(
-      "Could not read that Word file — if it is an old binary .doc, save it as .docx first.");
-    const err = await p.catch(e => e);
+      "Could not read that Word file — if it is an old binary .doc, save it as .docx first.",
+    );
+    const err = await p.catch((e) => e);
     expect((err as { cause?: unknown }).cause).toBe(orig);
   });
 
   it("reports an unbundled build honestly", async () => {
-    await expect(DocxImport.toHtml(buf)).rejects.toThrow("Word import is not bundled in this build");
+    await expect(DocxImport.toHtml(buf)).rejects.toThrow(
+      "Word import is not bundled in this build",
+    );
   });
 });

@@ -6,15 +6,16 @@
    reads, and __FONT_DATA__ is a tiny fake so the font-embedding
    path (including the DocxFonts regroup rewrite) runs for real.
    ============================================================ */
-import { describe, it, expect, beforeAll } from "vitest";
+
 import { Buffer } from "node:buffer";
 import * as docxLib from "docx";
 import { convertMillimetersToTwip } from "docx";
 import katex from "katex";
-import { EngineFixture } from "./engine-fixture.js";
-import { readZip } from "./_zip.js";
-import { build } from "../src/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { DocxSettings } from "../src/index.js";
+import { build } from "../src/index.js";
+import { readZip } from "./_zip.js";
+import { EngineFixture } from "./engine-fixture.js";
 
 /* ---- install the globals the classic build provides ---- */
 const fakeCut = (seed: number): string => {
@@ -32,7 +33,7 @@ const FONT_DATA: Record<string, string> = {
 };
 
 (globalThis as any).Engine = EngineFixture;
-(globalThis as any).katex = katex;    // MathmlOmml reads the katex global
+(globalThis as any).katex = katex; // MathmlOmml reads the katex global
 (globalThis as any).docx = docxLib;
 (globalThis as any).__FONT_DATA__ = FONT_DATA;
 if (typeof window !== "undefined") {
@@ -84,7 +85,7 @@ const FIXTURE_HTML = [
   '<p>Claim.<span class="footnote" data-fn="1">The note text.</span> More prose.</p>',
   '<table data-cols="120,240">' +
     '<caption><span class="tbl-label">Table 1</span> — Widths</caption>' +
-    '<tbody><tr><th>Head A</th><th>Head B</th></tr>' +
+    "<tbody><tr><th>Head A</th><th>Head B</th></tr>" +
     '<tr><td align="center">a1</td><td>b1</td></tr></tbody></table>',
   '<p>Inline math <span class="math-inline" data-tex="x^2"></span> here.</p>',
   '<div class="math-display" data-tex="\\frac{a}{b}"></div>',
@@ -96,11 +97,15 @@ const FIXTURE_HTML = [
 const T = EngineFixture.tints(SETTINGS.accent);
 const up = (h: string) => h.replace("#", "").toUpperCase();
 
-let docXml = "", stylesXml = "", numXml = "", ftXml = "", fnXml = "";
+let docXml = "",
+  stylesXml = "",
+  numXml = "",
+  ftXml = "",
+  fnXml = "";
 let runChunks: string[] = [];
 
 const runOf = (text: string): string => {
-  const c = runChunks.find(c => c.includes(`>${text}<`));
+  const c = runChunks.find((c) => c.includes(`>${text}<`));
   expect(c, `a run containing "${text}"`).toBeDefined();
   return c!;
 };
@@ -113,7 +118,7 @@ beforeAll(async () => {
   numXml = zip.get("word/numbering.xml")!.toString("utf8");
   ftXml = zip.get("word/fontTable.xml")!.toString("utf8");
   fnXml = (zip.get("word/footnotes.xml") ?? Buffer.alloc(0)).toString("utf8");
-  runChunks = docXml.split("<w:r>").map(c => "<w:r>" + c);
+  runChunks = docXml.split("<w:r>").map((c) => "<w:r>" + c);
 });
 
 describe("headings", () => {
@@ -129,9 +134,14 @@ describe("headings", () => {
   });
   it("H1 carries the accent bottom rule", () => {
     const bottoms = docXml.match(/<w:bottom [^>]*\/>/g) || [];
-    expect(bottoms.some(b =>
-      b.includes('w:sz="8"') && b.includes('w:space="3"') && b.includes(`w:color="${up(T.a600)}"`)
-    )).toBe(true);
+    expect(
+      bottoms.some(
+        (b) =>
+          b.includes('w:sz="8"') &&
+          b.includes('w:space="3"') &&
+          b.includes(`w:color="${up(T.a600)}"`),
+      ),
+    ).toBe(true);
   });
   it("heading styles live in styles.xml with the theme faces", () => {
     expect(stylesXml).toContain('w:styleId="Heading1"');
@@ -151,14 +161,18 @@ describe("ribbon marks", () => {
     ["subscript", "subtxt", ['<w:vertAlign w:val="subscript"/>']],
     ["superscript", "suptxt", ['<w:vertAlign w:val="superscript"/>']],
     ["inline code", "mono()", ['w:ascii="DocForge Mono"', '<w:sz w:val="19"/>', 'w:fill="F0F2F5"']],
-    ["attribute span (colour/bg/size/font/u/sc)", "styledtxt", [
-      '<w:color w:val="CC0000"/>',
-      'w:fill="FFE28A"',
-      '<w:sz w:val="28"/>',
-      'w:ascii="Georgia"',
-      /<w:u [^>]*\/>/,
-      /<w:smallCaps\/>/,
-    ]],
+    [
+      "attribute span (colour/bg/size/font/u/sc)",
+      "styledtxt",
+      [
+        '<w:color w:val="CC0000"/>',
+        'w:fill="FFE28A"',
+        '<w:sz w:val="28"/>',
+        'w:ascii="Georgia"',
+        /<w:u [^>]*\/>/,
+        /<w:smallCaps\/>/,
+      ],
+    ],
     ["attribute span (caps)", "capstxt", [/<w:caps\/>/]],
   ];
   it.each(cases)("%s becomes a real run property", (_label, text, needles) => {
@@ -238,10 +252,15 @@ describe("page borders", () => {
     expect(pgb![0]).toContain('w:offsetFrom="page"');
     expect(pgb![0]).toContain('w:zOrder="front"');
     const tops = docXml.match(/<w:top [^>]*\/>/g) || [];
-    expect(tops.some(b =>
-      b.includes('w:val="single"') && b.includes('w:sz="12"') &&
-      b.includes('w:space="9"') && b.includes('w:color="3C434E"')
-    )).toBe(true);
+    expect(
+      tops.some(
+        (b) =>
+          b.includes('w:val="single"') &&
+          b.includes('w:sz="12"') &&
+          b.includes('w:space="9"') &&
+          b.includes('w:color="3C434E"'),
+      ),
+    ).toBe(true);
   });
 });
 

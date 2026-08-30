@@ -71,3 +71,17 @@ to an IIFE with the same global name the shell consumes today.
 - Unit coverage ≥80% on engine + exporters.
 - `pnpm build` produces a working single-file edition.
 - No `eval(` anywhere in src or packages.
+
+## Gate record (2026-08-30/31)
+
+- **Golden gate GREEN in CI** on the packaged build (`b399e28`, run 33325544392):
+  every matrix case vs `v1-classic`, zero failures. Engine parity additionally
+  proven twice at the byte level: the in-repo `RUN_PARITY=1` suite (71/71) and a
+  real-Chromium harness during the port (68 cases, 724 KB HTML per side).
+- **Coverage**: engine 99.1% stmts · export-docx 99.0% · mathml-omml 91.2%
+  (importers 120 tests, pdf-editor 89 — DOM-heavy flows stay with the qa/ suites).
+- **764 unit tests**, tsc 7 clean, biome clean (rule set annotated for the 1:1 port).
+- **All four `(0,eval)` sites dead** — Blob-URL module imports; grep-verified zero
+  `eval(` in src/ and packages/.
+- Ported `src/js` modules deleted once the CI gate passed; `src/js` now holds only
+  the Phase-2 chrome (`main.js`, `live-edit.js`).

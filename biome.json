@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "includes": ["packages/**", "apps/**"]
+    "includes": ["packages/**", "apps/**", "!**/coverage", "!**/coverage"]
   },
   "formatter": {
     "enabled": true,
@@ -12,7 +12,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useTemplate": "off"
       },
@@ -33,5 +33,27 @@
     "formatter": {
       "quoteStyle": "double"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.d.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/mathml-omml/src/index.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noControlCharactersInRegex": "off"
+          }
+        }
+      }
+    }
+  ]
 }

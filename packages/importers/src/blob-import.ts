@@ -22,10 +22,9 @@
    ============================================================ */
 
 export async function importGlobalScript(src: string, epilogue: string): Promise<void> {
-  const blob = new Blob(
-    ["var self=globalThis,window=globalThis;\n", src, "\n", epilogue],
-    { type: "text/javascript" },
-  );
+  const blob = new Blob(["var self=globalThis,window=globalThis;\n", src, "\n", epilogue], {
+    type: "text/javascript",
+  });
   const url = URL.createObjectURL(blob);
   try {
     await import(/* @vite-ignore */ url);

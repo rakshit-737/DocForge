@@ -17,6 +17,7 @@ declare module "node:buffer" {
 }
 declare module "node:zlib" {
   import { Buffer } from "node:buffer";
+
   const zlib: {
     inflateRawSync(data: Uint8Array): Buffer;
   };

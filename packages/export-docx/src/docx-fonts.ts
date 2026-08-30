@@ -62,7 +62,10 @@ function readEntries(bytes: Uint8Array): ZipEntry[] {
   const d = new DataView(bytes.buffer as ArrayBuffer, bytes.byteOffset, bytes.byteLength);
   let eocd = -1;
   for (let i = bytes.length - 22; i >= 0 && i > bytes.length - 22 - 65536; i--) {
-    if (u32(d, i) === 0x06054b50) { eocd = i; break; }
+    if (u32(d, i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
   }
   if (eocd < 0) throw new Error("not a zip");
   const count = u16(d, eocd + 10);
@@ -71,11 +74,13 @@ function readEntries(bytes: Uint8Array): ZipEntry[] {
   const dec = new TextDecoder();
   for (let i = 0; i < count; i++) {
     if (u32(d, p) !== 0x02014b50) throw new Error("bad central directory");
-    const nameLen = u16(d, p + 28), extraLen = u16(d, p + 30), cmtLen = u16(d, p + 32);
+    const nameLen = u16(d, p + 28),
+      extraLen = u16(d, p + 30),
+      cmtLen = u16(d, p + 32);
     const e = {
       flags: u16(d, p + 8),
       method: u16(d, p + 10),
-      time: u32(d, p + 12),          // modtime+moddate as one dword
+      time: u32(d, p + 12), // modtime+moddate as one dword
       crc: u32(d, p + 16),
       compSize: u32(d, p + 20),
       rawSize: u32(d, p + 24),
@@ -94,12 +99,18 @@ function readEntries(bytes: Uint8Array): ZipEntry[] {
 
 async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array> {
   const ds = new DecompressionStream("deflate-raw");
-  const buf = await new Response(new Blob([bytes] as BlobPart[]).stream().pipeThrough(ds)).arrayBuffer();
+  const buf = await new Response(
+    new Blob([bytes] as BlobPart[]).stream().pipeThrough(ds),
+  ).arrayBuffer();
   return new Uint8Array(buf);
 }
 
 /* Rebuild the archive, swapping in `replacements` (stored, uncompressed). */
-function rebuild(bytes: Uint8Array, entries: ZipEntry[], replacements: Map<string, Uint8Array>): Blob {
+function rebuild(
+  bytes: Uint8Array,
+  entries: ZipEntry[],
+  replacements: Map<string, Uint8Array>,
+): Blob {
   const enc = new TextEncoder();
   const parts: Uint8Array[] = [];
   const central: Uint8Array[] = [];
@@ -111,10 +122,16 @@ function rebuild(bytes: Uint8Array, entries: ZipEntry[], replacements: Map<strin
     let method: number, crc: number, compSize: number, rawSize: number, data: Uint8Array;
 
     if (repl) {
-      method = 0; data = repl;
-      crc = crc32(repl); compSize = repl.length; rawSize = repl.length;
+      method = 0;
+      data = repl;
+      crc = crc32(repl);
+      compSize = repl.length;
+      rawSize = repl.length;
     } else {
-      method = e.method; crc = e.crc; compSize = e.compSize; rawSize = e.rawSize;
+      method = e.method;
+      crc = e.crc;
+      compSize = e.compSize;
+      rawSize = e.rawSize;
       data = bytes.subarray(e.dataOffset, e.dataOffset + e.compSize);
     }
 
@@ -122,7 +139,7 @@ function rebuild(bytes: Uint8Array, entries: ZipEntry[], replacements: Map<strin
     const ld = new DataView(lh.buffer);
     ld.setUint32(0, 0x04034b50, true);
     ld.setUint16(4, 20, true);
-    ld.setUint16(6, 0, true);                 // no data descriptor — sizes are known
+    ld.setUint16(6, 0, true); // no data descriptor — sizes are known
     ld.setUint16(8, method, true);
     ld.setUint32(10, e.time, true);
     ld.setUint32(14, crc, true);
@@ -171,8 +188,10 @@ function rebuild(bytes: Uint8Array, entries: ZipEntry[], replacements: Map<strin
 
 /* ---------- font table ---------- */
 const ROLE_TAG: Record<string, string> = {
-  regular: "w:embedRegular", bold: "w:embedBold",
-  italic: "w:embedItalic", boldItalic: "w:embedBoldItalic",
+  regular: "w:embedRegular",
+  bold: "w:embedBold",
+  italic: "w:embedItalic",
+  boldItalic: "w:embedBoldItalic",
 };
 
 /* Rewrite <w:fonts> so each real family owns the four parts already in the package. */
@@ -187,22 +206,32 @@ function regroup(xml: string, families: EmbedFamily[]): string {
     if (embed) parts[m[1]!] = { id: embed[1]!, key: embed[2]!, sig: sig ? sig[0] : "" };
   }
 
-  const body = families.map(fam => {
-    const embeds = Object.keys(ROLE_TAG)
-      .filter(role => fam.cuts[role] && parts[fam.cuts[role]!])
-      .map(role => {
-        const p = parts[fam.cuts[role]!]!;
-        return `<${ROLE_TAG[role]} r:id="${p.id}" w:fontKey="${p.key}"/>`;
-      }).join("");
-    if (!embeds) return "";
-    const sig = (parts[fam.cuts.regular as string] || ({} as { sig?: string })).sig || "";
-    return `<w:font w:name="${fam.name}">` +
-      `<w:charset w:val="00"/><w:family w:val="${fam.family || "auto"}"/>` +
-      `<w:pitch w:val="${fam.pitch || "variable"}"/>${sig}${embeds}</w:font>`;
-  }).join("");
+  const body = families
+    .map((fam) => {
+      const embeds = Object.keys(ROLE_TAG)
+        .filter((role) => fam.cuts[role] && parts[fam.cuts[role]!])
+        .map((role) => {
+          const p = parts[fam.cuts[role]!]!;
+          return `<${ROLE_TAG[role]} r:id="${p.id}" w:fontKey="${p.key}"/>`;
+        })
+        .join("");
+      if (!embeds) return "";
+      const sig = (parts[fam.cuts.regular as string] || ({} as { sig?: string })).sig || "";
+      return (
+        `<w:font w:name="${fam.name}">` +
+        `<w:charset w:val="00"/><w:family w:val="${fam.family || "auto"}"/>` +
+        `<w:pitch w:val="${fam.pitch || "variable"}"/>${sig}${embeds}</w:font>`
+      );
+    })
+    .join("");
 
   const open = xml.slice(0, xml.indexOf(">", xml.indexOf("<w:fonts")) + 1);
-  return xml.slice(0, xml.indexOf("<w:fonts")) + open.slice(open.indexOf("<w:fonts")) + body + "</w:fonts>";
+  return (
+    xml.slice(0, xml.indexOf("<w:fonts")) +
+    open.slice(open.indexOf("<w:fonts")) +
+    body +
+    "</w:fonts>"
+  );
 }
 
 /**
@@ -215,7 +244,7 @@ export async function embed(blob: Blob, families: EmbedFamily[]): Promise<Blob> 
   if (typeof DecompressionStream === "undefined") return blob; // older browser: named fonts only
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const entries = readEntries(bytes);
-  const ft = entries.find(e => e.name === "word/fontTable.xml");
+  const ft = entries.find((e) => e.name === "word/fontTable.xml");
   if (!ft) return blob;
 
   const raw = bytes.subarray(ft.dataOffset, ft.dataOffset + ft.compSize);

@@ -5,13 +5,13 @@
    Invisible/combining characters are built with U(...) so this file carries
    no bare zero-width code points. */
 import { describe, expect, it } from "vitest";
-import { NS, api, mmlToOmml, oMathPara, texToOmml } from "../src/index.js";
+import { api, mmlToOmml, NS, oMathPara, texToOmml } from "../src/index.js";
 
 const U = (...cp: number[]): string => String.fromCharCode(...cp);
-const APPLY = U(0x2061);      // U+2061 FUNCTION APPLICATION
-const JOIN = U(0x2060);       // word joiner that keeps whitespace-only runs alive
-const EM = U(0x2003);         // em space
-const EN = U(0x2002);         // en space
+const APPLY = U(0x2061); // U+2061 FUNCTION APPLICATION
+const JOIN = U(0x2060); // word joiner that keeps whitespace-only runs alive
+const EM = U(0x2003); // em space
+const EN = U(0x2002); // en space
 
 describe("mmlToOmml — dialect table", () => {
   const cases: [name: string, mml: string, subs: string[]][] = [
@@ -46,12 +46,12 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "linethickness=0 fraction loses its bar (\\binom)",
-      "<math><mfrac linethickness=\"0\"><mi>n</mi><mi>k</mi></mfrac></math>",
+      '<math><mfrac linethickness="0"><mi>n</mi><mi>k</mi></mfrac></math>',
       ['<m:fPr><m:type m:val="noBar"/></m:fPr>'],
     ],
     [
       "bevelled fraction is skewed",
-      "<math><mfrac bevelled=\"true\"><mi>a</mi><mi>b</mi></mfrac></math>",
+      '<math><mfrac bevelled="true"><mi>a</mi><mi>b</mi></mfrac></math>',
       ['<m:type m:val="skw"/>'],
     ],
     [
@@ -92,7 +92,11 @@ describe("mmlToOmml — dialect table", () => {
     [
       "n-ary integral: msubsup limits go subSup",
       "<math><msubsup><mo>∫</mo><mn>0</mn><mn>1</mn></msubsup><mi>f</mi></math>",
-      ['<m:chr m:val="∫"/>', '<m:limLoc m:val="subSup"/>', "<m:e><m:r><m:t>f</m:t></m:r></m:e></m:nary>"],
+      [
+        '<m:chr m:val="∫"/>',
+        '<m:limLoc m:val="subSup"/>',
+        "<m:e><m:r><m:t>f</m:t></m:r></m:e></m:nary>",
+      ],
     ],
     [
       "bare n-ary operator hides both limits with bare slots",
@@ -101,17 +105,21 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "accent hat maps to the combining form",
-      "<math><mover accent=\"true\"><mi>x</mi><mo>^</mo></mover></math>",
-      ['<m:acc><m:accPr><m:chr m:val="' + U(0x302) + '"/></m:accPr><m:e><m:r><m:t>x</m:t></m:r></m:e></m:acc>'],
+      '<math><mover accent="true"><mi>x</mi><mo>^</mo></mover></math>',
+      [
+        '<m:acc><m:accPr><m:chr m:val="' +
+          U(0x302) +
+          '"/></m:accPr><m:e><m:r><m:t>x</m:t></m:r></m:e></m:acc>',
+      ],
     ],
     [
       "stretchy macron reads as an overbar, not an accent (order matters)",
-      "<math><mover accent=\"true\"><mi>x</mi><mo stretchy=\"true\">¯</mo></mover></math>",
+      '<math><mover accent="true"><mi>x</mi><mo stretchy="true">¯</mo></mover></math>',
       ['<m:bar><m:barPr><m:pos m:val="top"/></m:barPr>'],
     ],
     [
       "\\vec arrow accent",
-      "<math><mover accent=\"true\"><mi>v</mi><mo>" + U(0x20d7) + "</mo></mover></math>",
+      '<math><mover accent="true"><mi>v</mi><mo>' + U(0x20d7) + "</mo></mover></math>",
       ['<m:acc><m:accPr><m:chr m:val="' + U(0x20d7) + '"/></m:accPr>'],
     ],
     [
@@ -141,32 +149,35 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "\\left( … \\right) pairs into one <m:d>",
-      "<math><mo fence=\"true\">(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo fence=\"true\">)</mo></math>",
+      '<math><mo fence="true">(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo fence="true">)</mo></math>',
       ['<m:d><m:dPr><m:begChr m:val="("/><m:endChr m:val=")"/></m:dPr><m:e><m:f>'],
     ],
     [
       "ambiguous bars pair with themselves and normalize to the plain pipe",
-      "<math><mo fence=\"true\">∣</mo><mi>x</mi><mo fence=\"true\">∣</mo></math>",
+      '<math><mo fence="true">∣</mo><mi>x</mi><mo fence="true">∣</mo></math>',
       ['<m:begChr m:val="|"/>', '<m:endChr m:val="|"/>'],
     ],
     [
       "opener with no closer (KaTeX cases) keeps an empty endChr",
-      "<math><mo fence=\"true\">{</mo><mi>x</mi></math>",
+      '<math><mo fence="true">{</mo><mi>x</mi></math>',
       ['<m:begChr m:val="{"/>', '<m:endChr m:val=""/>'],
     ],
     [
       "closer with no opener takes what precedes it (\\left.…\\right|)",
-      "<math><mfrac><mi>a</mi><mi>b</mi></mfrac><mo fence=\"true\">|</mo></math>",
+      '<math><mfrac><mi>a</mi><mi>b</mi></mfrac><mo fence="true">|</mo></math>',
       ['<m:begChr m:val=""/><m:endChr m:val="|"/></m:dPr><m:e><m:f>'],
     ],
     [
       "mfenced with separators emits sepChr and one <m:e> per child",
-      "<math><mfenced open=\"[\" close=\"]\" separators=\";\"><mi>a</mi><mi>b</mi></mfenced></math>",
-      ['<m:begChr m:val="["/><m:sepChr m:val=";"/><m:endChr m:val="]"/>', "<m:e><m:r><m:t>a</m:t></m:r></m:e><m:e><m:r><m:t>b</m:t></m:r></m:e>"],
+      '<math><mfenced open="[" close="]" separators=";"><mi>a</mi><mi>b</mi></mfenced></math>',
+      [
+        '<m:begChr m:val="["/><m:sepChr m:val=";"/><m:endChr m:val="]"/>',
+        "<m:e><m:r><m:t>a</m:t></m:r></m:e><m:e><m:r><m:t>b</m:t></m:r></m:e>",
+      ],
     ],
     [
       "matrix: column alignments group into m:mcs; ragged rows pad",
-      "<math><mtable columnalign=\"left right\"><mtr><mtd><mn>1</mn></mtd><mtd><mn>2</mn></mtd></mtr><mtr><mtd><mn>3</mn></mtd></mtr></mtable></math>",
+      '<math><mtable columnalign="left right"><mtr><mtd><mn>1</mn></mtd><mtd><mn>2</mn></mtd></mtr><mtr><mtd><mn>3</mn></mtd></mtr></mtable></math>',
       [
         '<m:count m:val="1"/><m:mcJc m:val="left"/>',
         '<m:count m:val="1"/><m:mcJc m:val="right"/>',
@@ -175,22 +186,22 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "aligned: columnspacing=0em pins the matrix gap to zero",
-      "<math><mtable columnspacing=\"0em\"><mtr><mtd><mi>a</mi></mtd><mtd><mi>b</mi></mtd></mtr></mtable></math>",
+      '<math><mtable columnspacing="0em"><mtr><mtd><mi>a</mi></mtd><mtd><mi>b</mi></mtd></mtr></mtable></math>',
       ['<m:cGpRule m:val="3"/><m:cGp m:val="0"/>'],
     ],
     [
       "mathvariant bold maps into <m:sty> (landmine #2)",
-      "<math><mi mathvariant=\"bold\">x</mi></math>",
+      '<math><mi mathvariant="bold">x</mi></math>',
       ['<m:rPr><m:sty m:val="b"/></m:rPr>'],
     ],
     [
       "double-struck maps into <m:scr>",
-      "<math><mi mathvariant=\"double-struck\">R</mi></math>",
+      '<math><mi mathvariant="double-struck">R</mi></math>',
       ['<m:scr m:val="double-struck"/><m:sty m:val="p"/>'],
     ],
     [
       "mathvariant inherits through mstyle",
-      "<math><mstyle mathvariant=\"sans-serif-bold-italic\"><mi>q</mi></mstyle></math>",
+      '<math><mstyle mathvariant="sans-serif-bold-italic"><mi>q</mi></mstyle></math>',
       ['<m:scr m:val="sans-serif"/><m:sty m:val="bi"/>'],
     ],
     [
@@ -200,29 +211,23 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "menclose box is a borderBox with no hides",
-      "<math><menclose notation=\"box\"><mi>x</mi></menclose></math>",
+      '<math><menclose notation="box"><mi>x</mi></menclose></math>',
       ["<m:borderBox><m:borderBoxPr></m:borderBoxPr>"],
     ],
     [
       "\\cancel: strike plus all four sides hidden",
-      "<math><menclose notation=\"updiagonalstrike\"><mi>x</mi></menclose></math>",
-      ['<m:hideTop m:val="1"/><m:hideBot m:val="1"/><m:hideLeft m:val="1"/><m:hideRight m:val="1"/><m:strikeBLTR m:val="1"/>'],
+      '<math><menclose notation="updiagonalstrike"><mi>x</mi></menclose></math>',
+      [
+        '<m:hideTop m:val="1"/><m:hideBot m:val="1"/><m:hideLeft m:val="1"/><m:hideRight m:val="1"/><m:strikeBLTR m:val="1"/>',
+      ],
     ],
     [
       "mmultiscripts with mprescripts wraps in <m:sPre>",
       "<math><mmultiscripts><mi>x</mi><mn>1</mn><mn>2</mn><mprescripts/><mn>3</mn><mn>4</mn></mmultiscripts></math>",
       ["<m:sPre><m:sub>", "<m:e><m:sSubSup>"],
     ],
-    [
-      "ms wraps its text in quote characters",
-      "<math><ms>str</ms></math>",
-      ['<m:t>"str"</m:t>'],
-    ],
-    [
-      "named entities decode",
-      "<math><mi>&alpha;</mi></math>",
-      ["<m:t>α</m:t>"],
-    ],
+    ["ms wraps its text in quote characters", "<math><ms>str</ms></math>", ['<m:t>"str"</m:t>']],
+    ["named entities decode", "<math><mi>&alpha;</mi></math>", ["<m:t>α</m:t>"]],
     [
       "numeric entities decode (decimal and hex)",
       "<math><mn>&#960;</mn><mn>&#x3C0;</mn></math>",
@@ -235,12 +240,12 @@ describe("mmlToOmml — dialect table", () => {
     ],
     [
       "mspace width=1em is an em space kept alive by a word joiner",
-      "<math><mspace width=\"1em\"/></math>",
+      '<math><mspace width="1em"/></math>',
       ['<m:t xml:space="preserve">' + EM + JOIN + "</m:t>"],
     ],
     [
       "mspace linebreak=newline leaves a wide gap (m:brk is dead in Word)",
-      "<math><mspace linebreak=\"newline\"/></math>",
+      '<math><mspace linebreak="newline"/></math>',
       [EM + EM + JOIN],
     ],
     [
@@ -290,8 +295,8 @@ describe("mmlToOmml — dialect table", () => {
 
   it("nested fences produce nested <m:d> elements", () => {
     const out = mmlToOmml(
-      "<math><mo fence=\"true\">(</mo><mo fence=\"true\">(</mo><mi>x</mi>" +
-      "<mo fence=\"true\">)</mo><mo fence=\"true\">)</mo></math>",
+      '<math><mo fence="true">(</mo><mo fence="true">(</mo><mi>x</mi>' +
+        '<mo fence="true">)</mo><mo fence="true">)</mo></math>',
     ) as string;
     expect(out.split("<m:d>").length - 1).toBe(2);
   });
@@ -299,7 +304,7 @@ describe("mmlToOmml — dialect table", () => {
   it("drops the TeX <annotation> entirely (landmine #3)", () => {
     const out = mmlToOmml(
       "<math><semantics><mrow><mi>x</mi></mrow>" +
-      "<annotation encoding=\"application/x-tex\">\\frac{a}{b}</annotation></semantics></math>",
+        '<annotation encoding="application/x-tex">\\frac{a}{b}</annotation></semantics></math>',
     ) as string;
     expect(out).toContain("<m:t>x</m:t>");
     expect(out).not.toContain("frac");
@@ -321,7 +326,7 @@ describe("mmlToOmml — dialect table", () => {
   });
 
   it("negative mspace collapses to nothing and yields null", () => {
-    expect(mmlToOmml("<math><mspace width=\"-0.3em\"/></math>")).toBe(null);
+    expect(mmlToOmml('<math><mspace width="-0.3em"/></math>')).toBe(null);
   });
 
   it("is deterministic: the same input twice gives byte-identical output", () => {
@@ -338,7 +343,9 @@ describe("mmlToOmml — dialect table", () => {
 describe("oMathPara", () => {
   it("wraps with a centered paragraph by default", () => {
     expect(oMathPara("<m:oMath/>")).toBe(
-      '<m:oMathPara xmlns:m="' + NS + '"><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr><m:oMath/></m:oMathPara>',
+      '<m:oMathPara xmlns:m="' +
+        NS +
+        '"><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr><m:oMath/></m:oMathPara>',
     );
   });
   it("honors an explicit justification", () => {

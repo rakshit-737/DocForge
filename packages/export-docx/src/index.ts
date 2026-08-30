@@ -22,6 +22,6 @@ export const api = { DocxExport, DocxFonts };
 export type DocxExportApi = typeof DocxExport;
 export type DocxFontsApi = typeof DocxFonts;
 
-export { build, embed };
 export type { DocxSettings } from "./docx-export.js";
 export type { EmbedFamily } from "./docx-fonts.js";
+export { build, embed };

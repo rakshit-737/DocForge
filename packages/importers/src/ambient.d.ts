@@ -7,8 +7,8 @@
    window.__*_SRC__ and are evaluated on first use by blob-import.ts.
    ============================================================ */
 
-import type { FileImportApi } from "./file-import.js";
 import type { DocxImportApi } from "./docx-import.js";
+import type { FileImportApi } from "./file-import.js";
 import type { PdfImportApi } from "./pdf-import.js";
 
 declare global {
@@ -18,8 +18,13 @@ declare global {
     altText?: string;
     read(kind: "base64"): Promise<string>;
   }
-  interface MammothMessage { message?: string }
-  interface MammothResult { value: string; messages?: MammothMessage[] }
+  interface MammothMessage {
+    message?: string;
+  }
+  interface MammothResult {
+    value: string;
+    messages?: MammothMessage[];
+  }
   type MammothImageHandler = (
     handler: (img: MammothImage) => Promise<{ src: string; alt: string }>,
   ) => unknown;
@@ -43,7 +48,9 @@ declare global {
     width?: number;
     fontName?: string;
   }
-  interface PdfjsTextStyle { fontFamily?: string }
+  interface PdfjsTextStyle {
+    fontFamily?: string;
+  }
   interface PdfjsTextContent {
     items: PdfjsTextItem[];
     styles?: Record<string, PdfjsTextStyle | undefined>;
@@ -93,5 +100,3 @@ declare global {
   // eslint-disable-next-line no-var
   var PdfImport: PdfImportApi;
 }
-
-export {};

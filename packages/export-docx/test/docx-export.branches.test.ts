@@ -8,15 +8,16 @@
    plays window.docx, the verbatim Engine fixture supplies the
    constants, __FONT_DATA__ is a tiny fake.
    ============================================================ */
-import { describe, it, expect, beforeAll } from "vitest";
+
 import { Buffer } from "node:buffer";
 import * as docxLib from "docx";
 import { convertMillimetersToTwip as mm2t } from "docx";
 import katex from "katex";
-import { EngineFixture } from "./engine-fixture.js";
-import { readZip } from "./_zip.js";
-import { build } from "../src/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { DocxSettings } from "../src/index.js";
+import { build } from "../src/index.js";
+import { readZip } from "./_zip.js";
+import { EngineFixture } from "./engine-fixture.js";
 
 /* ---- install the globals the classic build provides ---- */
 const fakeCut = (seed: number): string => {
@@ -65,7 +66,12 @@ const BASE: DocxSettings = {
   h1break: false,
 };
 
-interface Pack { doc: string; styles: string; ft: string; runs: string[] }
+interface Pack {
+  doc: string;
+  styles: string;
+  ft: string;
+  runs: string[];
+}
 async function pack(el: HTMLElement, settings: DocxSettings): Promise<Pack> {
   const blob = await build(el, settings);
   const zip = readZip(Buffer.from(await blob.arrayBuffer()));
@@ -74,11 +80,11 @@ async function pack(el: HTMLElement, settings: DocxSettings): Promise<Pack> {
     doc,
     styles: zip.get("word/styles.xml")!.toString("utf8"),
     ft: zip.get("word/fontTable.xml")!.toString("utf8"),
-    runs: doc.split("<w:r>").map(c => "<w:r>" + c),
+    runs: doc.split("<w:r>").map((c) => "<w:r>" + c),
   };
 }
 const runIn = (p: Pack, text: string): string => {
-  const c = p.runs.find(c => c.includes(`>${text}<`));
+  const c = p.runs.find((c) => c.includes(`>${text}<`));
   expect(c, `a run containing "${text}"`).toBeDefined();
   return c!;
 };
@@ -87,13 +93,13 @@ const runIn = (p: Pack, text: string): string => {
 const PNG_1x1 =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
-const availPx = Math.floor((210 - 20 - 20) * 96 / 25.4) - 4;
+const availPx = Math.floor(((210 - 20 - 20) * 96) / 25.4) - 4;
 
 /* ---------------- build A: kitchen-sink body branches ---------------- */
 const HTML_A = [
   "<h1>One</h1>",
-  "<p>  </p>",                                    // blank p vanishes
-  '<p><img src="notdata.png"></p>',               // inline img is skipped by runs()
+  "<p>  </p>", // blank p vanishes
+  '<p><img src="notdata.png"></p>', // inline img is skipped by runs()
   '<p>see <a href="https://example.com/x">Example</a> and <a href="#local">local</a> ' +
     '<span class="hnum">2.1</span> line<br>break <mark>plainmark</mark><!--c--></p>',
   "<h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>",
@@ -103,7 +109,7 @@ const HTML_A = [
   '<div class="align-center"><p>centered text</p></div>',
   '<div class="align-weird"><p>unknown align</p></div>',
   "<ul><li>alpha<ul><li>beta</li></ul></li>" +
-    '<li>gamma<table><tbody><tr><td>incell</td></tr></tbody></table></li></ul>',
+    "<li>gamma<table><tbody><tr><td>incell</td></tr></tbody></table></li></ul>",
   "<ol><li>o-one</li></ol><ol><li>o-two</li></ol>",
   '<div class="callout tip"><div class="co-title">Tip</div>' +
     '<div class="co-body"><p>tip body</p></div></div>',
@@ -144,31 +150,64 @@ const SETTINGS_A: DocxSettings = {
 /* ---------------- cover settings per theme ---------------- */
 const COVER_HTML = "<h1>Body</h1><p>text</p>";
 
-const SETTINGS_B: DocxSettings = {   // modern: top band + thin bottom band
-  ...BASE, cover: true, header: true, pageNums: true,
-  title: "Cover Doc", subtitle: "Sub line", author: "Auth", metaExtra: "Extra meta",
-  kicker: "Kick", date: "2026-02-03",
-  borderStyle: "thickthin", borderWeight: "bold", borderColor: "accent",
+const SETTINGS_B: DocxSettings = {
+  // modern: top band + thin bottom band
+  ...BASE,
+  cover: true,
+  header: true,
+  pageNums: true,
+  title: "Cover Doc",
+  subtitle: "Sub line",
+  author: "Auth",
+  metaExtra: "Extra meta",
+  kicker: "Kick",
+  date: "2026-02-03",
+  borderStyle: "thickthin",
+  borderWeight: "bold",
+  borderColor: "accent",
 };
 
-const SETTINGS_C: DocxSettings = {   // academic: centred, Oxford rule, no bands
-  ...BASE, theme: "academic", page: "Letter", margins: "wide",
-  cover: true, header: true, pageNums: true,
-  kicker: "Series", metaExtra: "Dept of X", date: "2026-03-04",
-  borderStyle: "double", borderWeight: "fine",
+const SETTINGS_C: DocxSettings = {
+  // academic: centred, Oxford rule, no bands
+  ...BASE,
+  theme: "academic",
+  page: "Letter",
+  margins: "wide",
+  cover: true,
+  header: true,
+  pageNums: true,
+  kicker: "Series",
+  metaExtra: "Dept of X",
+  date: "2026-03-04",
+  borderStyle: "double",
+  borderWeight: "fine",
 };
 
-const SETTINGS_D: DocxSettings = {   // minimal: hairline ink band, no bottom band
-  ...BASE, theme: "minimal", margins: "narrow", cover: true,
-  title: "Min", date: "2026-01-02",
-  borderStyle: "dotted", lineSpacing: "1.5",
+const SETTINGS_D: DocxSettings = {
+  // minimal: hairline ink band, no bottom band
+  ...BASE,
+  theme: "minimal",
+  margins: "narrow",
+  cover: true,
+  title: "Min",
+  date: "2026-01-02",
+  borderStyle: "dotted",
+  lineSpacing: "1.5",
 };
 
-const SETTINGS_E: DocxSettings = {   // executive: vertical accent spine
-  ...BASE, theme: "executive", cover: true,
-  title: "Exec", subtitle: "Exec sub", author: "E. Xec", metaExtra: "Board",
-  fontHead: "mont", fontBody: "serif",
-  borderStyle: "triple", borderWeight: "medium",
+const SETTINGS_E: DocxSettings = {
+  // executive: vertical accent spine
+  ...BASE,
+  theme: "executive",
+  cover: true,
+  title: "Exec",
+  subtitle: "Exec sub",
+  author: "E. Xec",
+  metaExtra: "Board",
+  fontHead: "mont",
+  fontBody: "serif",
+  borderStyle: "triple",
+  borderWeight: "medium",
 };
 
 let A: Pack, B: Pack, C: Pack, D: Pack, E: Pack, F: Pack, G: Pack;
@@ -184,8 +223,12 @@ beforeAll(async () => {
   delete (globalThis as any).__FONT_DATA__;
   delete (window as any).__FONT_DATA__;
   try {
-    F = await pack(contentFrom("<h1>F</h1><pre><code>x</code></pre>"),
-      { ...BASE, theme: "corporate", page: "Tabloid", margins: "huge" });
+    F = await pack(contentFrom("<h1>F</h1><pre><code>x</code></pre>"), {
+      ...BASE,
+      theme: "corporate",
+      page: "Tabloid",
+      margins: "huge",
+    });
   } finally {
     (globalThis as any).__FONT_DATA__ = FONT_DATA;
     (window as any).__FONT_DATA__ = FONT_DATA;
@@ -194,9 +237,13 @@ beforeAll(async () => {
   // G: katex missing — both math paths must fall back to printing the TeX source
   (globalThis as any).katex = undefined;
   try {
-    G = await pack(contentFrom(
-      '<p>bad <span class="math-inline" data-tex="\\frac{a}{b}"></span></p>' +
-      '<div class="math-display" data-tex="\\frac{c}{d}"></div>'), { ...BASE });
+    G = await pack(
+      contentFrom(
+        '<p>bad <span class="math-inline" data-tex="\\frac{a}{b}"></span></p>' +
+          '<div class="math-display" data-tex="\\frac{c}{d}"></div>',
+      ),
+      { ...BASE },
+    );
   } finally {
     (globalThis as any).katex = katex;
   }
@@ -219,7 +266,9 @@ describe("headings and page flow", () => {
   });
   it("hr becomes a bottom-ruled empty paragraph", () => {
     const bottoms = A.doc.match(/<w:bottom [^>]*\/>/g) || [];
-    expect(bottoms.some(b => b.includes('w:sz="4"') && b.includes('w:color="D7DBE0"'))).toBe(true);
+    expect(bottoms.some((b) => b.includes('w:sz="4"') && b.includes('w:color="D7DBE0"'))).toBe(
+      true,
+    );
   });
   it("blank paragraphs are dropped, bare text blocks are kept", () => {
     expect(A.doc).toContain(">bare text block<");
@@ -233,7 +282,7 @@ describe("headings and page flow", () => {
   });
   it("base size scales the default run and line height", () => {
     expect(A.styles).toContain(`<w:sz w:val="${HP(13.5)}"/>`);
-    expect(A.styles).toContain(`w:line="${Math.round(350 * 13.5 / 11)}"`);
+    expect(A.styles).toContain(`w:line="${Math.round((350 * 13.5) / 11)}"`);
   });
   it("borderStyle none draws no page borders", () => {
     expect(A.doc).not.toContain("<w:pgBorders");
@@ -269,9 +318,14 @@ describe("blockquote", () => {
     expect(q).toMatch(/<w:i\/>/);
     expect(q).toContain('<w:color w:val="3D434D"/>');
     const lefts = A.doc.match(/<w:left [^>]*\/>/g) || [];
-    expect(lefts.some(b =>
-      b.includes('w:sz="16"') && b.includes('w:space="12"') && b.includes(`w:color="${up(T.a300)}"`),
-    )).toBe(true);
+    expect(
+      lefts.some(
+        (b) =>
+          b.includes('w:sz="16"') &&
+          b.includes('w:space="12"') &&
+          b.includes(`w:color="${up(T.a300)}"`),
+      ),
+    ).toBe(true);
   });
   it("bare text nodes inside the quote still become paragraphs", () => {
     const bare = runIn(A, "Bare quote text");
@@ -299,7 +353,7 @@ describe("lists", () => {
     expect(cell).toContain('w:w="620"');
   });
   it("each top-level ol restarts its numbering instance", () => {
-    const numIds = [...A.doc.matchAll(/<w:numId w:val="(\d+)"\/>/g)].map(m => m[1]);
+    const numIds = [...A.doc.matchAll(/<w:numId w:val="(\d+)"\/>/g)].map((m) => m[1]);
     expect(new Set(numIds).size).toBeGreaterThan(1);
   });
   it("non-li children of a list are ignored", () => {
@@ -320,7 +374,7 @@ describe("callouts", () => {
     const title = runIn(A, "●  NOTE");
     expect(title).toContain('<w:color w:val="2458C5"/>');
     const lefts = A.doc.match(/<w:left [^>]*\/>/g) || [];
-    expect(lefts.some(b => b.includes('w:sz="20"') && b.includes('w:color="2458C5"'))).toBe(true);
+    expect(lefts.some((b) => b.includes('w:sz="20"') && b.includes('w:color="2458C5"'))).toBe(true);
   });
   it("a callout body ending in a table gets the cellSafe guard paragraph", () => {
     // The warning callout holds only a shot figure, whose caption-hugging pop
@@ -376,7 +430,9 @@ describe("figures", () => {
     expect(A.doc).toContain(`w:fill="${up(T.a50)}"`);
     expect(A.doc).toContain('<w:trHeight w:val="2400" w:hRule="atLeast"/>');
     const dashes = A.doc.match(/<w:top [^>]*w:val="dashed"[^>]*\/>/g) || [];
-    expect(dashes.some(b => b.includes('w:sz="12"') && b.includes(`w:color="${up(T.a400)}"`))).toBe(true);
+    expect(
+      dashes.some((b) => b.includes('w:sz="12"') && b.includes(`w:color="${up(T.a400)}"`)),
+    ).toBe(true);
   });
   it("a non-data image emits no drawing but keeps its caption", () => {
     // exactly two drawings: the png figure and the jpeg figure
@@ -417,7 +473,9 @@ describe("modern cover", () => {
     expect(B.doc).toContain(`w:fill="${up(T.a200)}"`);
   });
   it("the cover section has zero margins so the band bleeds", () => {
-    expect(B.doc).toMatch(/<w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"\/>/);
+    expect(B.doc).toMatch(
+      /<w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"\/>/,
+    );
   });
   it("title, kicker, subtitle and meta all land with their sizes", () => {
     expect(runIn(B, "Cover Doc")).toContain(`<w:sz w:val="${HP(31)}"/>`);
@@ -436,10 +494,14 @@ describe("modern cover", () => {
     const pgb = B.doc.match(/<w:pgBorders[^>]*>/);
     expect(pgb).not.toBeNull();
     const tops = B.doc.match(/<w:top [^>]*\/>/g) || [];
-    expect(tops.some(b =>
-      b.includes('w:val="thickThinSmallGap"') && b.includes('w:sz="36"') &&
-      b.includes(`w:color="${up(T.a600)}"`),
-    )).toBe(true);
+    expect(
+      tops.some(
+        (b) =>
+          b.includes('w:val="thickThinSmallGap"') &&
+          b.includes('w:sz="36"') &&
+          b.includes(`w:color="${up(T.a600)}"`),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -447,9 +509,12 @@ describe("academic cover", () => {
   it("is centred with the Oxford rule around the title", () => {
     expect(C.doc).toContain('<w:jc w:val="center"/>');
     const tops = C.doc.match(/<w:top [^>]*\/>/g) || [];
-    expect(tops.some(b =>
-      b.includes('w:sz="21"') && b.includes('w:space="10"') && b.includes('w:color="14181F"'),
-    )).toBe(true);
+    expect(
+      tops.some(
+        (b) =>
+          b.includes('w:sz="21"') && b.includes('w:space="10"') && b.includes('w:color="14181F"'),
+      ),
+    ).toBe(true);
   });
   it("a missing title falls back to Untitled document at the centred size", () => {
     expect(runIn(C, "Untitled document")).toContain(`<w:sz w:val="${HP(27)}"/>`);
@@ -467,10 +532,14 @@ describe("academic cover", () => {
   });
   it("double page border at the fine weight", () => {
     const tops = C.doc.match(/<w:top [^>]*\/>/g) || [];
-    expect(tops.some(b =>
-      b.includes('w:val="double"') && b.includes(`w:sz="${Math.round(6 * 0.8)}"`) &&
-      b.includes('w:color="3C434E"'),
-    )).toBe(true);
+    expect(
+      tops.some(
+        (b) =>
+          b.includes('w:val="double"') &&
+          b.includes(`w:sz="${Math.round(6 * 0.8)}"`) &&
+          b.includes('w:color="3C434E"'),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -485,7 +554,7 @@ describe("minimal cover", () => {
   });
   it("dotted page borders at the default weight", () => {
     const tops = D.doc.match(/<w:top [^>]*\/>/g) || [];
-    expect(tops.some(b => b.includes('w:val="dotted"') && b.includes('w:sz="12"'))).toBe(true);
+    expect(tops.some((b) => b.includes('w:val="dotted"') && b.includes('w:sz="12"'))).toBe(true);
   });
   it("named line spacing maps to its twip value", () => {
     expect(D.styles).toContain('w:line="360"');

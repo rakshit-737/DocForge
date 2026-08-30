@@ -60,11 +60,29 @@ declare global {
 
   /* ----- the Engine global (sibling module; stays global to avoid bundling it) ----- */
   interface EngineTints {
-    a50: string; a75: string; a100: string; a200: string; a300: string;
-    a400: string; a500: string; a600: string; a700: string; a800: string; a900: string;
+    a50: string;
+    a75: string;
+    a100: string;
+    a200: string;
+    a300: string;
+    a400: string;
+    a500: string;
+    a600: string;
+    a700: string;
+    a800: string;
+    a900: string;
   }
-  interface EnginePage { w: number; h: number; label: string }
-  interface EngineMargin { t: number; r: number; b: number; l: number }
+  interface EnginePage {
+    w: number;
+    h: number;
+    label: string;
+  }
+  interface EngineMargin {
+    t: number;
+    r: number;
+    b: number;
+    l: number;
+  }
   interface EngineEmbeddedFamily {
     name: string;
     stem: string;
@@ -91,5 +109,3 @@ declare global {
   // eslint-disable-next-line no-var
   var DocxFonts: DocxFontsApi;
 }
-
-export {};

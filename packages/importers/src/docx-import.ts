@@ -29,7 +29,9 @@ async function lib(): Promise<MammothLib> {
     // once" true now that loading is asynchronous — the eval was atomic.
     if (!mammothLoading) {
       mammothLoading = importGlobalScript(window.__MAMMOTH_SRC__, ";globalThis.mammoth=mammoth;");
-      mammothLoading.catch(() => { mammothLoading = null; }); // a failed load stays retryable
+      mammothLoading.catch(() => {
+        mammothLoading = null;
+      }); // a failed load stays retryable
     }
     await mammothLoading;
     window.__MAMMOTH_SRC__ = null; // the string is dead weight once eval'd
@@ -88,8 +90,8 @@ function cleanup(html: string): string {
 /* Keep the messages worth showing: mammoth emits one "unrecognised style"
    warning per exotic style, which drowns out anything actionable. */
 function tidyMessages(messages: MammothMessage[]): string[] {
-  let list = messages.map(m => m.message || String(m));
-  if (list.length >= 3) list = list.filter(m => !/unrecognised\b.*\bstyle/i.test(m));
+  let list = messages.map((m) => m.message || String(m));
+  if (list.length >= 3) list = list.filter((m) => !/unrecognised\b.*\bstyle/i.test(m));
   return [...new Set(list)].slice(0, 8);
 }
 
@@ -104,19 +106,26 @@ async function toHtml(arrayBuffer: ArrayBuffer): Promise<{ html: string; message
 
   let result: MammothResult;
   try {
-    result = await mammoth.convertToHtml({ arrayBuffer }, {
-      styleMap: STYLE_MAP,
-      ignoreEmptyParagraphs: true,
-      convertImage: imgEl && imgEl(img =>
-        img.read("base64").then(b64 => ({
-          src: "data:" + img.contentType + ";base64," + b64,
-          alt: img.altText || "",
-        }))),
-    });
+    result = await mammoth.convertToHtml(
+      { arrayBuffer },
+      {
+        styleMap: STYLE_MAP,
+        ignoreEmptyParagraphs: true,
+        convertImage:
+          imgEl &&
+          imgEl((img) =>
+            img.read("base64").then((b64) => ({
+              src: "data:" + img.contentType + ";base64," + b64,
+              alt: img.altText || "",
+            })),
+          ),
+      },
+    );
   } catch (err) {
     throw new Error(
       "Could not read that Word file — if it is an old binary .doc, save it as .docx first.",
-      { cause: err });
+      { cause: err },
+    );
   }
 
   return { html: cleanup(result.value), messages: tidyMessages(result.messages || []) };

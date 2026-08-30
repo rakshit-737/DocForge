@@ -7,7 +7,12 @@ import { deflateRawSync } from "node:zlib";
 const enc = new TextEncoder();
 
 const u16le = (n: number): number[] => [n & 0xff, (n >> 8) & 0xff];
-const u32le = (n: number): number[] => [n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, (n >>> 24) & 0xff];
+const u32le = (n: number): number[] => [
+  n & 0xff,
+  (n >> 8) & 0xff,
+  (n >> 16) & 0xff,
+  (n >>> 24) & 0xff,
+];
 
 export interface ZipInput {
   name: string;
@@ -29,18 +34,35 @@ export function buildZip(inputs: ZipInput[]): ArrayBuffer {
     const stored = method === 8 ? new Uint8Array(deflateRawSync(raw)) : raw;
 
     const localHeader = new Uint8Array([
-      ...u32le(0x04034b50), ...u16le(20), ...u16le(0), ...u16le(method),
-      ...u16le(0), ...u16le(0),                       // time, date
-      ...u32le(0),                                    // crc32 (reader ignores it)
-      ...u32le(stored.length), ...u32le(raw.length),
-      ...u16le(nameBytes.length), ...u16le(0),
+      ...u32le(0x04034b50),
+      ...u16le(20),
+      ...u16le(0),
+      ...u16le(method),
+      ...u16le(0),
+      ...u16le(0), // time, date
+      ...u32le(0), // crc32 (reader ignores it)
+      ...u32le(stored.length),
+      ...u32le(raw.length),
+      ...u16le(nameBytes.length),
+      ...u16le(0),
     ]);
     const centralHeader = new Uint8Array([
-      ...u32le(0x02014b50), ...u16le(20), ...u16le(20), ...u16le(0), ...u16le(method),
-      ...u16le(0), ...u16le(0), ...u32le(0),          // time, date, crc32
-      ...u32le(stored.length), ...u32le(raw.length),
-      ...u16le(nameBytes.length), ...u16le(0), ...u16le(0),
-      ...u16le(0), ...u16le(0), ...u32le(0),          // disk, int attrs, ext attrs
+      ...u32le(0x02014b50),
+      ...u16le(20),
+      ...u16le(20),
+      ...u16le(0),
+      ...u16le(method),
+      ...u16le(0),
+      ...u16le(0),
+      ...u32le(0), // time, date, crc32
+      ...u32le(stored.length),
+      ...u32le(raw.length),
+      ...u16le(nameBytes.length),
+      ...u16le(0),
+      ...u16le(0),
+      ...u16le(0),
+      ...u16le(0),
+      ...u32le(0), // disk, int attrs, ext attrs
       ...u32le(offset),
     ]);
 
@@ -51,15 +73,23 @@ export function buildZip(inputs: ZipInput[]): ArrayBuffer {
 
   const cdSize = central.reduce((n, c) => n + c.length, 0);
   const eocd = new Uint8Array([
-    ...u32le(0x06054b50), ...u16le(0), ...u16le(0),
-    ...u16le(inputs.length), ...u16le(inputs.length),
-    ...u32le(cdSize), ...u32le(offset), ...u16le(0),
+    ...u32le(0x06054b50),
+    ...u16le(0),
+    ...u16le(0),
+    ...u16le(inputs.length),
+    ...u16le(inputs.length),
+    ...u32le(cdSize),
+    ...u32le(offset),
+    ...u16le(0),
   ]);
 
   const all = [...parts, ...central, eocd];
   const size = all.reduce((n, c) => n + c.length, 0);
   const out = new Uint8Array(size);
   let p = 0;
-  for (const c of all) { out.set(c, p); p += c.length; }
+  for (const c of all) {
+    out.set(c, p);
+    p += c.length;
+  }
   return out.buffer;
 }

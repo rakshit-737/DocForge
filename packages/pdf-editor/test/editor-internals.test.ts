@@ -7,7 +7,7 @@
    extraction, y = H − yTop − 0.83·size at export, so a rewrite lands on the
    original baseline) lives inline in ensureLines/exportPdf and is not
    extractable without changing code — the smoke test owns it. */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { _internals, api } from "../src/index.js";
 
 const { encodeWith, wrapWidth, wrapLines, hexRgb, clamp } = _internals;
@@ -17,8 +17,16 @@ const { encodeWith, wrapWidth, wrapLines, hexRgb, clamp } = _internals;
 describe("public surface", () => {
   it("exposes exactly the classic PdfEditor members", () => {
     expect(Object.keys(api).sort()).toEqual([
-      "addEdit", "close", "editLineAt", "exportPdf", "getEdits",
-      "getTextLines", "hasEdits", "hooks", "isOpen", "open",
+      "addEdit",
+      "close",
+      "editLineAt",
+      "exportPdf",
+      "getEdits",
+      "getTextLines",
+      "hasEdits",
+      "hooks",
+      "isOpen",
+      "open",
     ]);
   });
   it("starts closed, clean and empty", () => {
@@ -37,8 +45,11 @@ describe("public surface", () => {
 
 describe("encodeWith", () => {
   const rev = new Map<string, number>([
-    ["A", 0x41], ["B", 0x42], ["z", 0x7a], ["\u0001", 1],
-    ["→", 0x2192],        // only reachable through a 2-byte (Type0) resource
+    ["A", 0x41],
+    ["B", 0x42],
+    ["z", 0x7a],
+    ["\u0001", 1],
+    ["→", 0x2192], // only reachable through a 2-byte (Type0) resource
     ["é", 0xe9],
   ]);
 
@@ -96,7 +107,7 @@ describe("hexRgb", () => {
     ["#ff0000", { red: 1, green: 0, blue: 0 }],
     ["#0080ff", { red: 0, green: 128 / 255, blue: 1 }],
     ["112233", { red: 0x11 / 255, green: 0x22 / 255, blue: 0x33 / 255 }], // leading # optional
-    ["#FFAA00", { red: 1, green: 0xaa / 255, blue: 0 }],                   // case-insensitive
+    ["#FFAA00", { red: 1, green: 0xaa / 255, blue: 0 }], // case-insensitive
   ])("%s", (hex, expected) => {
     expect(hexRgb(hex, rgb)).toEqual(expected);
   });

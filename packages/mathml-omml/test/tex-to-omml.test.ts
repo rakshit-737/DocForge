@@ -38,7 +38,11 @@ describe("texToOmml — KaTeX edge cases", () => {
       "\\hat{x}",
       ['<m:acc><m:accPr><m:chr m:val="' + U(0x302) + '"/></m:accPr>'],
     ],
-    ["\\overline is a top bar", "\\overline{AB}", ['<m:bar><m:barPr><m:pos m:val="top"/>', "<m:t>AB</m:t>"]],
+    [
+      "\\overline is a top bar",
+      "\\overline{AB}",
+      ['<m:bar><m:barPr><m:pos m:val="top"/>', "<m:t>AB</m:t>"],
+    ],
     [
       "\\vec is the combining right arrow accent",
       "\\vec{v}",
@@ -57,7 +61,11 @@ describe("texToOmml — KaTeX edge cases", () => {
     [
       "aligned: zero column gap and right/left alignment",
       "\\begin{aligned}a&=b\\\\c&=d\\end{aligned}",
-      ['<m:cGpRule m:val="3"/><m:cGp m:val="0"/>', '<m:mcJc m:val="right"/>', '<m:mcJc m:val="left"/>'],
+      [
+        '<m:cGpRule m:val="3"/><m:cGp m:val="0"/>',
+        '<m:mcJc m:val="right"/>',
+        '<m:mcJc m:val="left"/>',
+      ],
     ],
     [
       "cases: open brace with an empty closer",
@@ -124,8 +132,11 @@ describe("texToOmml — KaTeX edge cases", () => {
   it("wraps into a display paragraph via oMathPara", () => {
     const omml = texToOmml("E=mc^2", true) as string;
     expect(oMathPara(omml)).toBe(
-      '<m:oMathPara xmlns:m="' + NS + '"><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr>' +
-      omml + "</m:oMathPara>",
+      '<m:oMathPara xmlns:m="' +
+        NS +
+        '"><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr>' +
+        omml +
+        "</m:oMathPara>",
     );
   });
 

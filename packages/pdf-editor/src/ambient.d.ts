@@ -34,7 +34,10 @@ declare global {
     /** Resolved font objects by loadedName: { name, toUnicode?._map }. */
     commonObjs: { get(name: string): any };
     getViewport(opts: { scale: number }): PdfJsViewport;
-    render(opts: { canvasContext: CanvasRenderingContext2D; viewport: PdfJsViewport }): PdfJsRenderTask;
+    render(opts: {
+      canvasContext: CanvasRenderingContext2D;
+      viewport: PdfJsViewport;
+    }): PdfJsRenderTask;
     getTextContent(): Promise<{ items: PdfJsTextItem[] }>;
   }
 
@@ -85,7 +88,11 @@ declare global {
     setFontAndSize(key: any, size: number): any;
     setFillingRgbColor(r: number, g: number, b: number): any;
     rotateAndSkewTextRadiansAndTranslate(
-      rotation: number, xSkew: number, ySkew: number, x: number, y: number,
+      rotation: number,
+      xSkew: number,
+      ySkew: number,
+      x: number,
+      y: number,
     ): any;
   }
 

@@ -25,7 +25,11 @@ async function inflateRaw(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array> {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-interface ZipEntry { method: number; compSize: number; localOff: number }
+interface ZipEntry {
+  method: number;
+  compSize: number;
+  localOff: number;
+}
 
 export interface ZipReader {
   has(name: string): boolean;
@@ -39,7 +43,10 @@ function zipOpen(buf: ArrayBuffer): ZipReader {
   const d = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let eocd = -1;
   for (let i = bytes.length - 22; i >= 0 && i > bytes.length - 22 - 65536; i--) {
-    if (u32(d, i) === 0x06054b50) { eocd = i; break; }
+    if (u32(d, i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
   }
   if (eocd < 0) throw new Error("Not a zip-based file");
   const count = u16(d, eocd + 10);
@@ -50,14 +57,16 @@ function zipOpen(buf: ArrayBuffer): ZipReader {
     if (u32(d, p) !== 0x02014b50) throw new Error("Damaged zip directory");
     const method = u16(d, p + 10);
     const compSize = u32(d, p + 20);
-    const nameLen = u16(d, p + 28), extraLen = u16(d, p + 30), cmtLen = u16(d, p + 32);
+    const nameLen = u16(d, p + 28),
+      extraLen = u16(d, p + 30),
+      cmtLen = u16(d, p + 32);
     const localOff = u32(d, p + 42);
     const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
     entries.set(name, { method, compSize, localOff });
     p += 46 + nameLen + extraLen + cmtLen;
   }
   return {
-    has: name => entries.has(name),
+    has: (name) => entries.has(name),
     names: () => [...entries.keys()],
     /* Uint8Array of the stored file */
     async bytes(name) {
@@ -72,7 +81,9 @@ function zipOpen(buf: ArrayBuffer): ZipReader {
       if (e.method === 8) return inflateRaw(raw);
       throw new Error("Unsupported zip compression");
     },
-    async text(name) { return new TextDecoder().decode(await this.bytes(name)); },
+    async text(name) {
+      return new TextDecoder().decode(await this.bytes(name));
+    },
   };
 }
 
@@ -84,48 +95,73 @@ const xml = (s: string): Document => {
   if (doc.querySelector("parsererror")) throw new Error("Damaged XML part");
   return doc;
 };
-const local = (node: Document | Element, name: string): Element[] =>
-  [...node.getElementsByTagNameNS("*", name)];
+const local = (node: Document | Element, name: string): Element[] => [
+  ...node.getElementsByTagNameNS("*", name),
+];
 
 const mdCell = (t: unknown): string =>
-  String(t ?? "").replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
+  String(t ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/\|/g, "\\|")
+    .trim();
 
 function mdTable(rows: unknown[][]): string {
   if (!rows.length) return "";
-  const width = Math.max(...rows.map(r => r.length));
-  const pad = (r: unknown[]) => { const o = r.slice(); while (o.length < width) o.push(""); return o; };
+  const width = Math.max(...rows.map((r) => r.length));
+  const pad = (r: unknown[]) => {
+    const o = r.slice();
+    while (o.length < width) o.push("");
+    return o;
+  };
   const line = (r: unknown[]) => "| " + pad(r).map(mdCell).join(" | ") + " |";
-  return [line(rows[0]!), "| " + Array(width).fill("---").join(" | ") + " |", ...rows.slice(1).map(line)].join("\n");
+  return [
+    line(rows[0]!),
+    "| " + Array(width).fill("---").join(" | ") + " |",
+    ...rows.slice(1).map(line),
+  ].join("\n");
 }
 
 /* ---------- CSV / TSV ---------- */
 function parseCsv(text: string, delim: string): string[][] {
   const rows: string[][] = [[]];
-  let field = "", q = false;
+  let field = "",
+    q = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i]!;
     if (q) {
-      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
-      else field += c;
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else q = false;
+      } else field += c;
     } else if (c === '"') q = true;
-    else if (c === delim) { rows[rows.length - 1]!.push(field); field = ""; }
-    else if (c === "\n" || c === "\r") {
+    else if (c === delim) {
+      rows[rows.length - 1]!.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
       if (c === "\r" && text[i + 1] === "\n") i++;
-      rows[rows.length - 1]!.push(field); field = "";
+      rows[rows.length - 1]!.push(field);
+      field = "";
       rows.push([]);
     } else field += c;
   }
   rows[rows.length - 1]!.push(field);
   // drop a trailing blank record from a final newline
-  while (rows.length && rows[rows.length - 1]!.every(f => f === "")) rows.pop();
+  while (rows.length && rows[rows.length - 1]!.every((f) => f === "")) rows.pop();
   return rows;
 }
 
 function csv(text: string): string {
   // sniff the delimiter from the first line, outside quotes
   const first = (text.match(/^.*$/m) || [""])[0]!.replace(/"[^"]*"/g, "");
-  const counts = ([[",", 0], [";", 0], ["\t", 0]] as [string, number][])
-    .map(([ch]) => [ch, first.split(ch).length - 1] as [string, number]);
+  const counts = (
+    [
+      [",", 0],
+      [";", 0],
+      ["\t", 0],
+    ] as [string, number][]
+  ).map(([ch]) => [ch, first.split(ch).length - 1] as [string, number]);
   counts.sort((a, b) => b[1] - a[1]);
   const delim = counts[0]![1] > 0 ? counts[0]![0] : ",";
   // (the source file wrote the BOM as a literal U+FEFF character; ﻿ is the same regex)
@@ -149,20 +185,32 @@ async function xlsx(buf: ArrayBuffer): Promise<string> {
   const wb = xml(await z.text("xl/workbook.xml"));
   const rels = xml(await z.text("xl/_rels/workbook.xml.rels"));
   const relMap: Record<string, string | null> = {};
-  local(rels, "Relationship").forEach(r => { relMap[r.getAttribute("Id") as string] = r.getAttribute("Target"); });
+  local(rels, "Relationship").forEach((r) => {
+    relMap[r.getAttribute("Id") as string] = r.getAttribute("Target");
+  });
 
   let shared: string[] = [];
   if (z.has("xl/sharedStrings.xml")) {
     const ss = xml(await z.text("xl/sharedStrings.xml"));
-    shared = local(ss, "si").map(si => local(si, "t").map(t => t.textContent).join(""));
+    shared = local(ss, "si").map((si) =>
+      local(si, "t")
+        .map((t) => t.textContent)
+        .join(""),
+    );
   }
 
   const parts: string[] = [];
   for (const sh of local(wb, "sheet")) {
-    const rid = sh.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id") || sh.getAttribute("r:id");
+    const rid =
+      sh.getAttributeNS(
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        "id",
+      ) || sh.getAttribute("r:id");
     let target = relMap[rid as string];
     if (!target) continue;
-    target = target.replace(/^\//, "").startsWith("xl/") ? target.replace(/^\//, "") : "xl/" + target.replace(/^\.?\//, "");
+    target = target.replace(/^\//, "").startsWith("xl/")
+      ? target.replace(/^\//, "")
+      : "xl/" + target.replace(/^\.?\//, "");
     if (!z.has(target)) continue;
     const doc = xml(await z.text(target));
     const rows: string[][] = [];
@@ -172,19 +220,24 @@ async function xlsx(buf: ArrayBuffer): Promise<string> {
         const idx = colIndex(c.getAttribute("r"));
         const t = c.getAttribute("t");
         let v = "";
-        if (t === "inlineStr") v = local(c, "t").map(n => n.textContent).join("");
+        if (t === "inlineStr")
+          v = local(c, "t")
+            .map((n) => n.textContent)
+            .join("");
         else {
           const vEl = local(c, "v")[0];
-          v = vEl ? vEl.textContent as string : "";
+          v = vEl ? (vEl.textContent as string) : "";
           if (t === "s") v = shared[+v] ?? "";
           else if (t === "b") v = v === "1" ? "TRUE" : "FALSE";
         }
-        if (idx >= 0) { while (out.length < idx) out.push(""); out[idx] = v; }
-        else out.push(v);
+        if (idx >= 0) {
+          while (out.length < idx) out.push("");
+          out[idx] = v;
+        } else out.push(v);
       }
       rows.push(out);
     }
-    while (rows.length && rows[rows.length - 1]!.every(f => !String(f).trim())) rows.pop();
+    while (rows.length && rows[rows.length - 1]!.every((f) => !String(f).trim())) rows.pop();
     if (rows.length) parts.push(`## ${sh.getAttribute("name") || "Sheet"}\n\n${mdTable(rows)}`);
   }
   if (!parts.length) throw new Error("No readable sheets in that workbook");
@@ -196,7 +249,10 @@ async function xlsx(buf: ArrayBuffer): Promise<string> {
    body placeholders become bullets (indented by outline level), free text
    boxes become paragraphs, tables become tables, and speaker notes arrive
    as a callout so they survive into both exports. */
-const runText = (p: Document | Element): string => local(p, "t").map(t => t.textContent).join("");
+const runText = (p: Document | Element): string =>
+  local(p, "t")
+    .map((t) => t.textContent)
+    .join("");
 
 function shapeParagraphs(sp: Element): { text: string; lvl: number }[] {
   const out: { text: string; lvl: number }[] = [];
@@ -214,11 +270,17 @@ async function pptx(buf: ArrayBuffer): Promise<string> {
   const pres = xml(await z.text("ppt/presentation.xml"));
   const rels = xml(await z.text("ppt/_rels/presentation.xml.rels"));
   const relMap: Record<string, string | null> = {};
-  local(rels, "Relationship").forEach(r => { relMap[r.getAttribute("Id") as string] = r.getAttribute("Target"); });
+  local(rels, "Relationship").forEach((r) => {
+    relMap[r.getAttribute("Id") as string] = r.getAttribute("Target");
+  });
 
   const slides: string[] = [];
   for (const sid of local(pres, "sldId")) {
-    const rid = sid.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id") || sid.getAttribute("r:id");
+    const rid =
+      sid.getAttributeNS(
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        "id",
+      ) || sid.getAttribute("r:id");
     const target = (relMap[rid as string] || "").replace(/^\.?\//, "");
     if (target) slides.push("ppt/" + target);
   }
@@ -234,15 +296,19 @@ async function pptx(buf: ArrayBuffer): Promise<string> {
 
     for (const sp of local(doc, "sp")) {
       const ph = local(sp, "ph")[0];
-      const type = ph ? (ph.getAttribute("type") || "body") : null;
+      const type = ph ? ph.getAttribute("type") || "body" : null;
       const paras = shapeParagraphs(sp);
       if (!paras.length) continue;
-      if (!title && (type === "title" || type === "ctrTitle")) { title = paras.map(p => p.text).join(" — "); continue; }
-      if (ph) chunks.push(paras.map(p => "  ".repeat(Math.min(p.lvl, 3)) + "- " + p.text).join("\n"));
-      else chunks.push(paras.map(p => p.text).join("\n\n"));
+      if (!title && (type === "title" || type === "ctrTitle")) {
+        title = paras.map((p) => p.text).join(" — ");
+        continue;
+      }
+      if (ph)
+        chunks.push(paras.map((p) => "  ".repeat(Math.min(p.lvl, 3)) + "- " + p.text).join("\n"));
+      else chunks.push(paras.map((p) => p.text).join("\n\n"));
     }
     for (const tbl of local(doc, "tbl")) {
-      const rows = local(tbl, "tr").map(tr => local(tr, "tc").map(tc => runText(tc)));
+      const rows = local(tbl, "tr").map((tr) => local(tr, "tc").map((tc) => runText(tc)));
       if (rows.length) chunks.push(mdTable(rows));
     }
 
@@ -250,13 +316,24 @@ async function pptx(buf: ArrayBuffer): Promise<string> {
     const slideRels = path.replace(/slides\//, "slides/_rels/") + ".rels";
     if (z.has(slideRels)) {
       const sr = xml(await z.text(slideRels));
-      const note = local(sr, "Relationship").find(r => /notesSlide/.test(r.getAttribute("Type") || ""));
+      const note = local(sr, "Relationship").find((r) =>
+        /notesSlide/.test(r.getAttribute("Type") || ""),
+      );
       if (note) {
-        const notePath = "ppt/" + (note.getAttribute("Target") as string).replace(/^(\.\.\/)+/, "").replace(/^\.?\//, "");
+        const notePath =
+          "ppt/" +
+          (note.getAttribute("Target") as string).replace(/^(\.\.\/)+/, "").replace(/^\.?\//, "");
         if (z.has(notePath)) {
           const nd = xml(await z.text(notePath));
-          const text = local(nd, "sp").map(sp => shapeParagraphs(sp).map(p => p.text).join("\n"))
-            .join("\n").replace(/^\s*\d+\s*$/gm, "").trim();
+          const text = local(nd, "sp")
+            .map((sp) =>
+              shapeParagraphs(sp)
+                .map((p) => p.text)
+                .join("\n"),
+            )
+            .join("\n")
+            .replace(/^\s*\d+\s*$/gm, "")
+            .trim();
           if (text) chunks.push(`:::note Speaker notes\n${text}\n:::`);
         }
       }
@@ -283,8 +360,12 @@ async function epub(
   const opf = xml(await z.text(opfPath));
 
   const manifest: Record<string, string | null> = {};
-  local(opf, "item").forEach(it => { manifest[it.getAttribute("id") as string] = it.getAttribute("href"); });
-  const order = local(opf, "itemref").map(ir => manifest[ir.getAttribute("idref") as string]).filter(Boolean) as string[];
+  local(opf, "item").forEach((it) => {
+    manifest[it.getAttribute("id") as string] = it.getAttribute("href");
+  });
+  const order = local(opf, "itemref")
+    .map((ir) => manifest[ir.getAttribute("idref") as string])
+    .filter(Boolean) as string[];
   if (!order.length) throw new Error("Empty EPUB spine");
 
   const parts: string[] = [];
@@ -303,7 +384,7 @@ async function epub(
 function ipynb(text: string): string {
   const nb = JSON.parse(text);
   const lang = nb?.metadata?.kernelspec?.language || nb?.metadata?.language_info?.name || "";
-  const src = (c: any) => Array.isArray(c.source) ? c.source.join("") : String(c.source || "");
+  const src = (c: any) => (Array.isArray(c.source) ? c.source.join("") : String(c.source || ""));
   const parts: string[] = [];
   for (const cell of nb.cells || []) {
     const body = src(cell).trim();

@@ -46,12 +46,22 @@ async function lib(): Promise<PdfjsLib> {
       await importGlobalScript(workerSrc, ";globalThis.pdfjsWorker=pdfjsWorker;");
       await importGlobalScript(libSrc, ";globalThis.pdfjsLib=pdfjsLib;");
     })();
-    pdfjsLoading.catch(() => { pdfjsLoading = null; }); // a failed load stays retryable
+    pdfjsLoading.catch(() => {
+      pdfjsLoading = null;
+    }); // a failed load stays retryable
   }
   await pdfjsLoading;
   // The source strings are megabytes each — drop them now that they're parsed.
-  try { delete window.__PDFJS_WORKER_SRC__; } catch { window.__PDFJS_WORKER_SRC__ = null; }
-  try { delete window.__PDFJS_SRC__; } catch { window.__PDFJS_SRC__ = null; }
+  try {
+    delete window.__PDFJS_WORKER_SRC__;
+  } catch {
+    window.__PDFJS_WORKER_SRC__ = null;
+  }
+  try {
+    delete window.__PDFJS_SRC__;
+  } catch {
+    window.__PDFJS_SRC__ = null;
+  }
   // Fresh read: control-flow narrowing can't see the imports mutate window.
   const pdfjsLib = (window as { pdfjsLib?: PdfjsLib }).pdfjsLib;
   if (!pdfjsLib) throw new Error("PDF support is not bundled in this build");
@@ -68,9 +78,23 @@ const TERMINAL_RE = /[.!?:;"]$/;
 
 type Run = { str: string; x: number; y: number; w: number; size: number; bold: boolean };
 type Cluster = { y: number; size: number; runs: Run[] };
-type Seg = { x: number; endX: number; text: string; boldChars: number; chars: number; size: number };
+type Seg = {
+  x: number;
+  endX: number;
+  text: string;
+  boldChars: number;
+  chars: number;
+  size: number;
+};
 
-export type Line = { text: string; x: number; y: number; size: number; bold: boolean; split: boolean };
+export type Line = {
+  text: string;
+  x: number;
+  y: number;
+  size: number;
+  bold: boolean;
+  split: boolean;
+};
 export type PageRec = { n: number; width: number; height: number; lines: Line[] };
 export type Block =
   | { t: "h"; level: number; text: string }
@@ -94,10 +118,15 @@ function buildLines(
     const st = styles[it.fontName as string];
     // The styles map only carries generic fallbacks ("sans-serif") — the real
     // "…+Calibri-Bold" name comes from commonObjs via boldMap when available.
-    const face = (boldMap && boldMap.get(it.fontName as string)) || (st && st.fontFamily) || it.fontName || "";
+    const face =
+      (boldMap && boldMap.get(it.fontName as string)) || (st && st.fontFamily) || it.fontName || "";
     runs.push({
-      str: it.str, x: it.transform[4], y: it.transform[5],
-      w: it.width || 0, size, bold: /bold|black|heavy/i.test(face),
+      str: it.str,
+      x: it.transform[4],
+      y: it.transform[5],
+      w: it.width || 0,
+      size,
+      bold: /bold|black|heavy/i.test(face),
     });
   }
   // PDF y grows upward, so top of page = largest y.
@@ -123,11 +152,13 @@ function buildLines(
     const segs: Seg[] = [];
     let seg: Seg | null = null;
     for (const r of cl.runs) {
-      if (seg && r.x - seg.endX > splitGap) { segs.push(seg); seg = null; }
+      if (seg && r.x - seg.endX > splitGap) {
+        segs.push(seg);
+        seg = null;
+      }
       if (!seg) {
         seg = { x: r.x, endX: -Infinity, text: "", boldChars: 0, chars: 0, size: 0 };
-      } else if (r.x - seg.endX > 0.25 * r.size &&
-                 !/\s$/.test(seg.text) && !/^\s/.test(r.str)) {
+      } else if (r.x - seg.endX > 0.25 * r.size && !/\s$/.test(seg.text) && !/^\s/.test(r.str)) {
         seg.text += " ";
       }
       seg.text += r.str;
@@ -142,7 +173,10 @@ function buildLines(
       const text = s.text.replace(/\s+/g, " ").trim();
       if (!text) continue;
       lines.push({
-        text, x: s.x, y: cl.y, size: s.size,
+        text,
+        x: s.x,
+        y: cl.y,
+        size: s.size,
         bold: s.chars > 0 && s.boldChars / s.chars > 0.5,
         split: segs.length > 1, // baseline had a big x-jump — table/column suspect
       });
@@ -163,12 +197,18 @@ function bodySize(pageList: PageRec[]): number {
       weight.set(s, (weight.get(s) || 0) + ln.text.length);
     }
   }
-  let best = 12, bestW = -1;
-  for (const [s, w] of weight) if (w > bestW) { best = s; bestW = w; }
+  let best = 12,
+    bestW = -1;
+  for (const [s, w] of weight)
+    if (w > bestW) {
+      best = s;
+      bestW = w;
+    }
   return best;
 }
 
-const normEdge = (t: string): string => t.replace(/\d+/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+const normEdge = (t: string): string =>
+  t.replace(/\d+/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 
 /* A header/footer is whatever repeats on most pages inside the ~50pt strips
    at the paper's top and bottom, once digits (page numbers, dates) are
@@ -183,7 +223,10 @@ function stripFurniture(pageList: PageRec[]): boolean {
     for (const ln of p.lines) {
       if (!inBand(p, ln)) continue;
       const e = normEdge(ln.text);
-      if (e && !seen.has(e)) { seen.add(e); hits.set(e, (hits.get(e) || 0) + 1); }
+      if (e && !seen.has(e)) {
+        seen.add(e);
+        hits.set(e, (hits.get(e) || 0) + 1);
+      }
     }
   }
   const need = Math.max(3, Math.ceil(0.6 * pageList.length));
@@ -192,8 +235,11 @@ function stripFurniture(pageList: PageRec[]): boolean {
 
   let removed = false;
   for (const p of pageList) {
-    p.lines = p.lines.filter(ln => {
-      if (inBand(p, ln) && drop.has(normEdge(ln.text))) { removed = true; return false; }
+    p.lines = p.lines.filter((ln) => {
+      if (inBand(p, ln) && drop.has(normEdge(ln.text))) {
+        removed = true;
+        return false;
+      }
       // Standalone page numbers hide in the top/bottom 12% of the page.
       if ((ln.y >= p.height * 0.88 || ln.y <= p.height * 0.12) && PAGENUM_RE.test(ln.text)) {
         removed = true;
@@ -212,8 +258,12 @@ function splitColumns(p: PageRec): { groups: Line[][]; multi: boolean } {
   if (p.lines.length < 6) return { groups: [p.lines], multi: false };
   const right = p.lines.filter((l) => l.x >= mid);
   const nearLeft = p.lines.filter((l) => l.x < p.width * 0.3);
-  if (right.length && right.length < p.lines.length &&
-      right.length / p.lines.length >= 0.4 && nearLeft.length >= 2) {
+  if (
+    right.length &&
+    right.length < p.lines.length &&
+    right.length / p.lines.length >= 0.4 &&
+    nearLeft.length >= 2
+  ) {
     return { groups: [p.lines.filter((l) => l.x < mid), right], multi: true };
   }
   return { groups: [p.lines], multi: false };
@@ -235,8 +285,7 @@ function headingLevel(ln: Line, body: number): number {
    labels: short, no terminal period, and genuinely the same size. */
 function boldHeading(ln: Line, body: number): boolean {
   const r = ln.size / body;
-  return ln.bold && ln.text.length < 60 && !ln.text.endsWith(".") &&
-    r >= 0.95 && r < 1.12;
+  return ln.bold && ln.text.length < 60 && !ln.text.endsWith(".") && r >= 0.95 && r < 1.12;
 }
 
 /* Single-space join with de-hyphenation: "exam-" + "ple" -> "example". */
@@ -264,8 +313,13 @@ function groupBlocks(lines: Line[], body: number): Block[] {
     const k = Math.round(l.x);
     xFreq.set(k, (xFreq.get(k) || 0) + 1);
   }
-  let baseX = Math.round(lines[0]!.x), bw = -1;
-  for (const [k, w] of xFreq) if (w > bw || (w === bw && k < baseX)) { baseX = k; bw = w; }
+  let baseX = Math.round(lines[0]!.x),
+    bw = -1;
+  for (const [k, w] of xFreq)
+    if (w > bw || (w === bw && k < baseX)) {
+      baseX = k;
+      bw = w;
+    }
 
   const blocks: Block[] = [];
   let prev: Line | null = null;
@@ -279,12 +333,17 @@ function groupBlocks(lines: Line[], body: number): Block[] {
     const bullet = !hSize && BULLET_RE.test(ln.text);
     const num = !hSize && !bullet && NUM_RE.test(ln.text);
     const nxt = lines[i + 1];
-    const markerless = !hSize && !bullet && !num &&
-      ln.x >= baseX + 8 && ln.x <= baseX + 60 &&
-      ln.size / body < 1.12 && ln.text.length < 140 &&
+    const markerless =
+      !hSize &&
+      !bullet &&
+      !num &&
+      ln.x >= baseX + 8 &&
+      ln.x <= baseX + 60 &&
+      ln.size / body < 1.12 &&
+      ln.text.length < 140 &&
       // ...only as part of a run: another item follows at the same x, or one precedes.
-      ((nxt && Math.abs(nxt.x - ln.x) < 2 && (ln.y - nxt.y) <= 1.8 * lineH) ||
-       (last && last.t === "li" && !last.ordered && near && Math.abs(ln.x - last.x) < 2));
+      ((nxt && Math.abs(nxt.x - ln.x) < 2 && ln.y - nxt.y <= 1.8 * lineH) ||
+        (last && last.t === "li" && !last.ordered && near && Math.abs(ln.x - last.x) < 2));
 
     if (hSize) {
       // A tall title wrapped over two lines is still one heading.
@@ -294,7 +353,12 @@ function groupBlocks(lines: Line[], body: number): Block[] {
         blocks.push({ t: "h", level: hSize, text: ln.text });
       }
     } else if (bullet || num) {
-      blocks.push({ t: "li", ordered: num, x: ln.x, text: ln.text.replace(bullet ? BULLET_RE : NUM_RE, "") });
+      blocks.push({
+        t: "li",
+        ordered: num,
+        x: ln.x,
+        text: ln.text.replace(bullet ? BULLET_RE : NUM_RE, ""),
+      });
     } else if (markerless) {
       blocks.push({ t: "li", ordered: false, x: ln.x, text: ln.text });
     } else if (last && last.t === "li" && near && ln.x > last.x + 4) {
@@ -318,14 +382,14 @@ const escProse = (t: string): string => t.replace(/\|/g, "\\|").replace(/^([#>])
 
 function emitList(items: LiBlock[]): string {
   const base = items[0]!.x;
-  let n = 0, nn = 0;
+  let n = 0,
+    nn = 0;
   const out: string[] = [];
   for (const it of items) {
     const nested = it.x >= base + 18; // ~a quarter inch deeper = one level in
     if (!nested) nn = 0;
     if (it.ordered) {
-      out.push(nested ? "  " + (++nn) + ". " + escProse(it.text)
-                      : (++n) + ". " + escProse(it.text));
+      out.push(nested ? "  " + ++nn + ". " + escProse(it.text) : ++n + ". " + escProse(it.text));
     } else {
       if (!nested) n = 0;
       out.push((nested ? "  - " : "- ") + escProse(it.text));
@@ -334,13 +398,20 @@ function emitList(items: LiBlock[]): string {
   return out.join("\n");
 }
 
-const pageNames = (nums: number[]): string => "page" + (nums.length > 1 ? "s " : " ") + nums.join(", ");
+const pageNames = (nums: number[]): string =>
+  "page" + (nums.length > 1 ? "s " : " ") + nums.join(", ");
 
 /* ---------- entry point ---------- */
 
-async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; pages: number; warnings: string[] }> {
+async function toMarkdown(
+  arrayBuffer: ArrayBuffer,
+): Promise<{ source: string; pages: number; warnings: string[] }> {
   const pdfjs = await lib();
-  const task = pdfjs.getDocument({ data: arrayBuffer, isEvalSupported: false, useSystemFonts: true });
+  const task = pdfjs.getDocument({
+    data: arrayBuffer,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  });
   let doc: PdfjsDocument | null = null;
   try {
     try {
@@ -368,29 +439,42 @@ async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; p
           try {
             const f = page.commonObjs.get(it.fontName);
             if (f && f.name) boldMap.set(it.fontName, f.name);
-          } catch { /* font not resolved — generic fallback still applies */ }
+          } catch {
+            /* font not resolved — generic fallback still applies */
+          }
         }
-      } catch { /* a broken page's graphics must not sink the text import */ }
-      pageList.push({ n: i, width: vp.width, height: vp.height, lines: buildLines(content, vp.width, boldMap) });
+      } catch {
+        /* a broken page's graphics must not sink the text import */
+      }
+      pageList.push({
+        n: i,
+        width: vp.width,
+        height: vp.height,
+        lines: buildLines(content, vp.width, boldMap),
+      });
     }
 
     let chars = 0;
     for (const p of pageList) for (const ln of p.lines) chars += ln.text.replace(/\s/g, "").length;
     if (chars < 3) {
-      throw new Error("No selectable text found — this looks like a scanned PDF. Run OCR on it first, or attach its pages as images.");
+      throw new Error(
+        "No selectable text found — this looks like a scanned PDF. Run OCR on it first, or attach its pages as images.",
+      );
     }
 
     const droppedFurniture = stripFurniture(pageList);
     const body = bodySize(pageList);
 
-    const columnPages: number[] = [], tablePages: number[] = [];
+    const columnPages: number[] = [],
+      tablePages: number[] = [];
     const pageBlocks: Block[][] = [];
     for (const p of pageList) {
       const { groups, multi } = splitColumns(p);
       if (multi) columnPages.push(p.n);
       else {
         const jumps = p.lines.filter((l) => l.split).length;
-        if (p.lines.length >= 6 && jumps >= 3 && jumps / p.lines.length >= 0.3) tablePages.push(p.n);
+        if (p.lines.length >= 6 && jumps >= 3 && jumps / p.lines.length >= 0.3)
+          tablePages.push(p.n);
       }
       const blocks: Block[] = [];
       for (const g of groups) blocks.push(...groupBlocks(g, body));
@@ -401,8 +485,14 @@ async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; p
     const blocks: Block[] = [];
     for (const pb of pageBlocks) {
       const tail = blocks[blocks.length - 1];
-      if (tail && pb[0] && tail.t === "p" && pb[0].t === "p" &&
-          !TERMINAL_RE.test(tail.text) && /^[a-z]/.test(pb[0].text)) {
+      if (
+        tail &&
+        pb[0] &&
+        tail.t === "p" &&
+        pb[0].t === "p" &&
+        !TERMINAL_RE.test(tail.text) &&
+        /^[a-z]/.test(pb[0].text)
+      ) {
         tail.text = joinWrapped(tail.text, pb[0].text);
         blocks.push(...pb.slice(1));
       } else {
@@ -417,13 +507,15 @@ async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; p
         out.push("#".repeat(b.level) + " " + b.text.replace(/\|/g, "\\|"));
       } else if (b.t === "li") {
         const items: LiBlock[] = [b];
-        while (i + 1 < blocks.length && blocks[i + 1]!.t === "li") items.push(blocks[++i] as LiBlock);
+        while (i + 1 < blocks.length && blocks[i + 1]!.t === "li")
+          items.push(blocks[++i] as LiBlock);
         out.push(emitList(items));
       } else {
         out.push(escProse(b.text));
       }
     }
-    const source = out.join("\n\n")
+    const source = out
+      .join("\n\n")
       .replace(/[ \t]+$/gm, "")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
@@ -433,12 +525,18 @@ async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; p
       warnings.push("Tables and multi-column layouts are flattened to running text");
     }
     if (columnPages.length) {
-      warnings.push("Multi-column layout detected on " + pageNames(columnPages) +
-        " — each was read left column first, then right.");
+      warnings.push(
+        "Multi-column layout detected on " +
+          pageNames(columnPages) +
+          " — each was read left column first, then right.",
+      );
     }
     if (tablePages.length) {
-      warnings.push("Text on " + pageNames(tablePages) +
-        " looks like a table or grid; its cells were flattened into lines.");
+      warnings.push(
+        "Text on " +
+          pageNames(tablePages) +
+          " looks like a table or grid; its cells were flattened into lines.",
+      );
     }
     if (droppedFurniture) {
       warnings.push("Repeating headers/footers and standalone page numbers were removed.");
@@ -447,8 +545,15 @@ async function toMarkdown(arrayBuffer: ArrayBuffer): Promise<{ source: string; p
     return { source, pages: numPages, warnings };
   } finally {
     // v6 keeps destroy() on the loading task; older builds had it on the proxy.
-    try { await task.destroy(); }
-    catch { try { await (doc && doc.destroy()); } catch { /* already torn down */ } }
+    try {
+      await task.destroy();
+    } catch {
+      try {
+        await (doc && doc.destroy());
+      } catch {
+        /* already torn down */
+      }
+    }
   }
 }
 
@@ -459,7 +564,19 @@ export type PdfImportApi = typeof PdfImport;
 /* Pure helpers exposed for unit tests only (additive; NOT part of the
    public surface and NOT assigned onto the global). */
 export const _internals = {
-  buildLines, bodySize, stripFurniture, splitColumns, headingLevel,
-  boldHeading, joinWrapped, groupBlocks, emitList, escProse, pageNames,
-  BULLET_RE, NUM_RE, PAGENUM_RE, TERMINAL_RE,
+  buildLines,
+  bodySize,
+  stripFurniture,
+  splitColumns,
+  headingLevel,
+  boldHeading,
+  joinWrapped,
+  groupBlocks,
+  emitList,
+  escProse,
+  pageNames,
+  BULLET_RE,
+  NUM_RE,
+  PAGENUM_RE,
+  TERMINAL_RE,
 };

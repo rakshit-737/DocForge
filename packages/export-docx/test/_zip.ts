@@ -2,15 +2,19 @@
    qa/golden/_zip.mjs (copied here because tests must not import qa/).
    Handles stored (0) and deflated (8) members — everything the docx lib
    and Office emit. No dependency. */
-import zlib from "node:zlib";
+
 import { Buffer } from "node:buffer";
+import zlib from "node:zlib";
 
 /** member name → bytes */
 export function readZip(buf: Buffer): Map<string, Buffer> {
   // End of central directory: scan backwards for its signature.
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65536); i--) {
-    if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
   }
   if (eocd === -1) throw new Error("not a zip: no end-of-central-directory");
   const count = buf.readUInt16LE(eocd + 10);

@@ -25,12 +25,22 @@ import { importGlobalScript } from "./blob-import.js";
 
 /* ---------- types (additive; the runtime shapes are unchanged) ---------- */
 
-export interface OrigFont { loadedName: string; face: string }
-export interface Cover { dx: number; dy: number; w: number; h: number }
+export interface OrigFont {
+  loadedName: string;
+  face: string;
+}
+export interface Cover {
+  dx: number;
+  dy: number;
+  w: number;
+  h: number;
+}
 
 export interface TextEdit {
   type: "text";
-  x: number; y: number; w: number;
+  x: number;
+  y: number;
+  w: number;
   /** Never set on text edits at runtime; typed so shared drag code can read it. */
   h?: number;
   text: string;
@@ -45,20 +55,31 @@ export interface TextEdit {
 }
 export interface ImageEdit {
   type: "image";
-  x: number; y: number; w: number; h: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   dataUrl: string;
   kind: "png" | "jpg";
 }
 export interface BoxEdit {
   type: "whiteout" | "highlight";
-  x: number; y: number; w: number; h: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 export type Edit = TextEdit | ImageEdit | BoxEdit;
 
 /** One printed line reconstructed from pdf.js's text layer (ensureLines). */
 export interface LineRec {
-  x: number; yTop: number; w: number; size: number;
-  text: string; font: string; orig: OrigFont;
+  x: number;
+  yTop: number;
+  w: number;
+  size: number;
+  text: string;
+  font: string;
+  orig: OrigFont;
 }
 
 interface PageState {
@@ -74,10 +95,27 @@ interface PageState {
   lines?: LineRec[];
 }
 
-type OrigRun = { str: string; x: number; f: number; w: number; size: number; face: string; loadedName: string };
+type OrigRun = {
+  str: string;
+  x: number;
+  f: number;
+  w: number;
+  size: number;
+  face: string;
+  loadedName: string;
+};
 
 type Drag =
-  | { kind: "move"; i: number; ed: Edit; sx: number; sy: number; ox: number; oy: number; moved: boolean }
+  | {
+      kind: "move";
+      i: number;
+      ed: Edit;
+      sx: number;
+      sy: number;
+      ox: number;
+      oy: number;
+      moved: boolean;
+    }
   | { kind: "resize"; i: number; ed: Edit; sx: number; sy: number; ow: number; oh: number }
   | { kind: "draw"; i: number; ed: Edit; sx: number; sy: number };
 
@@ -103,7 +141,9 @@ async function lib(): Promise<PdfLibNamespace> {
     // now that loading is asynchronous — the eval was atomic.
     if (!pdflibLoading) {
       pdflibLoading = importGlobalScript(window.__PDFLIB_SRC__, ";globalThis.PDFLib=PDFLib;");
-      pdflibLoading.catch(() => { pdflibLoading = null; }); // a failed load stays retryable
+      pdflibLoading.catch(() => {
+        pdflibLoading = null;
+      }); // a failed load stays retryable
     }
     await pdflibLoading;
     window.__PDFLIB_SRC__ = null; // the string is dead weight once eval'd
@@ -117,13 +157,17 @@ async function lib(): Promise<PdfLibNamespace> {
 }
 
 const PDF_FONT: Record<string, string> = {
-  helv: "Helvetica", helvB: "HelveticaBold", times: "TimesRoman",
-  timesB: "TimesRomanBold", timesI: "TimesRomanItalic", courier: "Courier",
+  helv: "Helvetica",
+  helvB: "HelveticaBold",
+  times: "TimesRoman",
+  timesB: "TimesRomanBold",
+  timesI: "TimesRomanItalic",
+  courier: "Courier",
 };
 const CSS_FONT: Record<string, [family: string, weight: string, style: string]> = {
-  helv:   ["Arial,Helvetica,sans-serif", "400", "normal"],
-  helvB:  ["Arial,Helvetica,sans-serif", "700", "normal"],
-  times:  ["Georgia,'Times New Roman',serif", "400", "normal"],
+  helv: ["Arial,Helvetica,sans-serif", "400", "normal"],
+  helvB: ["Arial,Helvetica,sans-serif", "700", "normal"],
+  times: ["Georgia,'Times New Roman',serif", "400", "normal"],
   timesB: ["Georgia,'Times New Roman',serif", "700", "normal"],
   timesI: ["Georgia,'Times New Roman',serif", "400", "italic"],
   courier: ["'Courier New',monospace", "400", "normal"],
@@ -133,18 +177,27 @@ const CSS_FONT: Record<string, [family: string, weight: string, style: string]> 
 
 /** DOM handles bound once (bindOnce). Values stay `any`: the shell's DOM
     plumbing is driven by load-bearing ids, not by this package's types. */
-let els: any = null, bound = false;
-let bytes: ArrayBuffer | null = null, task: PdfJsLoadingTask | null = null,
-    doc: PdfJsDocument | null = null, name = "";
-let pages: PageState[] = [];  // { pg, w, h, el, canvas, layer, renderTask }
-const edits = new Map<number, Edit[]>();      // pageIndex -> Edit[]
-let opened = false, dirty = false, gen = 0;
-let tool = "select", zoom = 1, zoomTimer = 0;
-let sel: Edit | null = null, selPage = -1, drag: Drag | null = null,
-    pendingImg: { i: number; x: number; y: number } | null = null;
+let els: any = null,
+  bound = false;
+let bytes: ArrayBuffer | null = null,
+  task: PdfJsLoadingTask | null = null,
+  doc: PdfJsDocument | null = null,
+  name = "";
+let pages: PageState[] = []; // { pg, w, h, el, canvas, layer, renderTask }
+const edits = new Map<number, Edit[]>(); // pageIndex -> Edit[]
+let opened = false,
+  dirty = false,
+  gen = 0;
+let tool = "select",
+  zoom = 1,
+  zoomTimer = 0;
+let sel: Edit | null = null,
+  selPage = -1,
+  drag: Drag | null = null,
+  pendingImg: { i: number; x: number; y: number } | null = null;
 const nodeOf = new WeakMap<Edit, HTMLElement>(); // edit -> element
 const elToEdit = new WeakMap<Element, Edit>();
-const revCache = new Map<string, Map<string, number> | null>();   // loadedName -> Map(unicode char -> charcode) | null
+const revCache = new Map<string, Map<string, number> | null>(); // loadedName -> Map(unicode char -> charcode) | null
 let mctx: CanvasRenderingContext2D | null = null; // shared canvas context for native-font measurement
 
 /* ---------- the original font, kept ----------
@@ -171,13 +224,19 @@ function revMapFor(i: number, loadedName: string): Map<string, number> | null {
       }
       if (!m.size) m = null;
     }
-  } catch { /* font not resolved — fall back to a standard face */ }
+  } catch {
+    /* font not resolved — fall back to a standard face */
+  }
   revCache.set(loadedName, m);
   return m;
 }
 
 const fontFaceUsable = (loadedName: string): boolean => {
-  try { return document.fonts.check(`12px "${loadedName}"`); } catch { return false; }
+  try {
+    return document.fonts.check(`12px "${loadedName}"`);
+  } catch {
+    return false;
+  }
 };
 
 function measureNative(loadedName: string, size: number, s: string): number {
@@ -203,38 +262,66 @@ const clamp = (v: number, a: number, b: number): number => Math.min(b, Math.max(
 /* ---------- display ---------- */
 
 function sizePage(i: number): void {
-  const p = pages[i]!, cw = p.w * zoom + "px", ch = p.h * zoom + "px";
-  p.el.style.width = cw; p.el.style.height = ch;
-  p.canvas.style.width = cw; p.canvas.style.height = ch;
-  p.layer.style.width = cw; p.layer.style.height = ch;
+  const p = pages[i]!,
+    cw = p.w * zoom + "px",
+    ch = p.h * zoom + "px";
+  p.el.style.width = cw;
+  p.el.style.height = ch;
+  p.canvas.style.width = cw;
+  p.canvas.style.height = ch;
+  p.layer.style.width = cw;
+  p.layer.style.height = ch;
 }
 
 async function paint(i: number): Promise<void> {
-  const p = pages[i]!, g = gen;
+  const p = pages[i]!,
+    g = gen;
   // Above 2 the extra pixels are invisible and quadruple the memory bill.
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const vp = p.pg.getViewport({ scale: zoom * dpr });
-  if (p.renderTask) { try { p.renderTask.cancel(); } catch { /* settled */ } }
-  p.canvas.width = Math.floor(vp.width); p.canvas.height = Math.floor(vp.height);
+  if (p.renderTask) {
+    try {
+      p.renderTask.cancel();
+    } catch {
+      /* settled */
+    }
+  }
+  p.canvas.width = Math.floor(vp.width);
+  p.canvas.height = Math.floor(vp.height);
   const t = p.pg.render({ canvasContext: p.canvas.getContext("2d")!, viewport: vp });
   p.renderTask = t;
-  try { await t.promise; } catch { /* cancelled by a newer zoom */ }
+  try {
+    await t.promise;
+  } catch {
+    /* cancelled by a newer zoom */
+  }
   if (gen === g && p.renderTask === t) p.renderTask = null;
 }
 
 function place(ed: Edit): void {
   const el = nodeOf.get(ed);
   if (!el) return;
-  Object.assign(el.style, { left: ed.x * zoom + "px", top: ed.y * zoom + "px", width: ed.w * zoom + "px" });
+  Object.assign(el.style, {
+    left: ed.x * zoom + "px",
+    top: ed.y * zoom + "px",
+    width: ed.w * zoom + "px",
+  });
   if (ed.type === "text") {
     let [fontFamily, fontWeight, fontStyle] = CSS_FONT[ed.font] || CSS_FONT.helv!;
     if (ed.orig && ed.useOrig !== false && fontFaceUsable(ed.orig.loadedName)) {
       // the embedded font itself, live in the edit box
       fontFamily = `"${ed.orig.loadedName}", ${fontFamily}`;
-      fontWeight = "400"; fontStyle = "normal"; // the face carries its own weight/slant
+      fontWeight = "400";
+      fontStyle = "normal"; // the face carries its own weight/slant
     }
-    Object.assign(el.style, { height: "auto", fontFamily, fontWeight, fontStyle,
-      fontSize: ed.size * zoom + "px", color: ed.color });
+    Object.assign(el.style, {
+      height: "auto",
+      fontFamily,
+      fontWeight,
+      fontStyle,
+      fontSize: ed.size * zoom + "px",
+      color: ed.color,
+    });
     if (ed.cover) {
       // On screen the white grows with the text (like the export cover will),
       // instead of blanking the whole margin-wide editing box.
@@ -261,7 +348,10 @@ function buildNode(ed: Edit, i: number): HTMLDivElement {
     el.textContent = ed.text;
     // line-height 1.25 matches the 1.25em line advance used at export
     Object.assign(el.style, { whiteSpace: "pre-wrap", minWidth: "40px", lineHeight: "1.25" });
-    el.addEventListener("input", () => { ed.text = el.innerText; dirty = true; });
+    el.addEventListener("input", () => {
+      ed.text = el.innerText;
+      dirty = true;
+    });
     el.addEventListener("blur", () => {
       // Whitespace-only boxes evaporate rather than exporting invisible edits.
       if (!ed.text.trim() && (edits.get(i) || []).includes(ed)) removeEdit(i, ed);
@@ -301,7 +391,10 @@ function syncLayer(i: number): void {
   const keep = new Set<Element>();
   for (const ed of edits.get(i) || []) {
     let el = nodeOf.get(ed);
-    if (!el) { el = buildNode(ed, i); nodeOf.set(ed, el); }
+    if (!el) {
+      el = buildNode(ed, i);
+      nodeOf.set(ed, el);
+    }
     if (el.parentNode !== p.layer) p.layer.appendChild(el);
     place(ed);
     decorate(ed, el);
@@ -315,26 +408,30 @@ function syncLayer(i: number): void {
 function select(ed: Edit, i: number): void {
   if (sel === ed) return;
   const prev = sel;
-  sel = ed; selPage = i;
+  sel = ed;
+  selPage = i;
   if (prev && nodeOf.get(prev)) decorate(prev, nodeOf.get(prev)!);
   if (nodeOf.get(ed)) decorate(ed, nodeOf.get(ed)!);
-  if (ed.type === "text") { // controls mirror the selection they now steer
-    els.font.value = (ed.orig && ed.useOrig !== false) ? "orig" : ed.font;
-    els.size.value = ed.size; els.color.value = ed.color;
+  if (ed.type === "text") {
+    // controls mirror the selection they now steer
+    els.font.value = ed.orig && ed.useOrig !== false ? "orig" : ed.font;
+    els.size.value = ed.size;
+    els.color.value = ed.color;
   }
 }
 
 function deselect(): void {
   if (!sel) return;
   const ed = sel;
-  sel = null; selPage = -1;
+  sel = null;
+  selPage = -1;
   const el = nodeOf.get(ed);
   if (el) decorate(ed, el);
 }
 
 function pushEdit(i: number, ed: Edit): void {
   let list = edits.get(i);
-  if (!list) edits.set(i, list = []);
+  if (!list) edits.set(i, (list = []));
   list.push(ed);
   dirty = true;
   syncLayer(i);
@@ -345,7 +442,10 @@ function removeEdit(i: number, ed: Edit): void {
   const at = list ? list.indexOf(ed) : -1;
   if (at < 0) return;
   list!.splice(at, 1);
-  if (sel === ed) { sel = null; selPage = -1; }
+  if (sel === ed) {
+    sel = null;
+    selPage = -1;
+  }
   dirty = true;
   syncLayer(i);
 }
@@ -368,8 +468,21 @@ async function ensureLines(i: number): Promise<LineRec[]> {
     if (!it.str || !it.str.trim()) continue;
     const size = Math.hypot(it.transform[0], it.transform[1]) || 1;
     let face = "";
-    try { const f = p.pg.commonObjs.get(it.fontName); face = (f && f.name) || ""; } catch { /* not resolved */ }
-    runs.push({ str: it.str, x: it.transform[4], f: it.transform[5], w: it.width || 0, size, face, loadedName: it.fontName });
+    try {
+      const f = p.pg.commonObjs.get(it.fontName);
+      face = (f && f.name) || "";
+    } catch {
+      /* not resolved */
+    }
+    runs.push({
+      str: it.str,
+      x: it.transform[4],
+      f: it.transform[5],
+      w: it.width || 0,
+      size,
+      face,
+      loadedName: it.fontName,
+    });
   }
   runs.sort((a, b) => b.f - a.f || a.x - b.x);
   const clusters: { f: number; runs: OrigRun[]; size?: number }[] = [];
@@ -381,7 +494,7 @@ async function ensureLines(i: number): Promise<LineRec[]> {
     // same-baseline runs never merge. Fixing it would change editLineAt's hit
     // targets and rewrite extents, i.e. observable behavior.
     if (cur && Math.abs(r.f - cur.f) <= 0.35 * Math.max(r.size, cur.size!)) cur.runs.push(r);
-    else clusters.push(cur = { f: r.f, runs: [r] });
+    else clusters.push((cur = { f: r.f, runs: [r] }));
   }
   p.lines = clusters.map((L) => {
     L.runs.sort((a, b) => a.x - b.x);
@@ -390,29 +503,57 @@ async function ensureLines(i: number): Promise<LineRec[]> {
     const size = Math.max(...L.runs.map((r) => r.size));
     let text = "";
     for (let k = 0; k < L.runs.length; k++) {
-      const r = L.runs[k]!, prev = L.runs[k - 1];
-      if (prev && !text.endsWith(" ") && !r.str.startsWith(" ") &&
-          r.x - (prev.x + prev.w) > 0.2 * size) text += " ";
+      const r = L.runs[k]!,
+        prev = L.runs[k - 1];
+      if (
+        prev &&
+        !text.endsWith(" ") &&
+        !r.str.startsWith(" ") &&
+        r.x - (prev.x + prev.w) > 0.2 * size
+      )
+        text += " ";
       text += r.str;
     }
     const faces = L.runs.map((r) => r.face).join(" ");
     const bold = /bold|black|heavy/i.test(faces);
     const italic = /italic|oblique/i.test(faces);
     const mono = /mono|courier|consol|code/i.test(faces);
-    const serif = !mono && /times|georgia|serif|garamond|book|roman|crimson|cambria|constantia/i.test(faces) && !/sans/i.test(faces);
-    const font = mono ? "courier"
-      : serif ? (bold ? "timesB" : italic ? "timesI" : "times")
-      : (bold ? "helvB" : "helv");
+    const serif =
+      !mono &&
+      /times|georgia|serif|garamond|book|roman|crimson|cambria|constantia/i.test(faces) &&
+      !/sans/i.test(faces);
+    const font = mono
+      ? "courier"
+      : serif
+        ? bold
+          ? "timesB"
+          : italic
+            ? "timesI"
+            : "times"
+        : bold
+          ? "helvB"
+          : "helv";
     // The line's dominant (most characters) font is the one a rewrite keeps.
     const byFont = new Map<string, number>();
     for (const r of L.runs) {
       byFont.set(r.loadedName, (byFont.get(r.loadedName) || 0) + r.str.length);
     }
-    let domName = L.runs[0]!.loadedName, domN = -1;
-    for (const [k, n] of byFont) if (n > domN) { domName = k; domN = n; }
-    const domFace = (L.runs.find((r) => r.loadedName === domName) || ({} as Partial<OrigRun>)).face || "";
+    let domName = L.runs[0]!.loadedName,
+      domN = -1;
+    for (const [k, n] of byFont)
+      if (n > domN) {
+        domName = k;
+        domN = n;
+      }
+    const domFace =
+      (L.runs.find((r) => r.loadedName === domName) || ({} as Partial<OrigRun>)).face || "";
     return {
-      x: x0, yTop: p.h - L.f - size * 0.83, w: x1 - x0, size, text, font,
+      x: x0,
+      yTop: p.h - L.f - size * 0.83,
+      w: x1 - x0,
+      size,
+      text,
+      font,
       orig: { loadedName: domName, face: domFace },
     };
   });
@@ -423,9 +564,10 @@ async function editLineAt(i: number, px: number, py: number): Promise<TextEdit |
   const p = pages[i];
   if (!p) return null;
   const lines = await ensureLines(i);
-  const hit = lines.find((L) =>
-    px >= L.x - 2 && px <= L.x + L.w + 2 &&
-    py >= L.yTop - 2 && py <= L.yTop + L.size * 1.24 + 2);
+  const hit = lines.find(
+    (L) =>
+      px >= L.x - 2 && px <= L.x + L.w + 2 && py >= L.yTop - 2 && py <= L.yTop + L.size * 1.24 + 2,
+  );
   if (!hit) {
     api.hooks.toast("No text there — double-click a printed line to rewrite it", "warn");
     return null;
@@ -433,15 +575,16 @@ async function editLineAt(i: number, px: number, py: number): Promise<TextEdit |
   const pad = Math.max(1.5, hit.size * 0.12);
   const ed: TextEdit = {
     type: "text",
-    x: hit.x, y: hit.yTop,
+    x: hit.x,
+    y: hit.yTop,
     // room to the right margin so a longer rewrite doesn't wrap early;
     // the export cover sizes itself to the text actually typed, not to this box
     w: Math.max(60, p.w - hit.x - 24),
     text: hit.text,
     size: Math.round(hit.size * 10) / 10,
     color: "#111111",
-    font: hit.font,           // the fallback face, if the original can't carry a glyph
-    orig: hit.orig,           // the page's own font — kept unless the user switches away
+    font: hit.font, // the fallback face, if the original can't carry a glyph
+    orig: hit.orig, // the page's own font — kept unless the user switches away
     useOrig: true,
     // offsets, not absolutes, so the cover travels when the box is dragged
     cover: { dx: -pad, dy: -pad, w: hit.w + pad * 2, h: hit.size * 1.24 + pad * 2 },
@@ -461,7 +604,8 @@ async function editLineAt(i: number, px: number, py: number): Promise<TextEdit |
 function onDblClick(e: MouseEvent): void {
   const pageEl = (e.target as Element).closest<HTMLElement>(".pe-page");
   if (!pageEl || (e.target as Element).closest(".pe-edit")) return;
-  const i = +pageEl.dataset.n!, p = pages[i]!;
+  const i = +pageEl.dataset.n!,
+    p = pages[i]!;
   const r = p.layer.getBoundingClientRect();
   editLineAt(i, (e.clientX - r.left) / zoom, (e.clientY - r.top) / zoom);
 }
@@ -479,9 +623,11 @@ function onDown(e: PointerEvent): void {
   if (e.button !== 0) return;
   const pageEl = (e.target as Element).closest<HTMLElement>(".pe-page");
   if (!pageEl) return;
-  const i = +pageEl.dataset.n!, p = pages[i]!;
+  const i = +pageEl.dataset.n!,
+    p = pages[i]!;
   const r = p.layer.getBoundingClientRect();
-  const px = (e.clientX - r.left) / zoom, py = (e.clientY - r.top) / zoom;
+  const px = (e.clientX - r.left) / zoom,
+    py = (e.clientY - r.top) / zoom;
   const handle = (e.target as Element).closest(".pe-resize");
   const editEl = (e.target as Element).closest<HTMLElement>(".pe-edit");
 
@@ -495,7 +641,8 @@ function onDown(e: PointerEvent): void {
   } else if (editEl) {
     const ed = elToEdit.get(editEl)!;
     select(ed, i);
-    const editing = ed.type === "text" &&
+    const editing =
+      ed.type === "text" &&
       (document.activeElement === editEl || editEl.contains(document.activeElement));
     if (tool === "select" && !editing) {
       drag = { kind: "move", i, ed, sx: px, sy: py, ox: ed.x, oy: ed.y, moved: false };
@@ -506,9 +653,14 @@ function onDown(e: PointerEvent): void {
   } else if (tool === "text") {
     e.preventDefault(); // default mousedown focus would steal the caret placed below
     const ed: TextEdit = {
-      type: "text", x: px, y: py, w: Math.max(40, Math.min(180, p.w - px - 6)), text: "",
+      type: "text",
+      x: px,
+      y: py,
+      w: Math.max(40, Math.min(180, p.w - px - 6)),
+      text: "",
       size: clamp(parseFloat(els.size.value) || 12, 6, 96),
-      color: els.color.value || "#111111", font: els.font.value || "helv",
+      color: els.color.value || "#111111",
+      font: els.font.value || "helv",
     };
     pushEdit(i, ed);
     select(ed, i);
@@ -532,12 +684,14 @@ function onDown(e: PointerEvent): void {
 
 function onMove(e: PointerEvent): void {
   if (!drag) return;
-  const p = pages[drag.i]!, ed = drag.ed;
+  const p = pages[drag.i]!,
+    ed = drag.ed;
   const r = p.layer.getBoundingClientRect();
   const px = clamp((e.clientX - r.left) / zoom, 0, p.w);
   const py = clamp((e.clientY - r.top) / zoom, 0, p.h);
   if (drag.kind === "move") {
-    const dx = px - drag.sx, dy = py - drag.sy;
+    const dx = px - drag.sx,
+      dy = py - drag.sy;
     if (!drag.moved && Math.hypot(dx, dy) * zoom > 3) drag.moved = true;
     if (!drag.moved) return;
     ed.x = clamp(drag.ox + dx, 8 - ed.w, p.w - 8); // keep at least a sliver on-page
@@ -545,9 +699,12 @@ function onMove(e: PointerEvent): void {
   } else if (drag.kind === "resize") {
     ed.w = Math.max(ed.type === "text" ? 40 : 12, drag.ow + (px - drag.sx));
     if (ed.type !== "text") ed.h = Math.max(12, drag.oh + (py - drag.sy));
-  } else { // draw
-    ed.x = Math.min(drag.sx, px); ed.y = Math.min(drag.sy, py);
-    ed.w = Math.abs(px - drag.sx); ed.h = Math.abs(py - drag.sy);
+  } else {
+    // draw
+    ed.x = Math.min(drag.sx, px);
+    ed.y = Math.min(drag.sy, py);
+    ed.w = Math.abs(px - drag.sx);
+    ed.h = Math.abs(py - drag.sy);
   }
   place(ed);
 }
@@ -599,19 +756,29 @@ async function onImageFile(): Promise<void> {
   try {
     const dataUrl = await new Promise<string>((res, rej) => {
       const rd = new FileReader();
-      rd.onload = () => res(rd.result as string); rd.onerror = () => rej(new Error("read failed"));
+      rd.onload = () => res(rd.result as string);
+      rd.onerror = () => rej(new Error("read failed"));
       rd.readAsDataURL(f);
     });
     const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = dataUrl;
+    });
     const p = pages[at.i]!;
     // CSS px → pt, then cap at 40% of the page width.
     let w = Math.max(12, img.naturalWidth * 0.75);
     if (w > p.w * 0.4) w = p.w * 0.4;
-    const h = Math.max(12, w * img.naturalHeight / img.naturalWidth);
+    const h = Math.max(12, (w * img.naturalHeight) / img.naturalWidth);
     const ed: ImageEdit = {
-      type: "image", w, h, dataUrl, kind: f.type === "image/png" ? "png" : "jpg",
-      x: clamp(at.x, 0, Math.max(0, p.w - w)), y: clamp(at.y, 0, Math.max(0, p.h - h)),
+      type: "image",
+      w,
+      h,
+      dataUrl,
+      kind: f.type === "image/png" ? "png" : "jpg",
+      x: clamp(at.x, 0, Math.max(0, p.w - w)),
+      y: clamp(at.y, 0, Math.max(0, p.h - h)),
     };
     pushEdit(at.i, ed);
     select(ed, at.i);
@@ -624,10 +791,15 @@ async function onImageFile(): Promise<void> {
 
 function applyZoom(now: boolean): void {
   els.zoomPct.textContent = Math.round(zoom * 100) + "%";
-  for (let i = 0; i < pages.length; i++) { sizePage(i); syncLayer(i); }
+  for (let i = 0; i < pages.length; i++) {
+    sizePage(i);
+    syncLayer(i);
+  }
   // The stretched canvases hold the fort until the debounced re-render.
   clearTimeout(zoomTimer);
-  const repaint = () => { for (let i = 0; i < pages.length; i++) paint(i).catch(() => {}); };
+  const repaint = () => {
+    for (let i = 0; i < pages.length; i++) paint(i).catch(() => {});
+  };
   if (now) repaint();
   else zoomTimer = setTimeout(repaint, 150);
 }
@@ -645,11 +817,19 @@ function bindOnce(): void {
   if (bound) return;
   bound = true;
   els = {
-    root: $("pdfEditor"), name: $("peName"), pages: $("pePages"),
+    root: $("pdfEditor"),
+    name: $("peName"),
+    pages: $("pePages"),
     tools: [...document.querySelectorAll("#peTools .pe-tool")],
-    font: $("peFont"), size: $("peSize"), color: $("peColor"),
-    zoomOut: $("peZoomOut"), zoomPct: $("peZoomPct"), zoomIn: $("peZoomIn"),
-    scroll: $("peScroll"), deck: $("peDeck"), imgInput: $("peImgInput"),
+    font: $("peFont"),
+    size: $("peSize"),
+    color: $("peColor"),
+    zoomOut: $("peZoomOut"),
+    zoomPct: $("peZoomPct"),
+    zoomIn: $("peZoomIn"),
+    scroll: $("peScroll"),
+    deck: $("peDeck"),
+    imgInput: $("peImgInput"),
   };
   for (const b of els.tools) b.addEventListener("click", () => setTool(b.dataset.tool));
   const restyle = (fn: (ed: TextEdit) => void): void => {
@@ -658,25 +838,39 @@ function bindOnce(): void {
     dirty = true;
     syncLayer(selPage);
   };
-  els.font.addEventListener("change", () => restyle((ed) => {
-    const v = els.font.value;
-    if (v === "orig") {
-      if (ed.orig) ed.useOrig = true;
-      else els.font.value = ed.font; // nothing original to return to
-    } else {
-      ed.useOrig = false;
-      ed.font = v;
-    }
-  }));
-  els.size.addEventListener("input", () => restyle((ed) => { ed.size = clamp(parseFloat(els.size.value) || 12, 6, 96); }));
-  els.color.addEventListener("input", () => restyle((ed) => { ed.color = els.color.value; }));
+  els.font.addEventListener("change", () =>
+    restyle((ed) => {
+      const v = els.font.value;
+      if (v === "orig") {
+        if (ed.orig) ed.useOrig = true;
+        else els.font.value = ed.font; // nothing original to return to
+      } else {
+        ed.useOrig = false;
+        ed.font = v;
+      }
+    }),
+  );
+  els.size.addEventListener("input", () =>
+    restyle((ed) => {
+      ed.size = clamp(parseFloat(els.size.value) || 12, 6, 96);
+    }),
+  );
+  els.color.addEventListener("input", () =>
+    restyle((ed) => {
+      ed.color = els.color.value;
+    }),
+  );
   els.zoomIn.addEventListener("click", () => setZoom(zoom + 0.1));
   els.zoomOut.addEventListener("click", () => setZoom(zoom - 0.1));
-  els.scroll.addEventListener("wheel", (e: WheelEvent) => {
-    if (!e.ctrlKey) return;
-    e.preventDefault();
-    setZoom(zoom + (e.deltaY < 0 ? 0.1 : -0.1));
-  }, { passive: false });
+  els.scroll.addEventListener(
+    "wheel",
+    (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      setZoom(zoom + (e.deltaY < 0 ? 0.1 : -0.1));
+    },
+    { passive: false },
+  );
   els.imgInput.addEventListener("change", onImageFile);
   els.deck.addEventListener("pointerdown", onDown);
   els.deck.addEventListener("pointermove", onMove);
@@ -704,7 +898,12 @@ async function open(buf: ArrayBuffer, fname?: string): Promise<void> {
   const pdfjs = await PdfImport.ensureLib();
   // fontExtraProperties keeps each font's ToUnicode map on the main thread —
   // that map, inverted, is what lets a rewritten line keep the ORIGINAL font.
-  task = pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)), isEvalSupported: false, useSystemFonts: true, fontExtraProperties: true });
+  task = pdfjs.getDocument({
+    data: new Uint8Array(buf.slice(0)),
+    isEvalSupported: false,
+    useSystemFonts: true,
+    fontExtraProperties: true,
+  });
   try {
     doc = await task.promise;
   } catch (err) {
@@ -717,7 +916,11 @@ async function open(buf: ArrayBuffer, fname?: string): Promise<void> {
   if (gen !== g) return; // closed while loading
   edits.clear();
   revCache.clear();
-  dirty = false; sel = null; selPage = -1; drag = null; pendingImg = null;
+  dirty = false;
+  sel = null;
+  selPage = -1;
+  drag = null;
+  pendingImg = null;
   setTool("select");
   els.name.textContent = name;
   els.pages.textContent = doc.numPages + (doc.numPages === 1 ? " page" : " pages");
@@ -755,19 +958,42 @@ async function open(buf: ArrayBuffer, fname?: string): Promise<void> {
 async function close(): Promise<void> {
   gen++;
   opened = false;
-  for (const p of pages) { if (p.renderTask) { try { p.renderTask.cancel(); } catch { /* settled */ } } }
-  const t = task, d = doc;
-  task = null; doc = null; bytes = null; name = "";
+  for (const p of pages) {
+    if (p.renderTask) {
+      try {
+        p.renderTask.cancel();
+      } catch {
+        /* settled */
+      }
+    }
+  }
+  const t = task,
+    d = doc;
+  task = null;
+  doc = null;
+  bytes = null;
+  name = "";
   pages = [];
   edits.clear();
   revCache.clear();
-  dirty = false; sel = null; selPage = -1; drag = null; pendingImg = null;
+  dirty = false;
+  sel = null;
+  selPage = -1;
+  drag = null;
+  pendingImg = null;
   clearTimeout(zoomTimer);
   if (els) els.deck.innerHTML = "";
   if (t) {
     // v6 keeps destroy() on the loading task; older builds had it on the proxy.
-    try { await t.destroy(); }
-    catch { try { await (d && d.destroy()); } catch { /* already torn down */ } }
+    try {
+      await t.destroy();
+    } catch {
+      try {
+        await (d && d.destroy());
+      } catch {
+        /* already torn down */
+      }
+    }
   }
 }
 
@@ -783,31 +1009,60 @@ function wrapWidth(text: string, widthOf: (s: string) => number, maxW: number): 
   const out: string[] = [];
   for (const raw of String(text).split(/\r?\n/)) {
     const words = raw.split(/\s+/).filter(Boolean);
-    if (!words.length) { out.push(""); continue; }
+    if (!words.length) {
+      out.push("");
+      continue;
+    }
     let line = "";
     for (const w of words) {
       const cand = line ? line + " " + w : w;
-      if (line && widthOf(cand) > maxW) { out.push(line); line = w; }
-      else line = cand;
+      if (line && widthOf(cand) > maxW) {
+        out.push(line);
+        line = w;
+      } else line = cand;
     }
     out.push(line);
   }
   return out;
 }
 
-function wrapLines(text: string, font: { widthOfTextAtSize(s: string, size: number): number }, size: number, maxW: number): string[] {
+function wrapLines(
+  text: string,
+  font: { widthOfTextAtSize(s: string, size: number): number },
+  size: number,
+  maxW: number,
+): string[] {
   // Un-encodable glyphs blow up measurement too, not just drawing.
-  return wrapWidth(text, (s) => {
-    try { return font.widthOfTextAtSize(s, size); }
-    catch { return font.widthOfTextAtSize(s.replace(/[^\x20-\xFF]/g, "?"), size); }
-  }, maxW);
+  return wrapWidth(
+    text,
+    (s) => {
+      try {
+        return font.widthOfTextAtSize(s, size);
+      } catch {
+        return font.widthOfTextAtSize(s.replace(/[^\x20-\xFF]/g, "?"), size);
+      }
+    },
+    maxW,
+  );
 }
 
 async function exportPdf(): Promise<{ blob: Blob; name: string }> {
   const {
-    PDFDocument, StandardFonts, rgb, PDFName, PDFDict, PDFRef, PDFHexString,
-    pushGraphicsState, popGraphicsState, beginText, endText, showText,
-    setFontAndSize, setFillingRgbColor, rotateAndSkewTextRadiansAndTranslate,
+    PDFDocument,
+    StandardFonts,
+    rgb,
+    PDFName,
+    PDFDict,
+    PDFRef,
+    PDFHexString,
+    pushGraphicsState,
+    popGraphicsState,
+    beginText,
+    endText,
+    showText,
+    setFontAndSize,
+    setFillingRgbColor,
+    rotateAndSkewTextRadiansAndTranslate,
   } = await lib();
   let out: any;
   try {
@@ -819,7 +1074,10 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
   const fonts = new Map<string, any>();
   const getFont = async (k: string) => {
     let f = fonts.get(k);
-    if (!f) { f = await out.embedFont(StandardFonts[PDF_FONT[k]!] || StandardFonts.Helvetica); fonts.set(k, f); }
+    if (!f) {
+      f = await out.embedFont(StandardFonts[PDF_FONT[k]!] || StandardFonts.Helvetica);
+      fonts.set(k, f);
+    }
     return f;
   };
   const images = new Map<string, any>();
@@ -831,7 +1089,13 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
     // Screen coords are top-left; pdf-lib's are bottom-left: y_pdf = H - y - h.
     // Whiteout under everything, text on top, so a box over a whiteout survives.
     for (const ed of list.filter((x): x is BoxEdit => x.type === "whiteout")) {
-      page.drawRectangle({ x: ed.x, y: H - ed.y - ed.h, width: ed.w, height: ed.h, color: rgb(1, 1, 1) });
+      page.drawRectangle({
+        x: ed.x,
+        y: H - ed.y - ed.h,
+        width: ed.w,
+        height: ed.h,
+        color: rgb(1, 1, 1),
+      });
     }
     /* This page's font resources, keyed by BaseFont name (sans slash) — the
        bridge from pdf.js's idea of a font to a name the content stream can
@@ -846,10 +1110,16 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
           const d = val instanceof PDFRef ? out.context.lookup(val) : val;
           const base = d && d.get && d.get(PDFName.of("BaseFont"));
           const sub = d && d.get && d.get(PDFName.of("Subtype"));
-          if (base) resFonts.set(base.asString().slice(1), { key, type0: !!sub && sub.asString() === "/Type0" });
+          if (base)
+            resFonts.set(base.asString().slice(1), {
+              key,
+              type0: !!sub && sub.asString() === "/Type0",
+            });
         }
       }
-    } catch { /* no readable resources — every rewrite falls back */ }
+    } catch {
+      /* no readable resources — every rewrite falls back */
+    }
 
     /* Lay out each text edit once: native (original font resource, glyphs
        encoded through the inverted ToUnicode map) when every character
@@ -863,13 +1133,18 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
       let native: NativeLayout | null = null;
       if (rsrc && rev) {
         const measurable = fontFaceUsable(ed.orig!.loadedName);
-        const widthOf = measurable ? (s: string) => measureNative(ed.orig!.loadedName, ed.size, s) : null;
+        const widthOf = measurable
+          ? (s: string) => measureNative(ed.orig!.loadedName, ed.size, s)
+          : null;
         const lines = widthOf ? wrapWidth(ed.text, widthOf, ed.w) : String(ed.text).split(/\r?\n/);
         const hexes = lines.map((ln) => (ln ? encodeWith(rev, rsrc.type0, ln) : ""));
         if (hexes.every((h) => h !== null)) {
-          const needW = widthOf && lines.length
-            ? Math.max(...lines.map((ln) => (ln ? widthOf(ln) : 0)))
-            : (ed.cover ? ed.cover.w : ed.w);
+          const needW =
+            widthOf && lines.length
+              ? Math.max(...lines.map((ln) => (ln ? widthOf(ln) : 0)))
+              : ed.cover
+                ? ed.cover.w
+                : ed.w;
           native = { rsrc, lines, hexes, needW };
         }
       }
@@ -877,7 +1152,10 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
       layout.set(ed, native);
     }
     if (fellBack) {
-      api.hooks.toast("Some characters aren't in this PDF's embedded font — those lines use the closest standard face", "warn");
+      api.hooks.toast(
+        "Some characters aren't in this PDF's embedded font — those lines use the closest standard face",
+        "warn",
+      );
     }
 
     // Rewritten lines: the cover hides the original print before any new ink
@@ -885,7 +1163,9 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
     // width, whichever is wider — never the whole editing box, which reaches
     // to the margin and would wipe a second column.
     const wrapped = new Map<TextEdit, string[]>();
-    for (const ed of list.filter((x): x is TextEdit & { cover: Cover } => x.type === "text" && !!x.cover)) {
+    for (const ed of list.filter(
+      (x): x is TextEdit & { cover: Cover } => x.type === "text" && !!x.cover,
+    )) {
       const c = ed.cover;
       const nat = layout.get(ed);
       let lines: string[], needW: number;
@@ -898,12 +1178,19 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
         wrapped.set(ed, lines);
         needW = 0;
         for (const ln of lines) {
-          try { needW = Math.max(needW, font.widthOfTextAtSize(ln, ed.size)); }
-          catch { needW = Math.max(needW, font.widthOfTextAtSize(ln.replace(/[^\x20-\xFF]/g, "?"), ed.size)); }
+          try {
+            needW = Math.max(needW, font.widthOfTextAtSize(ln, ed.size));
+          } catch {
+            needW = Math.max(
+              needW,
+              font.widthOfTextAtSize(ln.replace(/[^\x20-\xFF]/g, "?"), ed.size),
+            );
+          }
         }
       }
       page.drawRectangle({
-        x: ed.x + c.dx, y: H - (ed.y + c.dy) - Math.max(c.h, lines.length * ed.size * 1.25),
+        x: ed.x + c.dx,
+        y: H - (ed.y + c.dy) - Math.max(c.h, lines.length * ed.size * 1.25),
         width: Math.max(c.w, needW + 3),
         height: Math.max(c.h, lines.length * ed.size * 1.25 + (ed.y - (ed.y + c.dy)) * 2),
         color: rgb(1, 1, 1),
@@ -918,11 +1205,20 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
       page.drawImage(img, { x: ed.x, y: H - ed.y - ed.h, width: ed.w, height: ed.h });
     }
     for (const ed of list.filter((x): x is BoxEdit => x.type === "highlight")) {
-      const box = { x: ed.x, y: H - ed.y - ed.h, width: ed.w, height: ed.h, color: rgb(0.96, 0.84, 0.04) };
+      const box = {
+        x: ed.x,
+        y: H - ed.y - ed.h,
+        width: ed.w,
+        height: ed.h,
+        color: rgb(0.96, 0.84, 0.04),
+      };
       // Multiply keeps the text legible under the tint (pdf-lib ≥1.17);
       // if this build rejects the option, plain translucency will do.
-      try { page.drawRectangle({ ...box, blendMode: "Multiply" }); }
-      catch { page.drawRectangle({ ...box, opacity: 0.35 }); }
+      try {
+        page.drawRectangle({ ...box, blendMode: "Multiply" });
+      } catch {
+        page.drawRectangle({ ...box, opacity: 0.35 });
+      }
     }
     for (const ed of list.filter((x): x is TextEdit => x.type === "text")) {
       const color = hexRgb(ed.color, rgb);
@@ -936,7 +1232,13 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
             beginText(),
             setFillingRgbColor(color.red, color.green, color.blue),
             setFontAndSize(nat.rsrc.key, ed.size),
-            rotateAndSkewTextRadiansAndTranslate(0, 0, 0, ed.x, H - ed.y - ed.size * 0.83 - li * ed.size * 1.25),
+            rotateAndSkewTextRadiansAndTranslate(
+              0,
+              0,
+              0,
+              ed.x,
+              H - ed.y - ed.size * 0.83 - li * ed.size * 1.25,
+            ),
             showText(PDFHexString.of(nat.hexes[li]!)),
             endText(),
             popGraphicsState(),
@@ -949,12 +1251,22 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
       for (let li = 0; li < lines.length; li++) {
         if (!lines[li]) continue;
         // 0.83 ≈ ascent fraction: drops the baseline so print lands where the screen box implied.
-        const opts = { x: ed.x, y: H - ed.y - ed.size * 0.83 - li * ed.size * 1.25, size: ed.size, font, color };
-        try { page.drawText(lines[li], opts); }
-        catch {
+        const opts = {
+          x: ed.x,
+          y: H - ed.y - ed.size * 0.83 - li * ed.size * 1.25,
+          size: ed.size,
+          font,
+          color,
+        };
+        try {
+          page.drawText(lines[li], opts);
+        } catch {
           // The standard fonts speak WinAnsi only — swap what they can't encode.
-          try { page.drawText(lines[li]!.replace(/[^\x20-\xFF]/g, "?"), opts); }
-          catch { /* even the fallback failed; skip the line */ }
+          try {
+            page.drawText(lines[li]!.replace(/[^\x20-\xFF]/g, "?"), opts);
+          } catch {
+            /* even the fallback failed; skip the line */
+          }
         }
       }
     }
@@ -969,13 +1281,20 @@ async function exportPdf(): Promise<{ blob: Blob; name: string }> {
 /* ---------- public surface ---------- */
 
 export const api = {
-  hooks: { toast() {}, async confirm() { return true; } } as PdfEditorHooks,
-  open, close, exportPdf,
+  hooks: {
+    toast() {},
+    async confirm() {
+      return true;
+    },
+  } as PdfEditorHooks,
+  open,
+  close,
+  exportPdf,
   isOpen: () => opened,
   hasEdits: () => dirty && [...edits.values()].some((l) => l.length),
   addEdit: pushEdit, // programmatic path shares the interactive one (QA leans on this)
   getEdits: () => edits,
-  editLineAt,        // double-click path, callable directly (QA + power users)
+  editLineAt, // double-click path, callable directly (QA + power users)
   getTextLines: ensureLines,
 };
 export type PdfEditorApi = typeof api;
@@ -984,7 +1303,7 @@ export type PdfEditorApi = typeof api;
    contract — main.js REASSIGNS api.hooks wholesale, so these bindings are
    snapshots taken at module load. */
 export const { hooks, isOpen, hasEdits, addEdit, getEdits, getTextLines } = api;
-export { open, close, exportPdf, editLineAt };
+export { close, editLineAt, exportPdf, open };
 
 /* Pure helpers exposed for unit tests only (additive; NOT part of the
    public surface and NOT assigned onto the global). */
