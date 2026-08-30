@@ -114,7 +114,7 @@ function loadClassic(): ClassicEngine {
      guarding every future engine refactor against drift from classic. */
   const src = readFileSync(
     join(ROOT, "packages", "engine", "test", "fixtures", "classic-engine.js"),
-    "utf8"
+    "utf8",
   );
   // A fresh Marked instance so the classic side's marked.use() calls cannot
   // stack onto the npm singleton the package configured. document / window /
