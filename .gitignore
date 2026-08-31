@@ -11,6 +11,8 @@ tools/.fontcache/
 
 # build artifacts — built in CI, never committed
 dist/
+.turbo/
+*.tsbuildinfo
 
 # AI-tool droppings and editor state
 .opencode/
