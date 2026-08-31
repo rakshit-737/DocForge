@@ -42,6 +42,9 @@ export const CASES = [
   { id: "footnotes", doc: "corpus/06-footnotes.md", settings: s({ theme: "academic", page: "A4", margins: "normal", cover: false, pageNums: true, justify: true }) },
   { id: "citations-numeric", doc: "corpus/07-citations.md", settings: s({ theme: "academic", page: "A4", margins: "normal", citeStyle: "ieee", cover: false, pageNums: true }) },
   { id: "citations-authoryear", doc: "corpus/07-citations.md", settings: s({ theme: "academic", page: "A4", margins: "normal", citeStyle: "apa", cover: false, pageNums: true }) },
+  // `apa7` (issue #10 interim) postdates v1-classic AND the frozen classic engine: postBaseline
+  // exempts it from the merge gate's tag comparison, postClassic from the byte-parity fixture.
+  { id: "citations-apa7", postBaseline: true, postClassic: true, doc: "corpus/07-citations.md", settings: s({ theme: "academic", page: "A4", margins: "normal", citeStyle: "apa7", cover: false, pageNums: true }) },
   { id: "math", doc: "corpus/09-math.md", settings: s({ theme: "modern", page: "A4", margins: "normal", cover: false, pageNums: true }) },
   { id: "code", doc: "corpus/10-code.md", settings: s({ theme: "minimal", page: "A4", margins: "normal", cover: false, pageNums: true }) },
   { id: "callouts-alignment", doc: "corpus/11-callouts-alignment.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, pageNums: true }) },

@@ -79,6 +79,95 @@ describe("APA style", () => {
   });
 });
 
+/* citeStyle "apa7" — the issue #10 interim fix. Suffixes are assigned in the
+   order the entries stand in the rendered references list (its alphabetical
+   sort), and "apa" deliberately keeps the classic non-disambiguating output. */
+describe("APA 7 disambiguation (citeStyle: apa7)", () => {
+  const SMITH2 =
+    "One [@sa]. Two [@sb]." +
+    "\n\n[@sa]: Smith, J. (2020). Alpha work.\n[@sb]: Smith, J. (2020). Beta work.";
+  const SMITH3 =
+    "One [@sa]. Two [@sb]. Three [@sc]." +
+    "\n\n[@sa]: Smith, J. (2020). Alpha work.\n[@sb]: Smith, J. (2020). Beta work.\n[@sc]: Smith, J. (2020). Gamma work.";
+  const OTHERS =
+    "One [@sm]. Two [@jn]." +
+    "\n\n[@sm]: Smith, J. (2020). Smith work.\n[@jn]: Jones, K. (2020). Jones work.";
+
+  const labelsOf = (md: string, citeStyle: string): (string | null)[] => {
+    const { content } = r(md, { citeStyle });
+    return [...content.querySelectorAll("span.cite")].map((s) => s.textContent);
+  };
+  const refsOf = (md: string, citeStyle: string): (string | null)[] => {
+    const { content } = r(md, { citeStyle });
+    return [...content.querySelectorAll("section.refs p.ref")].map((p) => p.textContent);
+  };
+
+  it.each<[string, string, string, string[]]>([
+    [
+      "two same-author same-year entries take a/b",
+      SMITH2,
+      "apa7",
+      ["(Smith, 2020a)", "(Smith, 2020b)"],
+    ],
+    [
+      "the classic bug stays pinned: apa never disambiguates",
+      SMITH2,
+      "apa",
+      ["(Smith, 2020)", "(Smith, 2020)"],
+    ],
+    [
+      "a three-way collision reaches c",
+      SMITH3,
+      "apa7",
+      ["(Smith, 2020a)", "(Smith, 2020b)", "(Smith, 2020c)"],
+    ],
+    [
+      "different authors in the same year take no suffix",
+      OTHERS,
+      "apa7",
+      ["(Smith, 2020)", "(Jones, 2020)"],
+    ],
+  ])("%s", (_name, md, citeStyle, labels) => {
+    expect(labelsOf(md, citeStyle)).toEqual(labels);
+  });
+
+  it.each<[string, string, string, string[]]>([
+    [
+      "suffixes land in the references entries too, in list order",
+      SMITH2,
+      "apa7",
+      ["Smith, J. (2020a). Alpha work.", "Smith, J. (2020b). Beta work."],
+    ],
+    [
+      "apa keeps the references unsuffixed — the classic output",
+      SMITH2,
+      "apa",
+      ["Smith, J. (2020). Alpha work.", "Smith, J. (2020). Beta work."],
+    ],
+  ])("%s", (_name, md, citeStyle, entries) => {
+    expect(refsOf(md, citeStyle)).toEqual(entries);
+  });
+
+  it("assignment follows the references list, not first citation", () => {
+    // Beta is cited first, but the list reads Alpha (a) above Beta (b).
+    const flipped =
+      "First [@sb], then [@sa]." +
+      "\n\n[@sa]: Smith, J. (2020). Alpha work.\n[@sb]: Smith, J. (2020). Beta work.";
+    expect(labelsOf(flipped, "apa7")).toEqual(["(Smith, 2020b)", "(Smith, 2020a)"]);
+    expect(refsOf(flipped, "apa7")).toEqual([
+      "Smith, J. (2020a). Alpha work.",
+      "Smith, J. (2020b). Beta work.",
+    ]);
+  });
+
+  it("locators ride after the suffix", () => {
+    const md =
+      "See [@sa, p. 4] and [@sb]." +
+      "\n\n[@sa]: Smith, J. (2020). Alpha work.\n[@sb]: Smith, J. (2020). Beta work.";
+    expect(labelsOf(md, "apa7")[0]).toBe("(Smith, 2020a, p. 4)");
+  });
+});
+
 describe("footnotes", () => {
   it("the call site carries the note inline, markdown parsed", () => {
     const { content } = r("A claim.[^1] More.\n\n[^1]: The note *text*.");

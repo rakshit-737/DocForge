@@ -51,21 +51,18 @@ export function ConfirmDialog({
       }}
     >
       <AlertDialog.Portal>
+        {/* Entrances live in globals.css, keyed to Radix's data-state (df-fade
+            scrim, df-sheet-in sheet). Tailwind v4 centres via the standalone
+            `translate` property, so df-sheet-in animates translate/scale (not
+            transform) and lands exactly on the utilities' resting values. */}
         <AlertDialog.Overlay
+          data-df-motion="fade"
           className="fixed inset-0 z-[60] bg-[rgba(10,8,5,0.72)]"
-          style={{ animation: "df-fade var(--dur) var(--ease)" }}
         />
         <AlertDialog.Content
+          data-df-motion="sheet"
           className="fixed left-1/2 top-1/2 z-[60] flex max-h-[84vh] w-[min(430px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-modal bg-surface shadow-[var(--elev-l)] outline-none"
-          style={{ animation: "df-modal-in var(--dur) var(--ease)" }}
         >
-          {/* Tailwind v4 centres via the standalone `translate` property, so the
-              entrance animates translate/scale (not transform) and lands exactly
-              on the utilities' resting values. */}
-          <style>{`
-            @keyframes df-fade { from { opacity: 0; } }
-            @keyframes df-modal-in { from { translate: -50% calc(-50% + 8px); scale: 0.99; opacity: 0; } to { translate: -50% -50%; scale: 1; } }
-          `}</style>
           <AlertDialog.Title className="border-b border-line px-5 py-4 font-display text-base font-normal text-ink">
             {title}
           </AlertDialog.Title>

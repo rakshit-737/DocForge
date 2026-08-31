@@ -113,6 +113,7 @@ const BORDER_COLOR_OPTIONS = [
 const CITE_OPTIONS = [
   ["ieee", "Numeric — [1], IEEE-style"],
   ["apa", "Author–year — (Smith, 2020)"],
+  ["apa7", "Author–year — APA 7, disambiguated"],
 ] as const;
 const WORD_GROUPS = [
   ["sans", "Word · Sans serif"],

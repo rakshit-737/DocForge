@@ -34,6 +34,16 @@ buildSync({
     "@docforge/export-docx": resolve(here, "../export-docx/src/index.ts"),
     "@docforge/mathml-omml": resolve(here, "../mathml-omml/src/index.ts"),
   },
-  external: ["happy-dom", "marked", "katex", "highlight.js", "highlight.js/*", "docx"],
+  // playwright-core is a ROOT dependency, imported dynamically by --pdf only —
+  // external so Node resolves it by its ordinary walk-up at run time.
+  external: [
+    "happy-dom",
+    "marked",
+    "katex",
+    "highlight.js",
+    "highlight.js/*",
+    "docx",
+    "playwright-core",
+  ],
   logLevel: "info",
 });

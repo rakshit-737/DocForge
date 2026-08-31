@@ -226,7 +226,7 @@ export interface Settings {
   metaExtra?: string;
   date?: string; // ISO yyyy-mm-dd
   numbered?: boolean;
-  citeStyle?: string; // "numeric" (default) | "apa"
+  citeStyle?: string; // "numeric" (default) | "apa" | "apa7" (apa + same-author same-year a/b/c suffixes)
   header?: boolean;
   pageNums?: boolean;
   baseSize?: number | string;

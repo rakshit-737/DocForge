@@ -22,7 +22,9 @@ import { resolveTemplate, TEMPLATES } from "@/lib/templates";
 import { anyDialogOpen, CommandPalette } from "./command-palette";
 import { ConfirmDialog } from "./confirm-dialog";
 import { DropZone } from "./drop-zone";
+import { EmptyState } from "./empty-state";
 import { FindBar, ToastRack } from "./find-bar";
+import { FirstRun } from "./first-run";
 import { HelpDialog } from "./help-dialog";
 import { LintBadge, LintPanel } from "./lint-panel";
 import { OutlinePanel, useRenderTick } from "./outline-panel";
@@ -481,7 +483,7 @@ export function StudioShell() {
       </header>
 
       {/* the desk: source galley left, the stone right */}
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(340px,42%)_1fr]" data-desk="">
+      <main className="grid min-h-0 flex-1 grid-cols-[minmax(340px,42%)_1fr]" data-desk="">
         <section
           aria-label="Source"
           data-chrome=""
@@ -500,6 +502,14 @@ export function StudioShell() {
         </section>
         <section aria-label="Preview" className="relative min-h-0">
           <PreviewDeck controllerRef={controllerRef} onRendered={onRendered} />
+          <EmptyState
+            onWrite={() => {
+              useMobilePane.getState().setPane("source");
+              view?.focus();
+            }}
+            onTemplates={() => setPaletteOpen(true)}
+            onOpen={() => fileInput.current?.click()}
+          />
           {outlineOpen && (
             <OutlinePanel
               deck={controller?.deck ?? null}
@@ -508,7 +518,7 @@ export function StudioShell() {
             />
           )}
         </section>
-      </div>
+      </main>
 
       {/* the wire ticker */}
       <footer
@@ -578,6 +588,7 @@ export function StudioShell() {
       <SettingsDrawer />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} commands={commands} />
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      <FirstRun />
       <ConfirmDialog
         open={confirmNew}
         onOpenChange={setConfirmNew}

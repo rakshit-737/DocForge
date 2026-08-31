@@ -1,10 +1,15 @@
 /* ============================================================
    cli.test.ts — the headless proof, end to end: spawn the built
    dist/cli.mjs on the golden corpus' 16-edge-minimal.md and read
-   the .docx back with the zip-reader trick. The suite builds the
-   bundle itself when dist/ is missing, so `vitest run` is enough
-   — but the npm dependencies (happy-dom above all) must be linked
-   by a workspace `pnpm install` before the spawned CLI can run.
+   the .docx back with the zip-reader trick; then print
+   03-headings-sections.md with --pdf and check the direct-export
+   spike's two claims in the bytes (outline + tagged structure).
+   The suite builds the bundle itself when dist/ is missing, so
+   `vitest run` is enough — but the npm dependencies (happy-dom
+   above all) must be linked by a workspace `pnpm install`, and
+   the --pdf suite additionally needs a resolvable Chromium
+   (PW_CHROMIUM / system Chrome or Edge) plus the repo's root
+   node_modules (pagedjs, playwright-core).
    ============================================================ */
 
 import type { Buffer } from "node:buffer";
@@ -20,9 +25,12 @@ const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO = resolve(PKG, "..", "..");
 const CLI = join(PKG, "dist", "cli.mjs");
 const CORPUS = join(REPO, "qa", "golden", "corpus", "16-edge-minimal.md");
+// The PDF spike prints a heading-rich corpus doc, so the generated outline has
+// a real tree to carry and the embedded font subsets give the size floor teeth.
+const PDF_CORPUS = join(REPO, "qa", "golden", "corpus", "03-headings-sections.md");
 
-const run = (args: string[]) =>
-  spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", timeout: 120_000 });
+const run = (args: string[], timeout = 120_000) =>
+  spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8", timeout });
 
 let outDir = "";
 let bytes: Buffer;
@@ -80,10 +88,55 @@ describe("docforge build --docx", () => {
   });
 });
 
-describe("docforge build --pdf", () => {
-  it("states the studio dependency honestly and exits 2", () => {
-    const r = run(["build", CORPUS, "--pdf"]);
-    expect(r.status).toBe(2);
-    expect(r.stderr + r.stdout).toContain("PDF needs the studio");
-  }, 60_000);
+describe("docforge build --pdf (direct export — the issue #9 spike)", () => {
+  let pdfDir = "";
+  let pdf: Buffer;
+  let latin1 = "";
+
+  beforeAll(() => {
+    pdfDir = mkdtempSync(join(tmpdir(), "docforge-cli-pdf-"));
+    // Chromium can be slow on a cold start under CI load — generous timeout.
+    const r = run(
+      [
+        "build",
+        PDF_CORPUS,
+        "--pdf",
+        "--out",
+        pdfDir,
+        "--theme",
+        "executive",
+        "--author",
+        "QA Harness",
+        "--date",
+        "2026-01-05",
+      ],
+      300_000,
+    );
+    if (r.status !== 0) {
+      throw new Error(`docforge build --pdf failed (exit ${r.status}):\n${r.stdout}${r.stderr}`);
+    }
+    pdf = readFileSync(join(pdfDir, "03-headings-sections.pdf"));
+    latin1 = pdf.toString("latin1");
+  }, 320_000);
+
+  afterAll(() => {
+    if (pdfDir) rmSync(pdfDir, { recursive: true, force: true });
+  });
+
+  it("writes a real PDF — %PDF magic up front", () => {
+    expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+  });
+
+  it("is a substantial document, not a stub (> 20 KB)", () => {
+    expect(pdf.length).toBeGreaterThan(20 * 1024);
+  });
+
+  it("carries a document outline — the print dialog cannot do this", () => {
+    expect(latin1).toContain("/Outlines");
+  });
+
+  it("carries tagged structure — the other thing the dialog cannot do", () => {
+    expect(latin1).toContain("/StructTreeRoot");
+    expect(latin1).toContain("/MarkInfo");
+  });
 });

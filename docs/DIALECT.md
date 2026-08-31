@@ -123,7 +123,9 @@ Notes are placed at the foot of the page their call lands on in the PDF, and exp
 | `[@harrow2015]: Harrow, J. (2015). *Acoustic Emission…*` | The bibliography entry; continuation lines indent | `07-citations.md` |
 | `[references]` | Places the reference list; **auto-appended at the end if omitted** | `07-citations.md` |
 
-Style — numeric `[1]` (IEEE-like) or Author–year (APA-like) — is a **document setting**, not markup; the same source renders under both (the golden matrix captures `07-citations.md` both ways). The list holds cited works only: defined-but-uncited entries are absent by contract. Numeric style lists in citation order; author–year lists alphabetically. A call whose key has no entry (`[@nonexistent]`) fails visibly in place with a question mark, never silently (`17-adversarial.md`). Known limitation, deliberately pinned as a specimen in the corpus: same-author same-year entries are not disambiguated with `2019a`/`2019b` suffixes ([#10](https://github.com/rakshit-737/docforge/issues/10)).
+Style — numeric `[1]` (IEEE-like), Author–year (APA-like), or Author–year with disambiguation (`apa7`) — is a **document setting**, not markup; the same source renders under all of them (the golden matrix captures `07-citations.md` each way; the `apa7` case is `postBaseline`). The list holds cited works only: defined-but-uncited entries are absent by contract. Numeric style lists in citation order; author–year lists alphabetically. A call whose key has no entry (`[@nonexistent]`) fails visibly in place with a question mark, never silently (`17-adversarial.md`).
+
+The `apa7` style is the `apa` style plus same-author same-year disambiguation, the interim fix for [#10](https://github.com/rakshit-737/docforge/issues/10): colliding entries take `a`/`b`/`c` year suffixes, assigned in the order the entries stand in the references list, and the suffix prints in **both** the in-text label (`(Marrow, 2019a)`) and the entry's own year. Honesty note, and a deliberate one: **`apa` keeps the classic non-disambiguating behaviour** — a document rendered under `apa` last year prints the same bytes forever, and the corpus specimen of the limitation stays frozen under that style. Choose `apa7` to get the suffixes; the full CSL engine (§8.3) remains the real fix.
 
 ## Cross-references
 
@@ -195,7 +197,7 @@ A backslash makes any mark literal: `\*asterisk\*`, `\~tilde\~`, `\[bracket\]`, 
 | `04-tables.md` | `[lot]`, column alignment (incl. unmarked), `[table: … \| #tbl:]`, header repeat across pages, wide tables, the uncaptioned control, inline marks in cells |
 | `05-figures.md` | `[lof]`, every `[screenshot…]` form: bare, captionless, `w:`/`width:`, clamp, `noborder`, `img:`, `#fig:`, free option order |
 | `06-footnotes.md` | Numeric and named keys, definitions anywhere, long notes, repeated calls |
-| `07-citations.md` | Calls, locators, entries, `[references]`, cited-only list, both styles (via the matrix), the APA-disambiguation limitation as a frozen specimen |
+| `07-citations.md` | Calls, locators, entries, `[references]`, cited-only list, all three styles (via the matrix; `citations-apa7` postBaseline), the APA-disambiguation limitation as a frozen specimen under `apa` — and its `apa7` resolution |
 | `09-math.md` | Inline and display KaTeX: fractions, sums, integrals, matrices, `aligned`, Greek, math inside bold |
 | `10-code.md` | Language-named fences at length (JS, Python, CSS), verbatim fidelity |
 | `11-callouts-alignment.md` | All four callouts, titled callouts, all four alignment blocks, nesting in both directions, block content inside callouts |

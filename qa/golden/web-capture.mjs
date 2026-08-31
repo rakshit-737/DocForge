@@ -39,17 +39,44 @@ const has = n => argv.includes("--" + n);
 const PORT = +arg("port", 3211);
 const REUSE_CLASSIC = has("reuse-classic");
 
-/* The representative subset: the flagship torture configuration plus one case per
-   major dialect cluster, every needed setting reachable through the drawer. */
+/* The FULL golden matrix (matrix.mjs order) — every case, including banner-plate:
+   its postBaseline flag only exempts it from the frozen v1-classic baseline; here both
+   sides are captured fresh from HEAD, so it must compare like any other case. */
 const SUBSET = [
   "torture-modern-a4",
+  "torture-academic-a4",
+  "torture-executive-letter",
+  "torture-minimal-a4-narrow",
+  "border-rule-fine-ink",
+  "border-double-medium-accent",
+  "border-triple-bold-ink",
+  "border-dashed-medium-ink",
+  "border-dotted-fine-accent",
+  "border-thickthin-medium-ink",
+  "border-thinthick-bold-accent",
+  "inline-marks",
+  "span-attributes",
   "headings-sections",
   "tables",
-  "math",
+  "tables-letter-justified",
+  "figures",
   "footnotes",
   "citations-numeric",
-  "figures",
+  "citations-authoryear",
+  "math",
+  "code",
+  "callouts-alignment",
+  "lists-quotes",
+  "toc-pagebreaks",
+  "long-mixed",
   "edge-minimal",
+  "adversarial",
+  "cover-frontmatter",
+  "fonts-embedded-pair",
+  "fonts-word-catalog",
+  "banner-plate",
+  "type-large-loose",
+  "type-small-single",
 ];
 const only = arg("only", null)?.split(",") ?? SUBSET;
 const cases = CASES.filter(c => only.includes(c.id));
@@ -159,6 +186,14 @@ async function applyDrawerSettings(page, target) {
   // Open the drawer through its real control (the masthead Settings button).
   await page.locator("header button", { hasText: "Settings" }).click();
   await page.waitForSelector("#sTitle", { timeout: 30000 });
+
+  /* The font catalogue arrives asynchronously (loadStudio → Engine.FACES/WORD_CATALOG);
+     until it lands the font selects hold only "Theme default" and driving a font value
+     would silently no-op ("has no option" warning). The "custom" sentinel option is
+     rendered exactly when the catalogue is — wait for it before driving font cases. */
+  if (target.fontHead !== "theme" || target.fontBody !== "theme") {
+    await page.waitForSelector('#sFontHead option[value="custom"]', { state: "attached", timeout: 60000 });
+  }
 
   const warnings = await page.evaluate((t) => {
     const warn = [];

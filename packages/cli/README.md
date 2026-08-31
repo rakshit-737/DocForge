@@ -1,15 +1,17 @@
 # @docforge/cli
 
-Headless DocForge — markdown in, Word `.docx` out, no browser required.
+Headless DocForge — markdown in, Word `.docx` (no browser required) or paged `.pdf`
+(headless Chromium) out.
 
 ```
 docforge build report.md --docx
-docforge build report.md --docx --out dist --theme executive --title "Q3 Report" \
+docforge build report.md --pdf
+docforge build report.md --docx --pdf --out dist --theme executive --title "Q3 Report" \
   --author "A. Author" --date 2026-08-31
 ```
 
-The output file takes the input's stem (`report.md` → `report.docx`) and lands next to the
-input, or inside `--out <dir>`.
+The output file takes the input's stem (`report.md` → `report.docx` / `report.pdf`) and
+lands next to the input, or inside `--out <dir>`.
 
 ## What runs under the hood
 
@@ -29,12 +31,44 @@ Exactly the studio's pipeline, stood up in Node:
    `DocxExport.build(contentEl, settings, {})` packs the OOXML — byte-for-byte the same
    writer the studio and the single-file edition use.
 
+## Direct PDF export (`--pdf`)
+
+`--pdf` prints the document through headless Chromium — the same Paged.js flow the studio
+preview composes, then Chromium's print engine — and produces two things the in-app print
+dialog **cannot**:
+
+- **A document outline** (bookmarks): every heading, as a navigable tree in the PDF
+  reader's sidebar, rooted in the document title.
+- **Tagged structure**: an accessible structure tree (headings, paragraphs, tables,
+  links marked as such), which screen readers and reflow views rely on.
+
+Both come from Chromium's CDP print options (`generateDocumentOutline` /
+`generateTaggedPDF`), reached through playwright-core's `page.pdf({ outline, tagged })`.
+
+The page furniture is the studio's own: the folio handler ("Page n of N" counting body
+pages only, roman numerals on front matter), repeated table headers across page breaks,
+and the footnote hardening are ported 1:1 from the studio's compose pipeline, so the PDF
+matches what the preview shows.
+
+Honest limitations:
+
+- **Repo checkout only.** The print path discovers `src/doc.css`, `fonts/`, `pagedjs`
+  and `playwright-core` by walking up from the installed CLI — the repo's root
+  `node_modules` carries the last two. An npm-installed CLI outside the repo fails with
+  a clear message rather than printing something degraded.
+- **A Chromium must exist on the machine**: `PW_CHROMIUM`, Playwright's own download,
+  or a system Chrome/Edge (the same resolution order as the QA harness).
+- **Tagging quality is Chromium's judgment.** `generateTaggedPDF` produces a genuine
+  structure tree, but it is not a certified PDF/UA audit.
+- The PDF's metadata (`CreationDate`) differs run to run, so its bytes are not
+  golden-comparable — same as the QA harness's printed PDFs.
+
 ## Flags
 
 | Flag | Values | Default |
 | --- | --- | --- |
-| `--docx` | — | required (the only headless format) |
-| `--pdf` | — | prints "PDF needs the studio (issue #9 tracks direct export)", exit 2 |
+| `--docx` | — | write the Word document (headless, no browser) |
+| `--pdf` | — | write the paged PDF (headless Chromium; outline + tagged) |
 | `--out <dir>` | path | alongside the input |
 | `--theme` | `modern` `executive` `academic` `minimal` | `modern` |
 | `--accent` | hex colour | the theme's own pairing |
@@ -52,7 +86,10 @@ Exactly the studio's pipeline, stood up in Node:
 | `--border-weight` | `fine` `medium` `bold` | `medium` |
 | `--border-color` | `ink` `accent` | `ink` |
 
-Exit codes: `0` success · `1` pipeline failure · `2` usage errors and `--pdf`.
+At least one of `--docx` / `--pdf` is required; both together write both files.
+
+Exit codes: `0` success · `1` pipeline failure (including a missing Chromium or a
+non-repo install asking for `--pdf`) · `2` usage errors.
 
 ## Building and testing
 
@@ -63,4 +100,6 @@ pnpm --filter "@docforge/cli" run test    # spawns the bundle on the golden corp
 
 The bundle inlines the workspace packages (engine, exporter, mathml-omml) and leaves the
 npm libraries external, so a workspace `pnpm install` must have linked this package's
-dependencies (`happy-dom` above all) before the CLI can run.
+dependencies (`happy-dom` above all) before the CLI can run. The `--pdf` test suite also
+needs a resolvable Chromium and the repo's root `node_modules` (pagedjs, playwright-core);
+Chromium's cold start is slow, so those tests carry generous timeouts.

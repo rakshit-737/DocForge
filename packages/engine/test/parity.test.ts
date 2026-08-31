@@ -30,6 +30,10 @@ interface GoldenCase {
   id: string;
   doc: string;
   postBaseline?: boolean;
+  /** Behaviour added after the classic engine retired — the frozen fixture cannot
+      render it, so the byte comparison must skip the case (the golden gate still
+      captures it under its own postBaseline exemption). */
+  postClassic?: boolean;
   settings: Settings;
 }
 
@@ -93,7 +97,9 @@ function fullSettings(partial: Settings): Settings {
   return s;
 }
 
-const cases = (CASES as GoldenCase[]).map((c) => ({ ...c, settings: fullSettings(c.settings) }));
+const cases = (CASES as GoldenCase[])
+  .filter((c) => !c.postClassic)
+  .map((c) => ({ ...c, settings: fullSettings(c.settings) }));
 
 /* happy-dom rewrites import.meta.url off the file: scheme, so locate the repo
    root by walking up from cwd until qa/golden/matrix.mjs appears. */

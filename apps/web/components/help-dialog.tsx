@@ -7,10 +7,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import type { ReactNode } from "react";
 
-const KEYFRAMES =
-  "@keyframes df-fade{from{opacity:0}}" +
-  "@keyframes df-modal-in-c{from{transform:translate(-50%,calc(-50% + 8px)) scale(0.99);opacity:0}}";
-
 function H({ children }: { children: ReactNode }) {
   return (
     <h4 className="mb-2.5 mt-6 border-b border-line pb-1.5 font-display text-[17px] font-normal text-ink first:mt-0">
@@ -46,15 +42,17 @@ export function HelpDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <style>{KEYFRAMES}</style>
+        {/* Entrances live in globals.css, keyed to Radix's data-state
+            (df-fade scrim, df-sheet-in sheet — standalone translate/scale,
+            composing with the centring utilities). */}
         <Dialog.Overlay
+          data-df-motion="fade"
           className="fixed inset-0 z-[60] bg-[rgba(10,8,5,0.72)]"
-          style={{ animation: "df-fade var(--dur) var(--ease)" }}
         />
         <Dialog.Content
+          data-df-motion="sheet"
           aria-describedby={undefined}
           className="fixed left-1/2 top-1/2 z-[60] flex max-h-[84vh] w-[min(680px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-modal bg-surface shadow-(--elev-l) outline-none"
-          style={{ animation: "df-modal-in-c var(--dur) var(--ease)" }}
         >
           <header className="flex items-center justify-between border-b border-line px-5 py-4">
             <Dialog.Title className="font-display text-base font-normal text-ink">

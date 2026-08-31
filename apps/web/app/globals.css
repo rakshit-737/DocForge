@@ -398,3 +398,70 @@ body[data-focus] header[data-chrome] .btn-ghost {
     color: var(--tx);
   }
 }
+
+/* ============================================================
+   Phase 4 §7.6 — the press showing its work. One motion grammar
+   for every Radix sheet, keyed to data-state so the entrance
+   lives here instead of inline styles: --dur (160ms feedback)
+   for chrome sheets, --dur2 (340ms compositional) for lines laid
+   on the desk. The centred keyframes animate the STANDALONE
+   translate/scale properties so they compose with — and land
+   exactly on — Tailwind v4's translate utilities, instead of
+   double-shifting through transform. The global reduced-motion
+   kill above silences all of it (!important beats everything
+   declared here).
+   ============================================================ */
+@keyframes df-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes df-rise {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+/* a sheet laid on the desk — the centred modals (confirm, help) */
+@keyframes df-sheet-in {
+  from {
+    translate: -50% calc(-50% + 8px);
+    scale: 0.99;
+    opacity: 0;
+  }
+  to {
+    translate: -50% -50%;
+    scale: 1;
+  }
+}
+/* the spike — the top-anchored command palette */
+@keyframes df-spike-in {
+  from {
+    translate: -50% 8px;
+    scale: 0.99;
+    opacity: 0;
+  }
+  to {
+    translate: -50% 0;
+    scale: 1;
+  }
+}
+[data-df-motion="fade"][data-state="open"] {
+  animation: df-fade var(--dur) var(--ease);
+}
+[data-df-motion="sheet"][data-state="open"] {
+  animation: df-sheet-in var(--dur) var(--ease);
+}
+[data-df-motion="spike"][data-state="open"] {
+  animation: df-spike-in var(--dur) var(--ease);
+}
+[data-df-motion="rise"][data-state="open"] {
+  animation: df-rise var(--dur) var(--ease);
+}
+
+/* The empty state — a blank sheet laid out line by line (the classic
+   #emptyState stagger: rise at the compositional speed, delays inline
+   per line, `backwards` so a delayed line waits unseen for its turn). */
+.df-es-rise {
+  animation: df-rise var(--dur2) var(--ease) backwards;
+}

@@ -46,10 +46,6 @@ function score(label: string, group: string, needle: string): number | null {
   return 100 + spread;
 }
 
-const KEYFRAMES =
-  "@keyframes df-fade{from{opacity:0}}" +
-  "@keyframes df-modal-in{from{transform:translate(-50%,8px) scale(0.99);opacity:0}}";
-
 function Kbd({ children }: { children: ReactNode }) {
   return (
     <kbd className="mr-0.5 border border-line bg-tray px-1 font-mono text-[10px] text-ink-2">
@@ -182,17 +178,20 @@ export function CommandPalette({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <style>{KEYFRAMES}</style>
+        {/* Entrances live in globals.css, keyed to Radix's data-state
+            (df-fade scrim, df-spike-in sheet) — the keyframes animate the
+            standalone translate so they compose with the -translate-x-1/2
+            utility instead of double-shifting through transform. */}
         <Dialog.Overlay
+          data-df-motion="fade"
           className="fixed inset-0 z-[60] bg-[rgba(10,8,5,0.72)]"
-          style={{ animation: "df-fade var(--dur) var(--ease)" }}
         />
         <Dialog.Content
           ref={contentRef}
+          data-df-motion="spike"
           aria-label="Command palette"
           aria-describedby={undefined}
           className="fixed left-1/2 top-[11vh] z-[60] w-[min(560px,92vw)] -translate-x-1/2 overflow-hidden rounded-modal bg-surface shadow-(--elev-l) outline-none"
-          style={{ animation: "df-modal-in var(--dur) var(--ease)" }}
         >
           <Dialog.Title className="sr-only">Command palette</Dialog.Title>
           <input
