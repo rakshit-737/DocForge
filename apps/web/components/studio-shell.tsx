@@ -4,9 +4,10 @@
    help, toasts, persistence and the ports of exit. */
 import { EditorView } from "@codemirror/view";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captionForFile, insertFigure, processImageFile } from "@/lib/attachments";
-import { exportDocx, exportPdf } from "@/lib/exports";
+import { downloadBlob, exportDocx, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
 import { useFocusMode, useMobilePane } from "@/lib/focus-mode";
 import { importFile, isHeavyImport } from "@/lib/imports";
@@ -25,6 +26,7 @@ import { FindBar, ToastRack } from "./find-bar";
 import { HelpDialog } from "./help-dialog";
 import { LintBadge, LintPanel } from "./lint-panel";
 import { OutlinePanel, useRenderTick } from "./outline-panel";
+import { stashBenchFile } from "./pdf-bench";
 import { PreviewDeck } from "./preview-deck";
 import { SettingsDrawer, useSettingsDrawer } from "./settings-drawer";
 import { SourcePane } from "./source-pane";
@@ -39,9 +41,11 @@ export function StudioShell() {
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [pdfPending, setPdfPending] = useState<File | null>(null);
   const [savedStamp, setSavedStamp] = useState<string>("");
   const [exporting, setExporting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const pageInfo = useUiStore((s) => s.pageInfo);
   const busy = useUiStore((s) => s.busy);
@@ -152,7 +156,7 @@ export function StudioShell() {
   }, [handleTemplate]);
 
   /* ---------------- ports of entry: one handler for Open and the drop zone ---------------- */
-  const handleImport = useCallback(
+  const convertFile = useCallback(
     async (f: File) => {
       if (isHeavyImport(f.name)) toast(`Reading “${f.name}”…`, "info", 1800);
       const res = await importFile(f);
@@ -187,6 +191,19 @@ export function StudioShell() {
     [view, applyWithUndo, openProjectFile],
   );
 
+  /* A PDF has two roads (classic parity): edit it in place on the bench, or
+     convert it to a manuscript. Ask before doing either. */
+  const handleImport = useCallback(
+    (f: File) => {
+      if (/\.pdf$/i.test(f.name)) {
+        setPdfPending(f);
+        return;
+      }
+      void convertFile(f);
+    },
+    [convertFile],
+  );
+
   const jumpToLine = useCallback(
     (n: number) => {
       if (!view) return;
@@ -219,6 +236,19 @@ export function StudioShell() {
     }
   }, [controller]);
 
+  const doExportMd = useCallback(() => {
+    flushActiveLiveEdit();
+    const s = useDocStore.getState();
+    const name = `${
+      ((s.settings.title as string) || "document")
+        .replace(/[^\w-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "document"
+    }.md`;
+    downloadBlob(new Blob([s.source], { type: "text/markdown" }), name);
+    toast("Markdown downloaded");
+  }, []);
+
   const doExportPdf = useCallback(() => {
     if (!controller) return;
     toast(
@@ -247,6 +277,9 @@ export function StudioShell() {
       }
       const k = e.key.toLowerCase();
       if (mod && k === "k") {
+        // In the editor Ctrl+K belongs to link insertion (deskKeymap wins there);
+        // the palette answers everywhere else.
+        if ((e.target as HTMLElement)?.closest?.(".cm-editor")) return;
         e.preventDefault();
         setPaletteOpen((o) => (o ? false : anyDialogOpen() ? o : true));
       } else if (mod && k === "s") {
@@ -273,6 +306,7 @@ export function StudioShell() {
   const commands = [
     { group: "Actions", label: "Export Word document", hint: "one click", run: doExportDocx },
     { group: "Actions", label: "Export PDF", hint: "print route", run: doExportPdf },
+    { group: "Actions", label: "Export Markdown", hint: ".md source", run: doExportMd },
     { group: "Actions", label: "Save on this device", hint: "Ctrl+S", run: saveLocal },
     { group: "Actions", label: "Save project file", hint: ".docforge.json", run: saveProject },
     { group: "Actions", label: "Open project…", run: () => fileInput.current?.click() },
@@ -551,6 +585,54 @@ export function StudioShell() {
           newDocument();
         }}
       />
+      {/* the classic edit-or-convert ask for an incoming PDF */}
+      {pdfPending ? (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Open PDF"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40"
+        >
+          <div className="w-[26rem] max-w-[90vw] border border-rule bg-tray p-5 shadow-(--elev-l)">
+            <h2 className="font-display text-lg text-ink">“{pdfPending.name}”</h2>
+            <p className="mt-2 text-[13px] leading-5 text-ink-2">
+              Edit the PDF itself on the proofing bench, or convert its text into an editable
+              manuscript?
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn-ghost" onClick={() => setPdfPending(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  const f = pdfPending;
+                  setPdfPending(null);
+                  if (f) void convertFile(f);
+                }}
+              >
+                Convert to manuscript
+              </button>
+              <button
+                type="button"
+                className="border border-rule bg-press px-3 py-1.5 font-mono text-[12px] uppercase tracking-widest text-press-ink hover:bg-press-hover"
+                onClick={() => {
+                  const f = pdfPending;
+                  setPdfPending(null);
+                  if (f) {
+                    // client navigation — the stashed File lives in module state
+                    stashBenchFile(f);
+                    router.push("/pdf");
+                  }
+                }}
+              >
+                Edit in place
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <ToastRack />
       <DropZone
         onFiles={(files) => {
