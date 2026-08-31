@@ -375,21 +375,36 @@ export function StudioShell() {
           {savedStamp ? `saved ${savedStamp}` : ""}
         </span>
 
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+        {/* Hierarchy answers "what do I click first" (§7.2): the file-ops tray
+            holds the small verbs, the products stand apart with ONE red plate,
+            and the utilities recede to quiet ink. */}
+        <div className="ml-auto flex flex-wrap items-center gap-2.5">
           <TemplatesMenu onApply={handleTemplate} />
-          <button type="button" className="btn-ghost" onClick={() => fileInput.current?.click()}>
-            Open
-          </button>
-          <button type="button" className="btn-ghost" onClick={saveProject}>
-            Save project
-          </button>
-          <button type="button" className="btn-ghost" onClick={() => setConfirmNew(true)}>
-            New
-          </button>
-          <Link href="/pdf" className="btn-ghost">
-            PDF bench
-          </Link>
-          <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+          <fieldset
+            aria-label="Project"
+            className="m-0 flex items-center gap-px rounded-none border border-line bg-surface p-0.5"
+          >
+            <button
+              type="button"
+              className="btn-tray"
+              onClick={() => fileInput.current?.click()}
+              title="Open a document or project file"
+            >
+              Open
+            </button>
+            <button
+              type="button"
+              className="btn-tray"
+              onClick={saveProject}
+              title="Save a .docforge.json project file"
+            >
+              Save
+            </button>
+            <button type="button" className="btn-tray" onClick={() => setConfirmNew(true)}>
+              New
+            </button>
+          </fieldset>
+          <span className="h-5 w-px bg-line" aria-hidden />
           <button type="button" className="btn-ghost" onClick={doExportPdf}>
             PDF
           </button>
@@ -401,22 +416,25 @@ export function StudioShell() {
           >
             {exporting ? "Exporting…" : "Export Word"}
           </button>
-          <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+          <span className="h-5 w-px bg-line" aria-hidden />
           <button
             type="button"
-            className="btn-ghost"
+            className="btn-quiet"
             aria-expanded={settingsOpen}
             onClick={() => useSettingsDrawer.getState().toggle()}
           >
             Settings
           </button>
-          <button type="button" className="btn-ghost" onClick={() => setHelpOpen(true)}>
+          <Link href="/pdf" className="btn-quiet" title="Edit an existing PDF in place">
+            Bench
+          </Link>
+          <button type="button" className="btn-quiet" onClick={() => setHelpOpen(true)}>
             Help
           </button>
           <button
             type="button"
             onClick={toggleTheme}
-            className="btn-ghost"
+            className="btn-quiet"
             aria-pressed={theme === "dark"}
           >
             {theme === "dark" ? "Day desk" : "Night shift"}

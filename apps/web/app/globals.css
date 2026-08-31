@@ -130,6 +130,30 @@ body {
   color: var(--tx);
   border-color: var(--rule);
 }
+/* Tray plate — a verb inside a ruled tray; the tray carries the border. */
+.btn-tray {
+  border: 0;
+  background: transparent;
+  color: var(--tx2);
+  padding: 4px 9px;
+  font-size: 12.5px;
+  border-radius: 1px;
+}
+.btn-tray:hover {
+  background: var(--bg3);
+  color: var(--tx);
+}
+/* Quiet ink — utilities that must never compete with the work. */
+.btn-quiet {
+  border: 0;
+  background: transparent;
+  color: var(--tx3);
+  padding: 5px 4px;
+  font-size: 12.5px;
+}
+.btn-quiet:hover {
+  color: var(--tx);
+}
 .btn-ghost:focus-visible,
 button:focus-visible,
 a:focus-visible,
@@ -137,6 +161,62 @@ input:focus-visible,
 select:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
+}
+
+/* ============================================================
+   The galleys on the stone — the classic page-card block, ported.
+   Pages carry their OWN paper: the document stays paper-white on
+   the night desk (the law), lies on the stone under the classic
+   three-layer shadow, and settles in with proofIn (staggered,
+   capped, dead under reduced motion via the global kill). Direct
+   manuscript editing keeps the quiet classic affordances.
+   ============================================================ */
+.pagedjs_page {
+  background: #fff;
+  box-shadow:
+    0 1px 1px rgba(18, 18, 16, 0.35),
+    0 3px 8px rgba(18, 18, 16, 0.2),
+    0 18px 44px rgba(18, 18, 16, 0.18);
+  margin: 0 auto 32px;
+  animation: proofIn var(--dur2) var(--ease) backwards;
+}
+.pagedjs_page:nth-child(n + 2) {
+  animation-delay: 60ms;
+}
+.pagedjs_page:nth-child(n + 3) {
+  animation-delay: 120ms;
+}
+.pagedjs_page:nth-child(n + 4) {
+  animation-delay: 180ms;
+}
+@keyframes proofIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+:root[data-light] .pagedjs_page {
+  box-shadow:
+    0 1px 1px rgba(38, 38, 31, 0.25),
+    0 3px 8px rgba(38, 38, 31, 0.12),
+    0 18px 44px rgba(38, 38, 31, 0.14);
+}
+.pagedjs_pages {
+  display: block;
+}
+.pagedjs_page_content {
+  caret-color: #111827;
+  cursor: text;
+}
+.pagedjs_page_content:focus,
+.pagedjs_page_content:focus-visible {
+  outline: none;
+}
+.pagedjs_page ::selection {
+  background: rgba(37, 99, 235, 0.22);
+}
+.pagedjs_page [contenteditable="false"] {
+  cursor: default;
 }
 
 /* PDF export rides the print route: only the pages leave the building.
