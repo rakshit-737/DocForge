@@ -9,8 +9,8 @@ export default function Home() {
         <h1 className="font-display text-6xl font-bold tracking-tight text-ink">DocForge</h1>
         <div className="mx-auto mt-3 w-64 border-t-4 border-double border-rule" />
         <p className="mt-4 max-w-md text-sm leading-6 text-ink-2">
-          Plain text in — beautifully typeset PDF and Word documents out. Local-first: no
-          account, nothing leaves this machine.
+          Plain text in — beautifully typeset PDF and Word documents out. Local-first: no account,
+          nothing leaves this machine.
         </p>
       </header>
       <Link

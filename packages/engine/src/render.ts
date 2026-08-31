@@ -177,7 +177,7 @@ export function postprocess(
           throwOnError: false,
           strict: "ignore",
         });
-      } catch (e) {
+      } catch (_e) {
         el.textContent = el.dataset.tex || "";
         el.classList.add("math-error");
       }
@@ -196,7 +196,7 @@ export function postprocess(
           ignoreIllegals: true,
         }).value;
         code.classList.add("hljs");
-      } catch (e) {
+      } catch (_e) {
         /* leave plain */
       }
     });
