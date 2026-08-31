@@ -78,10 +78,14 @@ Domain/name check, Vercel account tier, AI-drawer default provider, the
   **Axe clean** on `/`, `/studio`, and drawer-open under WCAG 2.2 AA tags
   (chrome scope; the rendered document is product surface — its accessibility
   is the tagged-PDF idea, §8.4 ▲).
+- **Sprint addendum (2026-08-31, `3d120ab`):** the per-selection font/size
+  selects, text shading, image attach + clipboard paste, the structure linter
+  (38 unit tests, badge + proof-slip panel), focus mode, and the sub-900px
+  one-column layout with pane tabs all landed and passed a 10/10 live feature
+  probe. Phase 3's ports of entry (all twelve import formats through one door,
+  full-window drop zone) and the /pdf bench route landed with them.
 - **Still open for the full Phase-2 gate:** the Appendix A checklist walked item
-  by item against the web studio (several classic surfaces — per-selection font
-  menus in the toolbar, image attach flow, structure linter, focus mode, mobile
-  layout — are not yet built); golden-corpus capture through the web render
+  by item against the web studio; golden-corpus capture through the web render
   path; a recorded keyboard-only walkthrough; Lighthouse runs. live-edit's
   `styleSelection` (ribbon marks applied to a manuscript selection) is ported
-  at the serializer level but not yet wired to the toolbar.
+  at the serializer level but not yet wired to a manuscript-side toolbar.
