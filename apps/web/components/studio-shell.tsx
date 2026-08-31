@@ -63,9 +63,12 @@ export function StudioShell() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-shell="">
       {/* masthead — the serif nameplate over a double ink rule */}
-      <header className="flex items-center gap-4 border-b-4 border-double border-rule bg-desk px-4 py-2">
+      <header
+        data-chrome=""
+        className="flex items-center gap-4 border-b-4 border-double border-rule bg-desk px-4 py-2"
+      >
         <Link href="/" className="font-display text-xl font-bold tracking-tight text-ink">
           DocForge
         </Link>
@@ -83,8 +86,8 @@ export function StudioShell() {
       </header>
 
       {/* the desk: source galley left, the stone right */}
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(320px,42%)_1fr]">
-        <section aria-label="Source" className="min-h-0 border-r border-line">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(320px,42%)_1fr]" data-desk="">
+        <section aria-label="Source" data-chrome="" className="min-h-0 border-r border-line">
           <SourcePane
             viewRef={(v) => {
               editorView.current = v;
@@ -97,7 +100,10 @@ export function StudioShell() {
       </div>
 
       {/* the wire ticker */}
-      <footer className="flex items-center gap-4 border-t border-rule bg-surface px-4 py-1 font-mono text-xs text-ink-2">
+      <footer
+        data-chrome=""
+        className="flex items-center gap-4 border-t border-rule bg-surface px-4 py-1 font-mono text-xs text-ink-2"
+      >
         <output aria-live="polite" className="tabular-nums">
           {busy && !pageInfo ? "composing…" : pageInfo || "—"}
         </output>

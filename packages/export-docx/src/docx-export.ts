@@ -307,7 +307,9 @@ export async function build(
       else if (tag === "sub") nf.sub = true;
       else if (tag === "sup") nf.sup = true;
       else if (tag === "mark")
-        nf.highlight = Engine.HL_COLORS[ch.dataset.hl] ? ch.dataset.hl : "yellow";
+        nf.highlight = Engine.HL_COLORS[ch.dataset.hl as keyof typeof Engine.HL_COLORS]
+          ? ch.dataset.hl
+          : "yellow";
       else if (tag === "code") nf.code = true;
       else if (tag === "span" && ch.classList.contains("hnum")) {
         nf.color = hex(t.a600);

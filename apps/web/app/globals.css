@@ -115,6 +115,48 @@ body {
   font-size: 13px;
 }
 
+/* PDF export rides the print route: only the pages leave the building.
+   (Port of the classic app.css print block, keyed to the new chrome.) */
+@media print {
+  html,
+  body {
+    overflow: visible;
+    background: #fff;
+  }
+  [data-chrome] {
+    display: none !important;
+  }
+  [data-shell],
+  [data-desk],
+  section[aria-label="Preview"] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  [data-preview-scroll] {
+    display: block;
+    height: auto;
+    overflow: visible;
+    padding: 0;
+    background: #fff;
+  }
+  [data-deck] {
+    zoom: 1 !important;
+    transform: none !important;
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+  .pagedjs_page {
+    box-shadow: none;
+    margin: 0;
+    animation: none;
+  }
+  .doc .shot .shot-hint {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

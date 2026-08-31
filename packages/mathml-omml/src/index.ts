@@ -1094,7 +1094,7 @@ export function oMathPara(omml: string | null | undefined, jc?: string): string 
 export function texToOmml(tex: string | null | undefined, display?: boolean): string | null {
   const k =
     (typeof katex !== "undefined" && katex) ||
-    (typeof globalThis !== "undefined" && globalThis.katex) ||
+    (typeof globalThis !== "undefined" && (globalThis as { katex?: KatexLib }).katex) ||
     null;
   if (!k || typeof k.renderToString !== "function" || tex == null) return null;
   let html: string | undefined;

@@ -172,12 +172,14 @@ export class PreviewController {
   private renderPending: (() => void) | null = null;
   private renderTimer: ReturnType<typeof setTimeout> | null = null;
   private pageTotal = 0;
+  /** The last rendered .content clone — the DOCX exporter's input (classic lastContentEl). */
+  lastContentEl: HTMLElement | null = null;
   zoomMode: "fit" | "man" = "fit";
   zoomVal = 1;
 
   constructor(
-    private deck: HTMLElement, // #scaleWrap equivalent — pages land here
-    private scroller: HTMLElement, // the scroll container ("the stone")
+    readonly deck: HTMLElement, // #scaleWrap equivalent — pages land here
+    readonly scroller: HTMLElement, // the scroll container ("the stone")
     private events: PreviewEvents,
   ) {
     scroller.addEventListener("scroll", () => this.updatePageIndicator());
@@ -210,6 +212,7 @@ export class PreviewController {
       const docCssText = await loadDocCss();
 
       const { doc } = Engine.render(source, settings, attachments as Parameters<typeof Engine.render>[2]);
+      this.lastContentEl = (doc.querySelector(".content")?.cloneNode(true) as HTMLElement) ?? null;
       const css = docCssText + Engine.dynamicCss(settings);
 
       /* Compose the new galleys offscreen while the old ones stay on the
