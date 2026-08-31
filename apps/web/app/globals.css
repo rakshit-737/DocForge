@@ -218,6 +218,39 @@ select:focus-visible {
 .pagedjs_page [contenteditable="false"] {
   cursor: default;
 }
+/* The screenshot placeholder's hint is a proof slip laid ON the galley —
+   absolutely positioned and hover-revealed (classic src/app.css). Without
+   this screen rule the hint flows inline and SHIFTS PAGE BREAKS: the web
+   parity run diverged from the classic edition by a page on every document
+   containing figures until it was ported. */
+.doc .shot {
+  cursor: pointer;
+  position: relative;
+}
+.doc .shot:hover .shot-box {
+  border-color: var(--a600);
+  box-shadow: 0 0 0 3pt var(--a100);
+}
+.doc .shot .shot-hint {
+  display: none;
+  position: absolute;
+  top: 6pt;
+  right: 6pt;
+  background: #1a1a17e6;
+  color: #f4f2ec;
+  font-size: 8pt;
+  padding: 2pt 6pt;
+  border-radius: 2px;
+  font-family: var(--mono);
+}
+.doc .shot:hover .shot-hint {
+  display: block;
+}
+@media (hover: none) {
+  .doc .shot .shot-hint {
+    display: block;
+  }
+}
 
 /* PDF export rides the print route: only the pages leave the building.
    (Port of the classic app.css print block, keyed to the new chrome.) */
