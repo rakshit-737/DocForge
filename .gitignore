@@ -32,6 +32,6 @@ next-env.d.ts
 apps/web/public/doc.css
 apps/web/public/fonts.css
 apps/web/public/fonts/
-apps/web/lib/vendor/
+apps/web/lib/vendor/paged.cjs
 apps/web/public/sw.js
 apps/web/public/sw.js.map
