@@ -9,7 +9,8 @@ import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import { findKeymap } from "@/lib/find";
 import { deskKeymap } from "@/lib/keymap";
-import { useDocStore } from "@/lib/store";
+import { flushActiveLiveEdit } from "@/lib/live-edit";
+import { consumeSplice, useDocStore } from "@/lib/store";
 
 const deskTheme = EditorView.theme({
   "&": {
@@ -52,7 +53,18 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
         keymap.of([...findKeymap]), // Mod-f/h, F3/Shift-F3, Esc-closes-find — before defaults
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         deskTheme,
+        EditorView.contentAttributes.of({
+          "aria-label": "Manuscript source",
+          tabindex: "0",
+        }),
         EditorView.lineWrapping,
+        // Classic editor-focus call site: the source pane must never act on a
+        // source the manuscript hasn't written yet.
+        EditorView.domEventHandlers({
+          focus: () => {
+            flushActiveLiveEdit();
+          },
+        }),
         EditorView.updateListener.of((u) => {
           if (!u.docChanged) return;
           selfEdit.current = true;
@@ -68,6 +80,20 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
     const unsub = useDocStore.subscribe((s, prev) => {
       if (s.source === prev.source || selfEdit.current) return;
       if (v.state.doc.toString() === s.source) return;
+      /* A live-edit splice arrives as a minimal change so the editor keeps
+         its own caret, scroll and native history; the descriptor is verified
+         against the actual before/after strings, and template/project loads
+         and history restores still take the whole-replace path below. */
+      const splice = consumeSplice();
+      if (
+        splice &&
+        v.state.doc.toString() === prev.source &&
+        prev.source.slice(0, splice.from) + splice.insert + prev.source.slice(splice.to) ===
+          s.source
+      ) {
+        v.dispatch({ changes: { from: splice.from, to: splice.to, insert: splice.insert } });
+        return;
+      }
       v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: s.source } });
     });
 

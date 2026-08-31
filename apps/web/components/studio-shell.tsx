@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { exportDocx, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
+import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { armAutosave, persistNow, restoreSession } from "@/lib/persistence";
 import type { PreviewController } from "@/lib/preview-controller";
 import { parseProject, saveProjectFile } from "@/lib/project-file";
@@ -112,6 +113,7 @@ export function StudioShell() {
   }, []);
 
   const saveProject = useCallback(async () => {
+    flushActiveLiveEdit();
     const s = useDocStore.getState();
     try {
       const how = await saveProjectFile({
@@ -383,7 +385,7 @@ export function StudioShell() {
           <button
             type="button"
             onClick={() => zoom(-0.1)}
-            className="px-1 hover:text-ink"
+            className="min-h-6 min-w-6 px-1 hover:text-ink"
             aria-label="Zoom out"
           >
             −
@@ -399,7 +401,7 @@ export function StudioShell() {
           <button
             type="button"
             onClick={() => zoom(0.1)}
-            className="px-1 hover:text-ink"
+            className="min-h-6 min-w-6 px-1 hover:text-ink"
             aria-label="Zoom in"
           >
             +

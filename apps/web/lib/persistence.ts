@@ -6,6 +6,7 @@
    Ctrl+S = persist locally (ledger I2) — the shell binds it to flushNow and
    stamps the save state; explicit export actions produce files. */
 import { type DBSchema, type IDBPDatabase, openDB } from "idb";
+import { flushActiveLiveEdit } from "./live-edit";
 import type { Settings } from "./settings";
 import { useDocStore } from "./store";
 
@@ -37,6 +38,7 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let lastSavedAt = 0;
 
 export async function persistNow(): Promise<number> {
+  flushActiveLiveEdit(); // any pending manuscript edit reaches the source first
   const { source, settings, attachments } = useDocStore.getState();
   const doc: StoredDoc = {
     id: CURRENT,

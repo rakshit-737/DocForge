@@ -6,12 +6,7 @@
    so there is no injected precache manifest: the caches fill as you visit,
    and every studio asset is same-origin, so one full load = offline forever.
    sw-register.tsx registers it in production. */
-import {
-  CacheFirst,
-  NetworkFirst,
-  Serwist,
-  StaleWhileRevalidate,
-} from "serwist";
+import { CacheFirst, NetworkFirst, Serwist, StaleWhileRevalidate } from "serwist";
 
 declare const self: ServiceWorkerGlobalScope;
 

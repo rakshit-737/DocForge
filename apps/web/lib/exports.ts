@@ -5,6 +5,7 @@
    font bytes loaded lazily on first use. PDF rides the print route (the
    direct-PDF path is issue #9, §8.4). */
 import { loadDocx, loadFontData, loadStudio } from "./bootstrap";
+import { flushActiveLiveEdit } from "./live-edit";
 import type { PreviewController } from "./preview-controller";
 import type { Settings } from "./settings";
 
@@ -31,6 +32,7 @@ export async function exportDocx(
   attachments: Record<string, unknown>,
 ): Promise<string> {
   if (!controller.lastContentEl) throw new Error("Nothing rendered yet");
+  flushActiveLiveEdit(); // pending manuscript edits reach the source before it exports
   await Promise.all([loadDocx(), loadFontData(), loadStudio()]);
   const { api } = await import("@docforge/export-docx");
   const blob = await api.DocxExport.build(controller.lastContentEl, settings as never, attachments);

@@ -65,3 +65,23 @@ pushed, CI green.
 
 Domain/name check, Vercel account tier, AI-drawer default provider, the
 "Built with Claude" footer, community-template licence.
+
+## Stage record (2026-08-31)
+
+- **Stages 1–7 built and live-verified.** Chrome acceptance 12/12 (roving toolbar
+  with zero extra tab stops, Ctrl+B/1, find "n of m", drawer, template+Undo,
+  Ctrl+S local-persist-no-download, 102 KB DOCX, IndexedDB session restore,
+  console clean). Live-edit port 12/12 (contenteditable pages, read-only
+  furniture, splice reaches CodeMirror, viewport anchor moved 0 px across the
+  swap, caret exact, one Ctrl+Z/Ctrl+Y history across panes). PWA 5/5 (manifest,
+  SW active + controlling, offline reload composes pages, offline banner).
+  **Axe clean** on `/`, `/studio`, and drawer-open under WCAG 2.2 AA tags
+  (chrome scope; the rendered document is product surface — its accessibility
+  is the tagged-PDF idea, §8.4 ▲).
+- **Still open for the full Phase-2 gate:** the Appendix A checklist walked item
+  by item against the web studio (several classic surfaces — per-selection font
+  menus in the toolbar, image attach flow, structure linter, focus mode, mobile
+  layout — are not yet built); golden-corpus capture through the web render
+  path; a recorded keyboard-only walkthrough; Lighthouse runs. live-edit's
+  `styleSelection` (ribbon marks applied to a manuscript selection) is ported
+  at the serializer level but not yet wired to the toolbar.

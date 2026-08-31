@@ -5,6 +5,7 @@
    never reconciles inside the deck; this class owns that DOM outright. */
 import type * as PagedNS from "pagedjs";
 import { loadDocCss, loadStudio, type StudioRuntime } from "./bootstrap";
+import type { LiveEdit, LiveEditView } from "./live-edit";
 import type { Settings } from "./settings";
 
 type PagedPage = { element?: HTMLElement; position?: number; removeListeners?: () => void };
@@ -175,6 +176,11 @@ export class PreviewController {
   private pageTotal = 0;
   /** The last rendered .content clone — the DOCX exporter's input (classic lastContentEl). */
   lastContentEl: HTMLElement | null = null;
+  /** Stage 6: the manuscript's live-edit surface, driven at the classic
+      doRender points (flush → captureView → compose → swap → arm →
+      restoreView). Optional — every touch is guarded, so the controller
+      behaves identically when nothing is attached. */
+  private liveEdit: LiveEdit | null = null;
   zoomMode: "fit" | "man" = "fit";
   zoomVal = 1;
 
@@ -192,6 +198,10 @@ export class PreviewController {
     this.renderTimer = setTimeout(run, delay);
   }
 
+  attachLiveEdit(le: LiveEdit | null) {
+    this.liveEdit = le;
+  }
+
   async render(source: string, settings: Settings, attachments: Record<string, unknown>) {
     if (this.rendering) {
       // collapse to a single trailing re-render, classic renderPending
@@ -203,9 +213,18 @@ export class PreviewController {
       clearTimeout(this.renderTimer);
       this.renderTimer = null;
     }
+    /* Any manuscript edit still pending reaches the source first (classic
+       doRender flushes before Engine.render). The deck's compose() flushes
+       before reading the store, making this a no-op on that path; on a
+       direct render() call a flush here may re-schedule a trailing compose
+       with the fresher source — deliberately left alive, since this pass
+       composes the `source` the caller already captured. */
+    this.liveEdit?.flush();
     this.rendering = true;
     this.events.onBusy(true);
     tickerTarget = (n) => this.events.onPageInfo(`p. ${n}…`);
+    // where is the reader, and where is their caret? restored after the swap
+    const view: LiveEditView | null = this.liveEdit?.captureView() ?? null;
     try {
       this.runtime ??= await loadStudio();
       const { Engine, Paged } = this.runtime;
@@ -256,6 +275,10 @@ export class PreviewController {
       this.pageTotal = flow.total;
       this.events.onPageInfo(`${flow.total} ${flow.total === 1 ? "page" : "pages"}`);
       this.applyZoom(settings);
+      // the classic post-swap order: arm the fresh pages, then put the
+      // reader (viewport anchor + caret) back where they were
+      this.liveEdit?.arm();
+      this.liveEdit?.restoreView(view);
       this.updatePageIndicator();
       this.events.onRendered?.();
     } finally {

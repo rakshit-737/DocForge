@@ -5,6 +5,26 @@
 import { create } from "zustand";
 import { defaultSettings, type Settings, THEME_ACCENT } from "./settings";
 
+/** A single-range source change (live-edit write-back): replace the
+    characters [from, to) with `insert`. */
+export interface SourceSplice {
+  from: number;
+  to: number;
+  insert: string;
+}
+
+/* The splice behind the latest spliceSource call, held outside the store so
+   nothing re-renders off it. The source pane consumes it (once) to dispatch
+   a minimal CodeMirror change instead of replacing the whole document; a
+   stale or unconsumed descriptor is harmless — consumers verify it against
+   the actual before/after strings and fall back to the whole-replace path. */
+let pendingSplice: SourceSplice | null = null;
+export function consumeSplice(): SourceSplice | null {
+  const s = pendingSplice;
+  pendingSplice = null;
+  return s;
+}
+
 export interface DocState {
   source: string;
   settings: Settings;
@@ -12,6 +32,10 @@ export interface DocState {
   /** True when the accent was picked by hand — theme switches stop following. */
   accentTouched: boolean;
   setSource: (source: string) => void;
+  /** Live-edit write-back: equivalent to setSource on the spliced string, but
+      records the change shape so the source pane can keep its own caret,
+      scroll and native history (see consumeSplice). */
+  spliceSource: (from: number, to: number, insert: string) => void;
   patchSettings: (patch: Partial<Settings>) => void;
   replaceDocument: (doc: {
     source: string;
@@ -26,6 +50,11 @@ export const useDocStore = create<DocState>((set) => ({
   attachments: {},
   accentTouched: false,
   setSource: (source) => set({ source }),
+  spliceSource: (from, to, insert) =>
+    set((s) => {
+      pendingSplice = { from, to, insert };
+      return { source: s.source.slice(0, from) + insert + s.source.slice(to) };
+    }),
   patchSettings: (patch) =>
     set((s) => {
       const next = { ...s.settings, ...patch };
