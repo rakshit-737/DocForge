@@ -30,6 +30,7 @@
     "marked": "^18.0.7"
   },
   "devDependencies": {
+    "@types/node": "26.4.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   }
