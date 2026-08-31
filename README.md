@@ -1,104 +1,130 @@
 # DocForge — your personal document studio
 
-Turn plain text into beautifully typeset **PDFs** and **Word documents** — cover pages, automatic table of contents with real page numbers, running headers, footnotes, citations, equations, cross-references, screenshot placeholders, tables, callouts and more. One HTML file. No account, no server, works offline. Yours forever.
+Turn plain text into beautifully typeset **PDFs** and **Word documents** — cover pages, automatic table of contents with real page numbers, running headers, footnotes, citations, equations, cross-references, screenshot placeholders, tables, callouts and more. No account, no server, works offline. Yours forever.
 
-**▶ Use it:** open `dist/DocForge.html` in Chrome or Edge — or serve it with GitHub Pages (see below).
+DocForge ships twice, from one set of typed packages:
+
+- **The forever edition** — a single self-contained HTML file (`dist/DocForge.html`, ~7 MB) that works from `file://` with the network cable cut. GitHub Pages serves the current build at the site root and the frozen 1.x classic at `/classic`. This build is a feature, not legacy: it ships with every release.
+- **The web studio** (`apps/web`) — the same engine mounted in a Next.js app: CodeMirror source pane, paginated preview, live editing on the pages, IndexedDB persistence with crash recovery, one-click exports, installable PWA that keeps working offline after first load. It builds in CI today; the hosted deploy target is still being decided, and until the feature-parity audit against the classic edition completes (see Known limitations), the single-file edition remains the reference behaviour.
+
+**▶ Use it:** open `dist/DocForge.html` in Chrome or Edge (build it with `node build.mjs`), or visit the Pages deployment. For the studio: `corepack pnpm --filter @docforge/web dev`.
+
+## Local-first, and provably so
+
+These are commitments, not marketing (MASTER-PROMPT §5):
+
+- **Documents never leave the device.** Everything — parsing, pagination, PDF and Word export, imports, PDF editing — runs in your browser. Watch the network tab: local mode makes no requests.
+- **No accounts, no walls.** Nothing is gated behind sign-in. Cloud sync, if it ever arrives, will be optional and additive — local stays the source of truth.
+- **No telemetry in the single-file build.** None. The hosted app may one day carry privacy-respecting analytics; if it does, it will be disclosed.
+- **The single-file edition is truly single-file** — no CDN, no runtime fetches, works from `file://`, forever.
+- **Fonts stay OFL-licensed** with licence texts shipped in `fonts/`.
 
 ## What it does
 
 - **Live paginated preview** — see actual A4/Letter pages, page numbers and all, as you type
-- **Edit the manuscript directly** — the pages are a real editing surface, not a preview: click into any paragraph, heading, list, table cell or callout and type. The Markdown source keeps itself in step (bold/italic/underline shortcuts included), pagination recomposes around your caret when you pause, and the viewport never jumps back to page 1 — the view re-anchors to the block you were reading, on a 100-page document as on a one-pager. Generated furniture (contents page, reference list, resolved cross-references, equations, figures) stays read-only on the page; edit those from the source panel. One undo history covers both panes (Ctrl+Z anywhere)
+- **Edit the manuscript directly** — the pages are a real editing surface, not a preview: click into any paragraph, heading, list, table cell or callout and type. The Markdown source keeps itself in step, pagination recomposes around your caret when you pause, and the viewport never jumps back to page 1. Generated furniture (contents page, reference list, resolved cross-references, equations, figures) stays read-only on the page; edit those from the source panel. One undo history covers both panes (Ctrl+Z anywhere)
 - **Markdown + toolbar editor** — `# headings`, `**bold**`, lists, tables, quotes, code
-- **Real typography** — seven embedded open-licence typefaces (see *Fonts* below) used identically in the PDF and the Word file, so the two exports look like the same document on any machine; curly quotes, en dashes and non-breaking spaces applied automatically; widow/orphan control; balanced headings and no orphan words on a paragraph's last line (`text-wrap`); tuned hyphenation in justified text; headings never stranded at a page foot; long tables repeat their header row on every page in both formats
+- **Real typography** — seven embedded open-licence typefaces (see *Fonts* below) used identically in the PDF and the Word file, so the two exports look like the same document on any machine; curly quotes, en dashes and non-breaking spaces applied automatically; widow/orphan control; headings never stranded at a page foot; long tables repeat their header row on every page in both formats
 - **Professional page numbering** — the cover is unnumbered, the contents page runs in romans (i, ii…), and the body starts at "Page 1 of N" where N counts body pages only; identical scheme in Word
 - **Footnotes** — `[^1]` calls with `[^1]: text` definitions; placed at the foot of the correct page in the PDF and exported as real Word footnotes
 - **Citations** — `[@key]` in text, `[@key]: Full entry` definitions, `[references]` for the list; numeric `[1]` (IEEE-like) or Author–year (APA-like) style, chosen in Settings; locators like `[@key, p. 33]` supported
 - **Mathematics** — `$inline$` and `$$display$$` LaTeX, rendered with KaTeX in the preview/PDF and exported to Word as **real editable equations** (OMML), not pictures
-- **Cross-references** — `[#fig:name]`, `[#tbl:name]`, `[#sec:name]` resolve to "Figure 3", "Table 1", "Section 2.1"; label headings with `{#sec:name}`, figures/tables with `#fig:name` / `#tbl:name` options
+- **Cross-references** — `[#fig:name]`, `[#tbl:name]`, `[#sec:name]` resolve to "Figure 3", "Table 1", "Section 2.1"
 - **Table captions** — `[table: caption]` above a table numbers it as *Table N*; `[lof]` and `[lot]` print lists of figures and tables
 - **Syntax highlighting** — name a language on a code fence (` ```python `) for print-friendly colouring in both exports (36 common languages)
-- **Screenshot placeholders** — `[screenshot: caption]` prints as a neat labelled box, or click it in the preview to attach the real image; options: `| w:60%` width, `| noborder`, `| #fig:name`
+- **Screenshot placeholders** — `[screenshot: caption]` prints as a neat labelled box, or click it in the preview to attach the real image
 - **Automatic table of contents** — `[toc]` with dotted leaders and real page numbers
 - **Cover page** — title, subtitle, author, date, course/company label; full-bleed accent band in the PDF *and* the Word file
 - **4 themes** (Modern, Executive, Academic, Minimal) × any accent colour × A4/Letter × 3 margin presets
-- **Callouts** — `:::note`, `:::tip`, `:::warning`, `:::important` — tables, lists and code inside them survive into Word intact
-- **Word's Home ribbon** — underline (`++u++`, Ctrl+U), strikethrough, highlighter in Word's 15 colours (`==text==`, `=={green}text==`), sub/superscript (`~x~` / `^x^`), text colour / shading / per-selection size and typeface (`[text]{color=#c00000 size=14 font="Georgia"}`), small caps and all caps, paragraph alignment blocks (`:::center` … `:::`), change-case and clear-formatting buttons, document-wide base font size and line spacing — every one of them lands identically in the PDF and as real run properties in the .docx
-- **Import nearly anything** (in the spirit of [MarkItDown](https://github.com/microsoft/markitdown), entirely offline) — Open (or drop onto the editor) a `.docx`, `.pdf`, `.md`, `.txt`, `.html`, `.csv`/`.tsv`, `.xlsx`, `.pptx`, `.epub`, `.ipynb` or an image, and it becomes editable Markdown: Word files keep headings, lists, tables, images and inline styling (mammoth.js); spreadsheets arrive as one section and table per sheet; presentations as one section per slide — titles as headings, bullets with their outline levels, tables, and speaker notes in a callout; EPUBs chapter by chapter in spine order; notebooks keep their prose and fenced code cells; HTML runs through the same converter as pasted web content; images attach as captioned figures. OOXML and EPUB packages are opened with the browser's own zip machinery — no extra libraries shipped. PDFs offer two roads — **edit in place** (below) or conversion to editable Markdown (headings by size, lists, paragraphs, page furniture stripped) when you want to rewrite freely
-- **Edit PDFs in place** — the layout you received is the layout you keep: **double-click any printed line to rewrite it** and it reappears at the same position, size **and in the PDF's own embedded font** — the editor inverts the font's ToUnicode map and writes glyph codes through the page's original font resource, so the rewrite is typographically indistinguishable. (A subset font only carries the characters the document already uses; type one it lacks and that line falls back to the closest standard face, with a notice.) Also: free text boxes, white-out, highlighter, image stamps; export rebuilds from the *original bytes* with only your edits drawn on top. Two honest limits: text doesn't reflow (a line is rewritten, not re-typeset), and a rewritten line's original characters remain in the file's hidden text layer beneath the cover — don't use it to redact secrets
-- **Editor comforts** — a command palette with every action searchable by name (Ctrl+K), focus mode (Ctrl+Shift+Enter — just the manuscript), a draggable source/manuscript split that remembers its place, a folio readout that follows your scroll ("p. 8 · 18 pages"), outline navigator (☰ above the preview), find & replace (Ctrl+F / Ctrl+H), pasted Word/web content auto-converted to Markdown, a gentle structure checker that flags anything that would break the export, a drop zone that names what dropping a file will do, and a light/dark switch for the app chrome (the document always prints on white)
-- **Export PDF** — via the browser print engine (choose *Save as PDF*), margins and headers pre-configured; text stays selectable and searchable
+- **Callouts** — `:::note`, `:::tip`, `:::warning`, `:::important` — tables, lists and code inside them survive into Word intact; `:::banner` sets a filled title plate
+- **Word's Home ribbon** — underline, strikethrough, highlighter in Word's 15 colours, sub/superscript, text colour / shading / per-selection size and typeface, small caps and all caps, alignment blocks, change-case and clear-formatting — every one lands identically in the PDF and as real run properties in the .docx
+- **Import nearly anything** (in the spirit of [MarkItDown](https://github.com/microsoft/markitdown), entirely offline) — open or drop a `.docx`, `.pdf`, `.md`, `.txt`, `.html`, `.csv`/`.tsv`, `.xlsx`, `.pptx`, `.epub`, `.ipynb` or an image and it becomes editable Markdown. OOXML and EPUB packages are opened with the browser's own zip machinery — no extra libraries shipped. PDFs offer two roads: **edit in place** (below) or conversion to editable Markdown
+- **Edit PDFs in place** — **double-click any printed line to rewrite it** and it reappears at the same position, size **and in the PDF's own embedded font** — the editor inverts the font's ToUnicode map and writes glyph codes through the page's original font resource. Also: free text boxes, white-out, highlighter, image stamps; export rebuilds from the *original bytes* with only your edits drawn on top. Two honest limits: text doesn't reflow, and a rewritten line's original characters remain in the file's hidden text layer — don't use it to redact secrets
+- **Editor comforts** — command palette (Ctrl+K), focus mode, a draggable split that remembers its place, folio readout, outline navigator, find & replace, pasted Word/web content auto-converted to Markdown, a gentle structure checker, and a light/dark switch for the app chrome (the document always prints on white)
+- **Export PDF** — via the browser print engine (*Save as PDF*), margins and headers pre-configured; text stays selectable and searchable
 - **Export Word** — a real `.docx` with the same fonts embedded, styled headings, cover, tables with true column widths, figures, footnotes, equations and an auto-updating TOC field
-- **Export Markdown** — the document handed back as a plain `.md` file. With Open, that's a MarkItDown-style converter that runs entirely offline: drop in a `.docx`, `.pdf`, `.xlsx`, `.pptx`, `.epub` or `.ipynb`, download it as structured Markdown
-- **Templates** — one house style across the set, each a working specimen rather than a bare skeleton. Every paged template opens on the same title page, built from ordinary document content so the page border frames it and every line stays editable: institution and unit centred over a rule, the course or client code, the title and standfirst, a `:::banner` plate carrying the subject, and a particulars table. Then: the **assignment/lab report** runs numbered sections — aim, tools, deployment table, procedure, six captioned task subsections with screenshot placeholders, result, conclusion — with live citations and a footnote; the **business proposal** carries captioned scope/timeline/pricing tables and a two-column signature acceptance block; the **project report** leads with an at-a-glance status slip and closes on an owner-and-date actions table; the **formal letter** keeps its own shape — a small-caps letterhead with a right-set date and an enclosures line; plus an **article/essay** and a guided **quick tour**
+- **Export Markdown** — the document handed back as a plain `.md` file; with Open, that's a MarkItDown-style converter that runs entirely offline
+- **Templates** — one house style across the set, each a working specimen rather than a bare skeleton: assignment/lab report, business proposal, project report, formal letter, article/essay, and a guided quick tour
 - **Autosave** in the browser + `.docforge.json` project files (images included) you can reopen anywhere
 
-## Syntax cheat-sheet
+The full markup reference — every construct, with the golden-corpus document that pins it — lives in [`docs/DIALECT.md`](docs/DIALECT.md). The dialect only ever grows; existing markup never changes meaning.
 
-| Write | Get |
-| --- | --- |
-| `# Title` / `## Section` / `### Sub` | Headings (feed the TOC automatically) |
-| `## Title {#sec:name}` | Heading with a referenceable label |
-| `**bold**` · `*italic*` · `` `code` `` | Inline styling |
-| `++underline++` · `~~strike~~` | Underline / strikethrough |
-| `==mark==` · `=={green}mark==` | Highlighter (Word's 15 colour names) |
-| `~sub~` · `^sup^` | Sub/superscript (no spaces inside) |
-| `[text]{color=#c00 bg=#ffe28a size=14 font="Georgia" u sc caps}` | Colour, shading, size, typeface, small caps… combine freely |
-| `:::center` … `:::` | Alignment block (also `right`, `left`, `justify`) |
-| `- item` / `1. item` | Bullet / numbered lists |
-| `> text` | Quotation |
-| `\| A \| B \|` rows | Table with shaded header (`:---:` / `---:` align columns) |
-| `[table: caption \| #tbl:name]` | Numbered, referenceable table caption |
-| `[screenshot: caption \| w:60% \| #fig:name]` | Screenshot placeholder / attached figure |
-| `[^1]` … `[^1]: note text` | Footnote |
-| `[@key]` … `[@key]: Full reference` | Citation and its entry |
-| `[references]` | The reference list (auto-appended if omitted) |
-| `[#fig:name]` / `[#tbl:name]` / `[#sec:name]` | Cross-reference ("Figure 3", …) |
-| `$E = mc^2$` and `$$…$$` | Inline / display mathematics (LaTeX) |
-| ` ```python ` | Syntax-coloured code block |
-| `[toc]` / `[lof]` / `[lot]` | Contents / list of figures / list of tables |
-| `[pagebreak]` | New page |
-| `:::tip Title` … `:::` | Callout box |
-| `:::banner` … `:::` | Title plate — filled band, first line large |
+## The monorepo
+
+```
+apps/
+  web/            the studio — Next.js App Router, React 19, Tailwind 4, CodeMirror 6, Zustand
+packages/
+  engine/         dialect → typed AST → HTML; themes; typography (the parser is the contract)
+  export-docx/    AST → .docx: embedded fonts, styles, cover band, OMML, TOC field
+  importers/      docx/pdf/xlsx/pptx/epub/ipynb/csv/html/image → dialect markdown
+  pdf-editor/     the in-place PDF bench (ToUnicode inversion, original-byte export)
+  mathml-omml/    KaTeX MathML → Word OMML converter (own work, MIT — headed for npm)
+  config/         shared tsconfig / tooling presets
+src/              the classic shell (index.html, app.css, doc.css, main.js, live-edit.js)
+                  — consumes the packages; build.mjs inlines it all into dist/DocForge.html
+fonts/            26 TTF cuts of 7 OFL families + licence texts
+qa/               headless Playwright suites driving the real UI; qa/golden/ is the merge gate
+docs/             phase plans, the bug ledger, DIALECT.md
+```
+
+`doc.css` and the document dialect are product surface: no cleanups that change rendered output. The engine runs in Node with no browser — that's what makes the unit tests (and an eventual CLI) possible.
+
+## Quickstart
+
+```bash
+corepack enable
+corepack pnpm install                      # Node 24 (.nvmrc), pnpm via corepack — no npm/yarn
+node build.mjs                             # → dist/DocForge.html, the forever edition
+corepack pnpm --filter @docforge/web dev   # the studio at localhost:3000
+```
+
+Other useful commands: `corepack pnpm lint` (Biome), `corepack pnpm typecheck`, `corepack pnpm test` (Vitest across packages), `corepack pnpm golden` (the merge gate, below).
+
+## The golden-master gate
+
+"It looks about the same" is never acceptance. The output contract is enforced mechanically (`qa/golden/README.md`):
+
+```bash
+node qa/golden/run.mjs --against v1-classic
+```
+
+A corpus of torture documents (`qa/golden/corpus/`, one per dialect cluster) is rendered through the real UI in headless Chromium on **both** sides — HEAD, and the `v1-classic` tag rebuilt fresh in a throwaway worktree — and compared on three surfaces: a screenshot of every rendered page, the print-engine PDF rasterised per page, and the exported `.docx` unzipped with its XML normalised and hashed. Pass = identical hashes, or pages within 0.1% differing pixels. Failures get magenta diff masks in `qa/out/golden/diff/`. The baseline is never stored in git — it's the tag itself, rebuilt on the same machine, so platform font rasterisation can't fake a regression. CI runs this on every push and PR.
+
+## CI reality
+
+Three workflows, all on every push to `main` (and PRs where noted):
+
+- **`ci.yml`** — Biome lint, workspace typecheck, unit tests with the engine byte-parity suite armed (`RUN_PARITY=1`), then builds both editions (single-file + web studio). Push + PR.
+- **`golden.yml`** — the golden-master comparison against `v1-classic`; diff masks and manifests uploaded as an artifact on failure. Push + PR.
+- **`pages.yml`** — builds the current edition and the `v1-classic` edition (in its own worktree, with its own committed lockfile) and deploys both to GitHub Pages: current at `/`, classic at `/classic`.
 
 ## Fonts
 
-The app embeds subsets of seven families — **Source Sans 3**, **Source Serif 4**, **Source Code Pro**, **Inter**, **Montserrat**, **EB Garamond** and **Crimson Pro** (all SIL Open Font License 1.1 — licence texts in `fonts/`). Pick the heading and body faces independently in Settings, or leave them on the theme's own pairing. The same TTF bytes serve the preview, the printed PDF and the `.docx` (only the families a document actually uses are embedded in its package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
+The app embeds subsets of seven families — **Source Sans 3**, **Source Serif 4**, **Source Code Pro**, **Inter**, **Montserrat**, **EB Garamond** and **Crimson Pro** (all SIL Open Font License 1.1 — licence texts in `fonts/`). The same TTF bytes serve the preview, the printed PDF and the `.docx` (only the families a document actually uses are embedded in its package), which is what keeps the two exports visually identical. Rebuild the subsets with `python tools/build_fonts.py`.
 
-Below the embedded faces, the pickers carry the whole classic **Word font menu** — ~190 families, sorted into specimen-book groups (*sans serif*, *serif*, *monospace*, *script & handwriting*, *display & titling*): everything from Aptos, Calibri and the Microsoft 365 cloud fonts (Bierstadt, Grandview, Seaford, Skeena, Tenorite) through Garamond, Bodoni MT, Rockwell and the Sitka opticals to Edwardian Script, Old English Text and Stencil — every name verified against Word's own font list, plus a *Custom family…* entry for anything else installed. These are proprietary, so they cannot travel inside the file: the preview uses the locally installed font and the `.docx` names the family, letting Word supply its own copy — exact parity on any machine with Office; a machine without the font sees a same-class fallback. Fonts not installed on the current device are labelled as such in the menu. The toolbar's typeface and size boxes apply a face to just the selected text via `[text]{font="…"}`.
+Below the embedded faces, the pickers carry the whole classic **Word font menu** — ~190 families in specimen-book groups. These are proprietary, so they cannot travel inside the file: the preview uses the locally installed font and the `.docx` names the family, letting Word supply its own copy — exact parity on any machine with Office; a machine without the font sees a same-class fallback, and fonts not installed on the current device are labelled as such in the menu.
 
 ## Page borders
 
-Settings → Page border offers seven styles (rule, double, triple, dashed, dotted, thick–thin, thin–thick) × three weights × ink or accent colour. The PDF draws the frame 4.5 mm inside the paper edge; the `.docx` gets real Word page borders (the same styles Word's own Design → Page Borders dialog produces) at the same standoff. The cover stays full-bleed and unframed in both.
+Settings → Page border offers seven styles (rule, double, triple, dashed, dotted, thick–thin, thin–thick) × three weights × ink or accent colour. The PDF draws the frame 4.5 mm inside the paper edge; the `.docx` gets real Word page borders at the same standoff. The cover stays full-bleed and unframed in both.
 
 ## Known limitations
 
-- **PDF bookmarks:** the printed PDF has no outline panel. Chrome's *Save as PDF* dialog cannot emit one — no CSS or DOM feature reaches it. (Automation-produced PDFs can; the interactive dialog can't.)
+- **PDF bookmarks:** the printed PDF has no outline panel. Chrome's *Save as PDF* dialog cannot emit one — no CSS or DOM feature reaches it. The fix is a direct PDF export path that skips the print dialog, tracked as [#9](https://github.com/rakshit-737/docforge/issues/9).
 - **Word ≠ PDF line breaks:** the two engines break lines and pages independently, so page totals can differ by a page or two on long documents; the *design* — fonts, colours, spacing, numbering scheme — is the same.
-- **APA labels** are derived mechanically from the entry text (surname before the first comma, first year found). Two works by the same author in the same year are not disambiguated.
-- **Word cover band** uses a zero-margin first section; in very old Word versions (pre-2013) the band may print inset.
-- **Compound page borders in Word** (double, triple, thick–thin, thin–thick): Word's own renderer fills the gap between the component lines with a dark tone rather than leaving it white — a document built natively in Word's *Design → Page Borders* dialog prints the same way. The PDF draws the gaps crisply; at reading distance the Word version reads slightly heavier.
-- **Math in Word**: a handful of LaTeX constructs degrade gracefully (colours are dropped, `\\` line breaks outside environments become wide gaps, `\hline` in arrays is omitted). Everything exports as a real equation, never an image.
+- **APA labels** are derived mechanically from the entry text (surname before the first comma, first year found). Two works by the same author in the same year are not disambiguated — a real CSL engine is the answer, tracked as [#10](https://github.com/rakshit-737/docforge/issues/10).
 - **PDF import is a reconstruction:** a PDF stores positioned glyphs, not paragraphs. Headings, lists and prose are rebuilt heuristically; tables and multi-column layouts flatten to running text, and scanned PDFs (no text layer) need OCR first. Word import is far more faithful — prefer the `.docx` when both exist.
-- **`~single tilde~` now means subscript** (Pandoc's convention), so a document that relied on marked's single-tilde strikethrough should use the standard `~~double~~` form.
+- **Redaction on the PDF bench is cosmetic:** a rewritten line's original characters remain in the file's hidden text layer beneath the cover. Don't use it to hide secrets.
+- **Compound page borders in Word** (double, triple, thick–thin, thin–thick): Word's own renderer fills the gap between the component lines with a dark tone — a document built natively in Word's *Design → Page Borders* dialog prints the same way. The PDF draws the gaps crisply.
+- **Math in Word:** a handful of LaTeX constructs degrade gracefully (colours dropped, `\\` line breaks outside environments become wide gaps, `\hline` in arrays omitted). Everything exports as a real equation, never an image.
+- **The web studio is not yet at full parity with the classic edition.** The Appendix-A audit (MASTER-PROMPT) is in progress: several classic surfaces — per-selection font menus in the toolbar, the image attach flow, the structure linter, focus mode, the mobile layout — are not yet built in `apps/web`, and the golden corpus has not yet been captured through the web render path. The single-file edition retires nothing until every box is checked.
 
-## Host it free on GitHub Pages
+## Contributing
 
-This repo is ready for Pages: **Settings → Pages → Deploy from a branch → `main` / `root`**, and your studio is live at `https://<user>.github.io/<repo>/` (the root `index.html` redirects to the app).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) — the short version: Node 24 + corepack pnpm, the golden gate is merge law, the dialect is additive-only, and parity is proven, never claimed.
 
-## Develop
-
-```bash
-npm install        # marked, pagedjs, docx, katex, highlight.js, mammoth, pdfjs-dist (+ esbuild)
-node build.mjs     # → dist/DocForge.html (single self-contained file, ~6 MB)
-```
-
-The import libraries (mammoth for `.docx`, pdf.js for `.pdf`) ride inside the file as string constants and are eval'd on first use, so they cost nothing at startup and the file still works fully offline. pdf.js runs on the main thread via its fake-worker path — no real Worker, no network.
-
-Source lives in `src/` (`index.html`, `app.css`, `doc.css`, `js/engine.js`, `js/mathml-omml.js`, `js/docx-fonts.js`, `js/docx-export.js`, `js/docx-import.js`, `js/pdf-import.js`, `js/pdf-editor.js`, `js/main.js`). The build inlines everything — libraries, fonts, maths — into one file.
-
-QA lives in `qa/`: `node qa/visual.mjs` renders a torture document in every theme, exports both formats, converts the `.docx` through real Word (Windows), rasterises both PDFs and writes a side-by-side contact sheet; `node qa/tier4.mjs` exercises the editor features headlessly.
-
-Built with [marked](https://github.com/markedjs/marked), [Paged.js](https://pagedjs.org/), [docx](https://github.com/dolanmiu/docx), [KaTeX](https://katex.org/) and [highlight.js](https://highlightjs.org/). The MathML→OMML converter is DocForge's own (MIT, `src/js/mathml-omml.js`). MIT licensed.
+Built with [marked](https://github.com/markedjs/marked), [Paged.js](https://pagedjs.org/), [docx](https://github.com/dolanmiu/docx), [KaTeX](https://katex.org/) and [highlight.js](https://highlightjs.org/). The MathML→OMML converter is DocForge's own (MIT, `packages/mathml-omml`). MIT licensed.
 
 ---
 

@@ -2,11 +2,14 @@
 /* The studio shell — the whole desk assembled: masthead, toolbar, source
    galley, the stone, settings drawer, templates, find, palette, outline,
    help, toasts, persistence and the ports of exit. */
-import type { EditorView } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { captionForFile, insertFigure, processImageFile } from "@/lib/attachments";
 import { exportDocx, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
+import { useFocusMode, useMobilePane } from "@/lib/focus-mode";
+import { importFile, isHeavyImport } from "@/lib/imports";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { armAutosave, persistNow, restoreSession } from "@/lib/persistence";
 import type { PreviewController } from "@/lib/preview-controller";
@@ -17,8 +20,10 @@ import type { TemplateDocument } from "@/lib/templates";
 import { resolveTemplate, TEMPLATES } from "@/lib/templates";
 import { anyDialogOpen, CommandPalette } from "./command-palette";
 import { ConfirmDialog } from "./confirm-dialog";
+import { DropZone } from "./drop-zone";
 import { FindBar, ToastRack } from "./find-bar";
 import { HelpDialog } from "./help-dialog";
+import { LintBadge, LintPanel } from "./lint-panel";
 import { OutlinePanel, useRenderTick } from "./outline-panel";
 import { PreviewDeck } from "./preview-deck";
 import { SettingsDrawer, useSettingsDrawer } from "./settings-drawer";
@@ -32,6 +37,7 @@ export function StudioShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [lintOpen, setLintOpen] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [savedStamp, setSavedStamp] = useState<string>("");
   const [exporting, setExporting] = useState(false);
@@ -46,6 +52,8 @@ export function StudioShell() {
   const findOpen = useFindStore((s) => s.open);
   const renderTick = useRenderTick((s) => s.tick);
   const settingsOpen = useSettingsDrawer((s) => s.open);
+  const mobilePane = useMobilePane((s) => s.pane);
+  const focusOn = useFocusMode((s) => s.on);
 
   /* ---------------- boot: restore the last session, arm autosave ---------------- */
   useEffect(() => {
@@ -143,6 +151,55 @@ export function StudioShell() {
     handleTemplate(resolveTemplate("blank"));
   }, [handleTemplate]);
 
+  /* ---------------- ports of entry: one handler for Open and the drop zone ---------------- */
+  const handleImport = useCallback(
+    async (f: File) => {
+      if (isHeavyImport(f.name)) toast(`Reading “${f.name}”…`, "info", 1800);
+      const res = await importFile(f);
+      if (res.error) {
+        toast(res.error, "warn", 5000);
+        return;
+      }
+      if (res.project) {
+        void openProjectFile(f);
+        return;
+      }
+      if (res.image) {
+        try {
+          const key = await processImageFile(res.image);
+          if (view) insertFigure(view, key, captionForFile(res.image.name));
+          toast("Image added as a figure");
+        } catch {
+          toast("Could not read that image", "warn");
+        }
+        return;
+      }
+      if (res.source != null) {
+        const title = f.name.replace(/\.[a-z0-9]+$/i, "");
+        applyWithUndo(f.name, {
+          source: res.source,
+          settings: { ...useDocStore.getState().settings, title },
+          attachments: res.attachments ?? {},
+        });
+        for (const w of res.warnings ?? []) toast(w, "warn", 5000);
+      }
+    },
+    [view, applyWithUndo, openProjectFile],
+  );
+
+  const jumpToLine = useCallback(
+    (n: number) => {
+      if (!view) return;
+      const line = view.state.doc.line(Math.max(1, Math.min(n, view.state.doc.lines)));
+      view.dispatch({
+        selection: { anchor: line.from },
+        effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 80 }),
+      });
+      view.focus();
+    },
+    [view],
+  );
+
   /* ---------------- exports ---------------- */
   const doExportDocx = useCallback(async () => {
     if (!controller) return;
@@ -183,6 +240,11 @@ export function StudioShell() {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
       if (!mod) return;
+      if (e.shiftKey && e.key === "Enter") {
+        e.preventDefault();
+        useFocusMode.getState().toggle();
+        return;
+      }
       const k = e.key.toLowerCase();
       if (mod && k === "k") {
         e.preventDefault();
@@ -231,6 +293,29 @@ export function StudioShell() {
       group: "Actions",
       label: outlineOpen ? "Hide outline" : "Show outline",
       run: () => setOutlineOpen((o) => !o),
+    },
+    {
+      group: "Actions",
+      label: focusOn ? "Leave focus mode" : "Focus mode — the writer and the page",
+      hint: "Ctrl+Shift+Enter",
+      run: () => useFocusMode.getState().toggle(),
+    },
+    {
+      group: "Actions",
+      label: lintOpen ? "Hide document checks" : "Document checks",
+      run: () => setLintOpen((o) => !o),
+    },
+    {
+      group: "Actions",
+      label: "Open the PDF bench",
+      hint: "/pdf",
+      run: () => window.location.assign("/pdf"),
+    },
+    {
+      group: "Actions",
+      label: "Import a file…",
+      hint: "docx · pdf · xlsx · epub …",
+      run: () => fileInput.current?.click(),
     },
     { group: "Actions", label: theme === "dark" ? "Day desk" : "Night shift", run: toggleTheme },
     {
@@ -301,6 +386,9 @@ export function StudioShell() {
           <button type="button" className="btn-ghost" onClick={() => setConfirmNew(true)}>
             New
           </button>
+          <Link href="/pdf" className="btn-ghost">
+            PDF bench
+          </Link>
           <span className="mx-1 h-5 w-px bg-line" aria-hidden />
           <button type="button" className="btn-ghost" onClick={doExportPdf}>
             PDF
@@ -349,8 +437,9 @@ export function StudioShell() {
             open={findOpen}
             onOpenChange={(o) => useFindStore.getState().setOpen(o)}
           />
-          <div className="min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1">
             <SourcePane viewRef={setView} />
+            <LintPanel open={lintOpen} onOpenChange={setLintOpen} onJump={jumpToLine} />
           </div>
         </section>
         <section aria-label="Preview" className="relative min-h-0">
@@ -381,6 +470,23 @@ export function StudioShell() {
         >
           Outline
         </button>
+        <LintBadge expanded={lintOpen} onClick={() => setLintOpen((o) => !o)} />
+        <fieldset data-mobile-tabs="" className="m-0 border-0 p-0" aria-label="Pane">
+          <button
+            type="button"
+            aria-pressed={mobilePane === "source"}
+            onClick={() => useMobilePane.getState().setPane("source")}
+          >
+            Source
+          </button>
+          <button
+            type="button"
+            aria-pressed={mobilePane === "preview"}
+            onClick={() => useMobilePane.getState().setPane("preview")}
+          >
+            Preview
+          </button>
+        </fieldset>
         <fieldset className="ml-auto flex items-center gap-1 border-0 p-0" aria-label="Zoom">
           <button
             type="button"
@@ -428,14 +534,19 @@ export function StudioShell() {
         }}
       />
       <ToastRack />
+      <DropZone
+        onFiles={(files) => {
+          for (const f of files) void handleImport(f);
+        }}
+      />
       <input
         ref={fileInput}
         type="file"
-        accept=".json,application/json"
+        accept=".md,.markdown,.txt,.json,.docx,.pdf,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,.html,.htm,image/*"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) void openProjectFile(f);
+          if (f) void handleImport(f);
           e.target.value = "";
         }}
       />

@@ -1,0 +1,20 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    // The CLI type-checks the workspace package sources under THIS config, and
+    // @docforge/engine (the 1:1 port) opts out of unchecked-index errors — the
+    // same accommodation apps/web/tsconfig.json makes.
+    "noUncheckedIndexedAccess": false,
+    "types": ["node"],
+    "paths": {
+      "@docforge/engine": ["../engine/src/index.ts"],
+      "@docforge/export-docx": ["../export-docx/src/index.ts"],
+      "happy-dom": [
+        "./node_modules/happy-dom",
+        "../export-docx/node_modules/happy-dom",
+        "../engine/node_modules/happy-dom"
+      ]
+    }
+  },
+  "include": ["src", "test"]
+}

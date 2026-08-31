@@ -802,7 +802,9 @@ function applyZoom(now: boolean): void {
     for (let i = 0; i < pages.length; i++) paint(i).catch(() => {});
   };
   if (now) repaint();
-  else zoomTimer = setTimeout(repaint, 150);
+  // window.setTimeout: identical at runtime; keeps the number type when a
+  // consumer program carries @types/node (the web app does).
+  else zoomTimer = window.setTimeout(repaint, 150);
 }
 
 function setZoom(z: number): void {
@@ -896,7 +898,10 @@ async function open(buf: ArrayBuffer, fname?: string): Promise<void> {
   // export needs the original bytes intact, so both sides get a copy.
   bytes = buf.slice(0);
   name = fname || "document.pdf";
-  const pdfjs = await PdfImport.ensureLib();
+  // Cast pins this package's own PdfJsLib view: when a program also loads
+  // @docforge/importers, its ambient `var PdfImport` wins declaration order
+  // and the return type would otherwise resolve against the wrong interface.
+  const pdfjs = (await PdfImport.ensureLib()) as unknown as PdfJsLib;
   // fontExtraProperties keeps each font's ToUnicode map on the main thread —
   // that map, inverted, is what lets a rewritten line keep the ORIGINAL font.
   task = pdfjs.getDocument({

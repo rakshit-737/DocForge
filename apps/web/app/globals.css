@@ -189,3 +189,99 @@ select:focus-visible {
     transition: none !important;
   }
 }
+
+/* The masthead composed for a 380px phone: tighter gutters, the document
+   title yields width, ghost plates narrow. The format toolbar needs no
+   help — its rows never wrap; they scroll with the classic edge fade.
+   (Sits before the focus block: biome orders selectors by ascending
+   specificity, and no property here collides with focus mode's.) */
+@media (max-width: 480px) {
+  header[data-chrome] {
+    padding-left: var(--sp2);
+    padding-right: var(--sp2);
+    column-gap: var(--sp2);
+  }
+  header[data-chrome] > :where(button) {
+    max-width: 38vw;
+  }
+  .btn-ghost {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+}
+
+/* ============================================================
+   Focus mode — the desk cleared. lib/focus-mode.ts (useFocusMode)
+   sets body[data-focus]; its own Esc listener leaves. The writer
+   and the page, nothing else: every piece of chrome leaves the
+   room except the source column, and the masthead thins from
+   nameplate signage to a working ribbon.
+   ============================================================ */
+body[data-focus] [data-chrome] {
+  display: none;
+}
+body[data-focus] [data-desk] > section[data-chrome] {
+  display: flex;
+}
+body[data-focus] header[data-chrome] {
+  display: flex;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  /* the double ink rule thins to a single hairline of the same ink */
+  border-bottom: 1px solid var(--rule);
+}
+body[data-focus] header[data-chrome] > a {
+  font-size: 15px;
+}
+body[data-focus] header[data-chrome] .btn-ghost {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+/* ============================================================
+   The desk under 900px — one column at a time. body[data-mobile-pane]
+   (lib/focus-mode.ts, useMobilePane) picks the column; a body with no
+   attribute shows the page. The statusbar's Source/Preview tab plates
+   ([data-mobile-tabs], added by the shell) exist only down here.
+   This block sits after the focus block on purpose: on a phone the
+   pane choice outranks focus mode's "show the source column".
+   ============================================================ */
+[data-mobile-tabs] {
+  display: none;
+}
+@media (max-width: 899.98px) {
+  [data-desk] {
+    grid-template-columns: 1fr;
+  }
+  body:not([data-mobile-pane="source"]) [data-desk] > section[aria-label="Source"] {
+    display: none;
+  }
+  body[data-mobile-pane="source"] [data-desk] > section[aria-label="Preview"] {
+    display: none;
+  }
+  body[data-mobile-pane="source"] [data-desk] > section[aria-label="Source"] {
+    border-right: 0;
+  }
+  [data-mobile-tabs] {
+    display: flex;
+    align-items: center;
+    gap: var(--sp1);
+  }
+  [data-mobile-tabs] > button {
+    border: 1px solid var(--line);
+    background: var(--bg3);
+    color: var(--tx2);
+    padding: 1px 8px;
+    font: inherit; /* the ticker's mono 12px */
+    border-radius: var(--rc);
+  }
+  [data-mobile-tabs] > button:hover {
+    color: var(--tx);
+  }
+  /* the chosen tab presses down to the desk ground — selection is ink, not red */
+  [data-mobile-tabs] > button[aria-pressed="true"] {
+    background: var(--bg);
+    border-color: var(--rule);
+    color: var(--tx);
+  }
+}

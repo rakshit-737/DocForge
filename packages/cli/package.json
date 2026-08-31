@@ -1,0 +1,36 @@
+{
+  "name": "@docforge/cli",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Headless DocForge — markdown in, Word .docx out, no browser required",
+  "license": "MIT",
+  "bin": {
+    "docforge": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@docforge/engine": "workspace:*",
+    "@docforge/export-docx": "workspace:*",
+    "docx": "^9.7.1",
+    "happy-dom": "^20.0.0",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.18.1",
+    "marked": "^18.0.7"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

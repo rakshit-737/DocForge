@@ -3,7 +3,31 @@
   "version": "0.0.0",
   "private": false,
   "description": "KaTeX MathML to Word OMML (Office Math) converter — real, editable Word equations",
+  "keywords": [
+    "mathml",
+    "omml",
+    "office-math",
+    "docx",
+    "word",
+    "katex",
+    "latex",
+    "tex",
+    "equations",
+    "openxml",
+    "ecma-376"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rakshit-737/docforge.git",
+    "directory": "packages/mathml-omml"
+  },
+  "files": [
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

@@ -22,6 +22,8 @@ import {
   toggleH2,
   toggleH3,
   toggleItalic,
+  toggleMark,
+  toggleStrike,
   toggleUnderline,
 } from "./editor-commands";
 
@@ -35,5 +37,10 @@ export const deskKeymap: Extension = Prec.high(
     { key: "Mod-1", run: toggleH1 },
     { key: "Mod-2", run: toggleH2 },
     { key: "Mod-3", run: toggleH3 },
+    /* the marks that only had toolbar plates get keys of their own:
+       strike (⌘⇧X) and the yellow highlighter (⌘⇧H — toggleMark is
+       setHighlight("yellow"), the classic ==…== wrap) */
+    { key: "Mod-Shift-x", run: toggleStrike },
+    { key: "Mod-Shift-h", run: toggleMark },
   ]),
 );

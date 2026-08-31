@@ -12,6 +12,8 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Toolbar from "@radix-ui/react-toolbar";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { ImageTool } from "@/components/image-tool";
+import { loadStudio } from "@/lib/bootstrap";
 import {
   alignCenter,
   alignJustify,
@@ -32,7 +34,10 @@ import {
   insertTable,
   insertToc,
   setHighlight,
+  setTextBg,
   setTextColor,
+  setTextFont,
+  setTextSize,
   toggleBold,
   toggleBulletList,
   toggleCode,
@@ -72,6 +77,7 @@ const SW =
 
 const MOD =
   typeof navigator !== "undefined" && /Mac|iP(hone|ad|od)/.test(navigator.platform) ? "⌘" : "Ctrl+";
+const MODSHIFT = MOD === "⌘" ? "⇧⌘" : "Ctrl+Shift+";
 
 /* ---------------- the classic edge-fade overflow affordance ---------------- */
 
@@ -173,6 +179,7 @@ function SwatchMenu({
   swatches,
   onPick,
   custom,
+  shortcut,
 }: {
   label: string;
   title: string;
@@ -180,6 +187,7 @@ function SwatchMenu({
   swatches: { value: string; name: string; css: string }[];
   onPick: (value: string) => void;
   custom?: boolean;
+  shortcut?: string;
 }) {
   const [open, setOpen] = useState(false);
   const picked = useRef(false);
@@ -200,6 +208,11 @@ function SwatchMenu({
         <Tooltip.Portal>
           <Tooltip.Content sideOffset={6} className={TIP} style={{ boxShadow: "var(--elev-m)" }}>
             {label}
+            {shortcut ? (
+              <kbd className="font-mono text-[10px] font-normal tracking-wide opacity-80">
+                {shortcut}
+              </kbd>
+            ) : null}
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
@@ -399,9 +412,218 @@ const FC_SWATCHES = (
   ] as const
 ).map(([c, name]) => ({ value: c, name, css: c }));
 
+/* Text shading — the dialect's `bg=` span attribute. No classic toolbar tool
+   existed for it, so the palette is designed here: soft paper tints that keep
+   AA text contrast underneath, plus the same custom mixer the colour tool has. */
+const BG_SWATCHES = (
+  [
+    ["#fff3b0", "soft yellow"],
+    ["#ffe28a", "manila"],
+    ["#fde2cf", "peach"],
+    ["#fbd3d0", "rose"],
+    ["#e6d7f5", "lilac"],
+    ["#d7e3fa", "powder blue"],
+    ["#d2ecec", "aqua"],
+    ["#d9efd7", "mint"],
+    ["#eae6da", "parchment"],
+    ["#e4e7eb", "fog"],
+  ] as const
+).map(([c, name]) => ({ value: c, name, css: c }));
+
+/* The shading glyph is a filled specimen — explicit ink over the tint so the
+   night desk's grey button text never lands on the light manila. */
+const bgGlyph = (
+  <span className="rounded-[1px] px-0.5" style={{ background: "#ffe28a", color: "#1a1a17" }}>
+    A
+  </span>
+);
+
+/* ---------------- typeface & size (classic #tbFont / #tbSize) ----------------
+   The classic fontOptionsHtml("toolbar") grammar, ported: a "Typeface…"
+   placeholder, the Embedded optgroup (option value = face.name), then the five
+   Word specimen-book groups (value = plain family name — no "sys:" prefix in
+   the toolbar kind). JSX closes every optgroup by construction — the classic
+   string builder's unclosed-optgroup trap cannot recur. Engine values arrive
+   at runtime through globalThis.Engine (assigned by bootstrap); only TYPES are
+   imported from @docforge/engine. Until boot the select renders disabled. */
+
+/* Mirrors packages/engine/src/themes.ts WordFontKind — the union is not
+   re-exported from the frozen package index, so the chrome keeps a copy
+   (same pattern as editor-commands' HL_COLORS mirror). */
+type WordFontKind = "sans" | "serif" | "mono" | "script" | "display";
+
+interface FaceInfo {
+  name: string;
+  kind: "sans" | "serif";
+  label: string;
+}
+interface FontCatalog {
+  faces: Record<string, FaceInfo>;
+  words: ReadonlyArray<readonly [string, WordFontKind]>;
+}
+/** The slice of the classic Engine global this toolbar reads. */
+interface EngineFontApi {
+  FACES: Record<string, FaceInfo>;
+  WORD_CATALOG: ReadonlyArray<readonly [string, WordFontKind]>;
+}
+
+const WORD_GROUPS: ReadonlyArray<readonly [WordFontKind, string]> = [
+  ["sans", "Word · Sans serif"],
+  ["serif", "Word · Serif"],
+  ["mono", "Word · Monospace"],
+  ["script", "Word · Script & handwriting"],
+  ["display", "Word · Display & titling"],
+];
+
+/* Is this family actually available to the renderer? document.fonts.check()
+   cannot answer that (Chromium says yes to every unknown name), so measure: a
+   probe string laid out in the family with a generic behind it moves in width
+   if the family resolves. Three generics with very different metrics, cached —
+   the classic fontInstalled, ported. */
+const fontInstalled = (() => {
+  const cache = new Map<string, boolean>();
+  const GENERIC = ["monospace", "sans-serif", "serif"];
+  const PROBE = "mmmmmmmmmmlliWWMMwi0Oo—“”";
+  let ctx: CanvasRenderingContext2D | null | undefined;
+  let base: number[] = [];
+  const width = (font: string): number => {
+    (ctx as CanvasRenderingContext2D).font = font;
+    return (ctx as CanvasRenderingContext2D).measureText(PROBE).width;
+  };
+  return (name: string): boolean => {
+    if (ctx === undefined) {
+      try {
+        ctx = document.createElement("canvas").getContext("2d");
+      } catch {
+        ctx = null;
+      }
+      if (ctx) base = GENERIC.map((g) => width(`72px ${g}`));
+    }
+    if (!ctx) return true;
+    const key = String(name || "");
+    const hit = cache.get(key);
+    if (hit !== undefined) return hit;
+    const q = `"${key.replace(/["\\]/g, "")}"`;
+    const found = GENERIC.some((g, i) => width(`72px ${q}, ${g}`) !== base[i]);
+    cache.set(key, found);
+    return found;
+  };
+})();
+
+/** Read the font catalogue off globalThis.Engine; if the studio has not booted
+    yet, await the shared loadStudio() promise (idempotent) and read again. */
+function useFontCatalog(): FontCatalog | null {
+  const [catalog, setCatalog] = useState<FontCatalog | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const grab = (): boolean => {
+      const eng = (globalThis as Record<string, unknown>).Engine as EngineFontApi | undefined;
+      if (!eng?.FACES || !eng.WORD_CATALOG) return false;
+      setCatalog({ faces: eng.FACES, words: eng.WORD_CATALOG });
+      return true;
+    };
+    if (grab()) return;
+    loadStudio()
+      .then(() => {
+        if (alive) grab();
+      })
+      .catch(() => {
+        /* boot failed — the selects simply stay disabled */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return catalog;
+}
+
+/* The inline select — DESIGN.md "Ruled trays": a hairline box on --bg3, square,
+   ink-2 warming to ink on hover, printed-form grease-pencil focus border. 13px,
+   NOT the classic 11.5px (ledger issue #3). The native select keeps its own
+   tab stop and arrow-key semantics — it does not join Radix's roving tabindex
+   (a roving item would steal the arrows a closed select needs). */
+const SEL =
+  "h-7 shrink-0 cursor-pointer rounded-desk border border-line bg-tray px-1 text-[13px] " +
+  "text-ink-2 outline-none transition-colors duration-[160ms] ease-desk hover:text-ink " +
+  "focus:border-press disabled:cursor-default disabled:opacity-55 pointer-coarse:h-9";
+
+function FontSelect({
+  catalog,
+  onPick,
+}: {
+  catalog: FontCatalog | null;
+  onPick: (name: string) => void;
+}) {
+  return (
+    <select
+      aria-label="Typeface for the selected text"
+      className={`${SEL} max-w-[150px]`}
+      value=""
+      disabled={!catalog}
+      onChange={(e) => {
+        // The classic snap-back: apply, then rest at the placeholder again.
+        const v = e.target.value;
+        e.target.value = "";
+        if (v) onPick(v);
+      }}
+    >
+      <option value="">Typeface…</option>
+      {catalog ? (
+        <>
+          <optgroup label="Embedded — travel inside the file">
+            {Object.entries(catalog.faces).map(([key, face]) => (
+              <option key={key} value={face.name}>
+                {face.label}
+              </option>
+            ))}
+          </optgroup>
+          {WORD_GROUPS.map(([kind, glabel]) => (
+            <optgroup key={kind} label={glabel}>
+              {catalog.words
+                .filter(([, k]) => k === kind)
+                .map(([name]) => (
+                  <option key={name} value={name}>
+                    {name}
+                    {fontInstalled(name) ? "" : " · not on this device"}
+                  </option>
+                ))}
+            </optgroup>
+          ))}
+        </>
+      ) : null}
+    </select>
+  );
+}
+
+/* The classic size ladder, verbatim (src/js/main.js buildFontSelects). */
+const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48] as const;
+
+function SizeSelect({ onPick }: { onPick: (pt: string) => void }) {
+  return (
+    <select
+      aria-label="Size for the selected text"
+      className={`${SEL} max-w-[76px]`}
+      value=""
+      onChange={(e) => {
+        const v = e.target.value;
+        e.target.value = "";
+        if (v) onPick(v);
+      }}
+    >
+      <option value="">Size…</option>
+      {SIZES.map((n) => (
+        <option key={n} value={n}>
+          {n} pt
+        </option>
+      ))}
+    </select>
+  );
+}
+
 /* ---------------- the toolbar ---------------- */
 
 export function FormatToolbar({ view }: { view: EditorView | null }) {
+  const catalog = useFontCatalog();
   // Dispatch into the live editor, then hand focus back to the writing surface.
   const pick = (cmd: Command) => {
     if (!view) return;
@@ -441,7 +663,7 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
             <Tool label="Underline" shortcut={`${MOD}U`} run={run(toggleUnderline)}>
               <span style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>U</span>
             </Tool>
-            <Tool label="Strikethrough" run={run(toggleStrike)}>
+            <Tool label="Strikethrough" shortcut={`${MODSHIFT}X`} run={run(toggleStrike)}>
               <span style={{ textDecoration: "line-through" }}>S</span>
             </Tool>
             <Tool label="Inline code" shortcut={`${MOD}E`} run={run(toggleCode)}>
@@ -459,6 +681,7 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
               label="Highlight"
               title="Highlighter"
               glyph={hlGlyph}
+              shortcut={`${MODSHIFT}H`}
               swatches={HL_SWATCHES}
               onPick={(name) => pick(setHighlight(name))}
             />
@@ -469,6 +692,14 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
               swatches={FC_SWATCHES}
               custom
               onPick={(hex) => pick(setTextColor(hex))}
+            />
+            <SwatchMenu
+              label="Text shading"
+              title="Text shading"
+              glyph={bgGlyph}
+              swatches={BG_SWATCHES}
+              custom
+              onPick={(hex) => pick(setTextBg(hex))}
             />
             <Tool label="Change case (UPPER → lower → Title)" run={run(cycleCase)}>
               Aa
@@ -493,6 +724,10 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
           </Tray>
         </Row>
         <Row>
+          <Tray label="Type">
+            <FontSelect catalog={catalog} onPick={(name) => pick(setTextFont(name))} />
+            <SizeSelect onPick={(pt) => pick(setTextSize(pt))} />
+          </Tray>
           <Tray label="Lists">
             <Tool label="Bullet list" run={run(toggleBulletList)}>
               {ic.ul}
@@ -534,6 +769,7 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
             <Tool label="Screenshot placeholder" run={run(insertFigure)}>
               {ic.shot}
             </Tool>
+            <ImageTool view={view} />
           </Tray>
           <Tray label="Structure">
             <Tool label="Table of contents" run={run(insertToc)}>

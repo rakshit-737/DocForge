@@ -123,6 +123,9 @@ importers:
       katex:
         specifier: ^0.18.4
         version: 0.18.4
+      mammoth:
+        specifier: ^1.12.2
+        version: 1.12.2
       marked:
         specifier: ^18.0.11
         version: 18.0.11
@@ -132,6 +135,12 @@ importers:
       pagedjs:
         specifier: ^0.4.3
         version: 0.4.3
+      pdf-lib:
+        specifier: 1.17.1
+        version: 1.17.1
+      pdfjs-dist:
+        specifier: ^6.3.289
+        version: 6.3.289
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -163,6 +172,37 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.12.0)(jsdom@28.1.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.7.0))
+
+  packages/cli:
+    dependencies:
+      '@docforge/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@docforge/export-docx':
+        specifier: workspace:*
+        version: link:../export-docx
+      docx:
+        specifier: ^9.7.1
+        version: 9.7.1
+      happy-dom:
+        specifier: ^20.0.0
+        version: 20.12.0
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.12.0
+      katex:
+        specifier: ^0.18.1
+        version: 0.18.4
+      marked:
+        specifier: ^18.0.7
+        version: 18.0.11
+    devDependencies:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

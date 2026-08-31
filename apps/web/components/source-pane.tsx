@@ -7,6 +7,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef } from "react";
+import { handleImagePaste } from "@/components/image-tool";
 import { findKeymap } from "@/lib/find";
 import { deskKeymap } from "@/lib/keymap";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
@@ -56,6 +57,10 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
         EditorView.contentAttributes.of({
           "aria-label": "Manuscript source",
           tabindex: "0",
+        }),
+        // smart paste: a clipboard image becomes an attached, captioned figure
+        EditorView.domEventHandlers({
+          paste: (e, v) => handleImagePaste(e, v),
         }),
         EditorView.lineWrapping,
         // Classic editor-focus call site: the source pane must never act on a
