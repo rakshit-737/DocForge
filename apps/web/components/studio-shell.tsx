@@ -285,6 +285,10 @@ export function StudioShell() {
       } else if (mod && k === "s") {
         e.preventDefault();
         void saveLocal();
+      } else if (mod && k === "p") {
+        // Ctrl+P = the pre-flighted PDF export, not the browser's raw print
+        e.preventDefault();
+        doExportPdf();
       } else if (mod && k === "/") {
         e.preventDefault();
         if (!helpOpen && anyDialogOpen()) return;
@@ -300,7 +304,7 @@ export function StudioShell() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [helpOpen, saveLocal]);
+  }, [helpOpen, saveLocal, doExportPdf]);
 
   /* ---------------- palette commands (built fresh so labels stay truthful) ---------------- */
   const commands = [

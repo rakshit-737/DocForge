@@ -102,8 +102,24 @@ export function PreviewDeck({
     };
     window.addEventListener("resize", onResize);
 
+    /* Ctrl+wheel zooms the preview (classic main.js:2141); clicking the
+       percentage still snaps back to fit. */
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const next = Math.min(
+        2,
+        Math.max(0.25, (controller.zoomVal || 1) + (e.deltaY < 0 ? 0.1 : -0.1)),
+      );
+      controller.setZoom("man", next, useDocStore.getState().settings);
+      useUiStore.getState().setZoom("man", next);
+    };
+    scroller.current?.addEventListener("wheel", onWheel, { passive: false });
+
+    const scrollEl = scroller.current;
     return () => {
       window.removeEventListener("resize", onResize);
+      scrollEl?.removeEventListener("wheel", onWheel);
       document.removeEventListener("keydown", onHistoryKey);
       unsub();
       detachHistory();
