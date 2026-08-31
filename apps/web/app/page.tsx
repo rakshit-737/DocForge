@@ -4,7 +4,7 @@ import Link from "next/link";
    It must still look set by hand: nameplate over a double ink rule. */
 export default function Home() {
   return (
-    <main className="flex h-full flex-col items-center justify-center gap-6 px-6">
+    <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6">
       <header className="text-center">
         <h1 className="font-display text-6xl font-bold tracking-tight text-ink">DocForge</h1>
         <div className="mx-auto mt-3 w-64 border-t-4 border-double border-rule" />

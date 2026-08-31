@@ -267,7 +267,7 @@ export function StudioShell() {
   const controllerRef = useCallback((c: PreviewController | null) => setController(c), []);
 
   return (
-    <div className="flex h-full flex-col" data-shell="">
+    <div className="flex min-h-0 flex-1 flex-col" data-shell="">
       {/* masthead — the serif nameplate over a double ink rule */}
       <header
         data-chrome=""

@@ -54,4 +54,18 @@ for (const f of readdirSync(join(REPO, "fonts"))
   css += `@font-face{font-family:"${family}";font-style:${s.style};font-weight:${s.weight};font-display:block;src:url("/fonts/${f}") format("truetype")}\n`;
 }
 writeFileSync(join(PUB, "fonts.css"), css);
-console.log("[sync-assets] doc.css, fonts/, fonts.css staged");
+
+/* Compile the service worker (Serwist as a runtime lib; the @serwist/next
+   plugin is webpack-only and this app builds on Turbopack). */
+const { buildSync } = await import("esbuild");
+buildSync({
+  entryPoints: [join(APP, "app", "sw.ts")],
+  bundle: true,
+  minify: true,
+  format: "iife",
+  platform: "browser",
+  target: "es2022",
+  outfile: join(PUB, "sw.js"),
+});
+
+console.log("[sync-assets] doc.css, fonts/, fonts.css, sw.js staged");
