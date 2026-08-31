@@ -22,7 +22,8 @@
         "useTemplate": "off"
       },
       "complexity": {
-        "useOptionalChain": "off"
+        "useOptionalChain": "off",
+        "noImportantStyles": "off"
       },
       "correctness": {
         "noUnusedFunctionParameters": "off"
@@ -32,6 +33,11 @@
         "noAssignInExpressions": "off",
         "useIterableCallbackReturn": "off"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   },
   "javascript": {
