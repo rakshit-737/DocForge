@@ -5,6 +5,9 @@
       "packages/**",
       "apps/**",
       "!**/coverage",
+      "!**/.next",
+      "!apps/web/lib/vendor",
+      "!apps/web/public",
       "!packages/engine/test/fixtures/classic-engine.js"
     ]
   },

@@ -7,8 +7,10 @@ import { useDocStore, useUiStore } from "@/lib/store";
 
 export function PreviewDeck({
   controllerRef,
+  onRendered,
 }: {
   controllerRef: (c: PreviewController | null) => void;
+  onRendered?: () => void;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const deck = useRef<HTMLDivElement>(null);
@@ -20,6 +22,7 @@ export function PreviewDeck({
       onPageInfo: (t) => useUiStore.getState().setPageInfo(t),
       onBusy: (b) => useUiStore.getState().setBusy(b),
       onZoomPct: (zoomPct) => useUiStore.setState({ zoomPct }),
+      onRendered,
     });
     controller.zoomMode = ui.zoomMode;
     controller.zoomVal = ui.zoomVal;
@@ -33,10 +36,7 @@ export function PreviewDeck({
       if (s.source === prev.source && s.settings === prev.settings) return;
       // Settings changes recompose immediately; typing waits the classic 420ms.
       const delay = s.settings !== prev.settings ? 60 : 420;
-      controller.schedule(
-        () => controller.render(s.source, s.settings, s.attachments),
-        delay,
-      );
+      controller.schedule(() => controller.render(s.source, s.settings, s.attachments), delay);
     });
 
     const onResize = () => {
@@ -50,7 +50,8 @@ export function PreviewDeck({
       controllerRef(null);
       controller.destroy();
     };
-  }, [controllerRef]);
+    // both callbacks must be referentially stable (the shell wraps them in useCallback([]))
+  }, [controllerRef, onRendered]);
 
   return (
     <div

@@ -33,11 +33,7 @@ export async function exportDocx(
   if (!controller.lastContentEl) throw new Error("Nothing rendered yet");
   await Promise.all([loadDocx(), loadFontData(), loadStudio()]);
   const { api } = await import("@docforge/export-docx");
-  const blob = await api.DocxExport.build(
-    controller.lastContentEl,
-    settings as never,
-    attachments,
-  );
+  const blob = await api.DocxExport.build(controller.lastContentEl, settings as never, attachments);
   const name = `${safeName(settings)}.docx`;
   downloadBlob(blob, name);
   return name;

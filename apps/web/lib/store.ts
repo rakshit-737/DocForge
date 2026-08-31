@@ -3,7 +3,7 @@
    edit; the ui store is chrome state. Persistence (IndexedDB) arrives in
    stage 4 and hangs off subscribe(). */
 import { create } from "zustand";
-import { defaultSettings, THEME_ACCENT, type Settings } from "./settings";
+import { defaultSettings, type Settings, THEME_ACCENT } from "./settings";
 
 export interface DocState {
   source: string;
@@ -72,8 +72,7 @@ export const useUiStore = create<UiState>((set) => ({
       else document.documentElement.removeAttribute("data-light");
       return { theme };
     }),
-  setZoom: (zoomMode, zoomVal) =>
-    set((s) => ({ zoomMode, zoomVal: zoomVal ?? s.zoomVal })),
+  setZoom: (zoomMode, zoomVal) => set((s) => ({ zoomMode, zoomVal: zoomVal ?? s.zoomVal })),
   setPageInfo: (pageInfo) => set({ pageInfo }),
   setBusy: (busy) => set({ busy }),
 }));

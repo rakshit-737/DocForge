@@ -4,9 +4,11 @@
    multiple cursors, and (stage 3) the search panel with counts and toggles. */
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { Compartment, EditorState } from "@codemirror/state";
+import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef } from "react";
+import { findKeymap } from "@/lib/find";
+import { deskKeymap } from "@/lib/keymap";
 import { useDocStore } from "@/lib/store";
 
 const deskTheme = EditorView.theme({
@@ -46,6 +48,8 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
         history(),
         markdown(),
         placeholder("Write here — plain text with the DocForge dialect."),
+        deskKeymap, // Prec.high: Mod-b/i/u/e/k, Mod-1/2/3 heading toggles (I5)
+        keymap.of([...findKeymap]), // Mod-f/h, F3/Shift-F3, Esc-closes-find — before defaults
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         deskTheme,
         EditorView.lineWrapping,

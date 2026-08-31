@@ -22,10 +22,12 @@ jobs:
       - name: Lint
         run: corepack pnpm exec biome check .
       - name: Typecheck
-        run: corepack pnpm -r --filter "!@docforge/config" exec tsc -p tsconfig.json
+        run: corepack pnpm -r run typecheck
       - name: Unit tests (with the engine byte-parity suite armed)
-        run: corepack pnpm -r --filter "!@docforge/config" exec vitest run
+        run: corepack pnpm -r run test
         env:
           RUN_PARITY: "1"
       - name: Build single-file edition
         run: node build.mjs
+      - name: Build web studio
+        run: corepack pnpm --filter "@docforge/web" run build

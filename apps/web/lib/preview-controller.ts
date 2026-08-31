@@ -136,7 +136,8 @@ function registerHandlers(Paged: typeof PagedNS) {
         needed += (n as HTMLElement).getBoundingClientRect().height;
       });
       const want = Math.ceil(needed + chrome);
-      if (want > Math.ceil(reserved)) area.style.setProperty("--pagedjs-footnotes-height", `${want}px`);
+      if (want > Math.ceil(reserved))
+        area.style.setProperty("--pagedjs-footnotes-height", `${want}px`);
       inner.style.height = "auto";
       cont.style.height = "auto";
     }
@@ -211,7 +212,11 @@ export class PreviewController {
       registerHandlers(Paged);
       const docCssText = await loadDocCss();
 
-      const { doc } = Engine.render(source, settings, attachments as Parameters<typeof Engine.render>[2]);
+      const { doc } = Engine.render(
+        source,
+        settings,
+        attachments as Parameters<typeof Engine.render>[2],
+      );
       this.lastContentEl = (doc.querySelector(".content")?.cloneNode(true) as HTMLElement) ?? null;
       const css = docCssText + Engine.dynamicCss(settings);
 
@@ -284,8 +289,7 @@ export class PreviewController {
     const pg = Engine.PAGES[settings.page] || Engine.PAGES.A4!;
     const pgPx = (pg!.w * 96) / 25.4;
     const avail = this.scroller.clientWidth - 44;
-    const z =
-      this.zoomMode === "fit" ? Math.min(1.35, Math.max(0.25, avail / pgPx)) : this.zoomVal;
+    const z = this.zoomMode === "fit" ? Math.min(1.35, Math.max(0.25, avail / pgPx)) : this.zoomVal;
     if (CSS.supports("zoom", "1")) {
       this.deck.style.zoom = String(z);
       this.deck.style.transform = "";
@@ -307,8 +311,6 @@ export class PreviewController {
         (this.previewer as unknown as { polisher: { destroy(): void } }).polisher.destroy();
       } catch {}
     }
-    document
-      .querySelectorAll("style[data-pagedjs-inserted-styles]")
-      .forEach((s) => s.remove());
+    document.querySelectorAll("style[data-pagedjs-inserted-styles]").forEach((s) => s.remove());
   }
 }

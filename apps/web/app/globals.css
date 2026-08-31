@@ -115,6 +115,28 @@ body {
   font-size: 13px;
 }
 
+/* Ghost plate — the chrome's quiet button; the one red stays on Export. */
+.btn-ghost {
+  border: 1px solid var(--line);
+  background: var(--bg3);
+  color: var(--tx2);
+  padding: 5px 10px;
+  font-size: 12.5px;
+  border-radius: var(--rc);
+}
+.btn-ghost:hover {
+  color: var(--tx);
+  border-color: var(--rule);
+}
+.btn-ghost:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
 /* PDF export rides the print route: only the pages leave the building.
    (Port of the classic app.css print block, keyed to the new chrome.) */
 @media print {

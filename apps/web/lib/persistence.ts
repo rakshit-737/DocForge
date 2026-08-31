@@ -75,7 +75,11 @@ export async function restoreSession(): Promise<boolean> {
 /** Debounced autosave, armed once by the shell. Returns the unsubscribe. */
 export function armAutosave(onSaved?: (at: number) => void): () => void {
   const unsub = useDocStore.subscribe((s, prev) => {
-    if (s.source === prev.source && s.settings === prev.settings && s.attachments === prev.attachments)
+    if (
+      s.source === prev.source &&
+      s.settings === prev.settings &&
+      s.attachments === prev.attachments
+    )
       return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(async () => {

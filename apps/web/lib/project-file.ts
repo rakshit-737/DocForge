@@ -37,7 +37,9 @@ function migrateSettings(raw: Record<string, unknown>): Settings {
 export function parseProject(text: string): ProjectDoc {
   const parsed = ProjectV1.safeParse(JSON.parse(text));
   if (!parsed.success) {
-    throw new Error(`Not a DocForge project file: ${parsed.error.issues[0]?.message ?? "unrecognised shape"}`);
+    throw new Error(
+      `Not a DocForge project file: ${parsed.error.issues[0]?.message ?? "unrecognised shape"}`,
+    );
   }
   const p = parsed.data;
   return {
@@ -71,7 +73,9 @@ export async function saveProjectFile(doc: ProjectDoc): Promise<"saved" | "downl
       showSaveFilePicker?: (o: {
         suggestedName: string;
         types: Array<{ description: string; accept: Record<string, string[]> }>;
-      }) => Promise<{ createWritable(): Promise<{ write(d: string): Promise<void>; close(): Promise<void> }> }>;
+      }) => Promise<{
+        createWritable(): Promise<{ write(d: string): Promise<void>; close(): Promise<void> }>;
+      }>;
     }
   ).showSaveFilePicker;
   if (picker) {

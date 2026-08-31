@@ -18,6 +18,7 @@ declare module "pagedjs" {
 /* The prebuilt UMD dist — same API surface; consumed by lib/bootstrap.ts. */
 declare module "pagedjs/dist/paged.js" {
   export * from "pagedjs";
+
   const mod: typeof import("pagedjs");
   export default mod;
 }

@@ -29,10 +29,11 @@ async function boot(): Promise<StudioRuntime> {
      edition inlines (vendored by sync-assets; the ESM source drags es5-ext
      "#" deep paths Turbopack mis-resolves, and dist/ is unexported). */
   const pagedMod = (await import("./vendor/paged.cjs")) as Record<string, unknown>;
-  const Paged = ((pagedMod.default ?? pagedMod) ??
-    (g.Paged || g.PagedModule)) as typeof PagedTypes;
+  const Paged = (pagedMod.default ?? pagedMod ?? (g.Paged || g.PagedModule)) as typeof PagedTypes;
   g.Paged = Paged;
   const Engine = await import("@docforge/engine");
+  // The exporters read the classic ambient global (export-docx's Engine.* lookups).
+  g.Engine = Engine.api;
   return { Engine, Paged };
 }
 
