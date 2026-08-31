@@ -21,3 +21,7 @@ dist/
 
 # vitest coverage reports
 coverage/
+
+# Next.js
+.next/
+next-env.d.ts

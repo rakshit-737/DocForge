@@ -1,0 +1,125 @@
+/* ============================================================
+   The copy desk, as executable tokens (DESIGN.md → Tailwind 4).
+
+   The chrome is a newspaper composing room at edition time:
+   newsprint-white day desk (default) / slate night shift, ink
+   hairline rules doing the structural work, square corners,
+   teletype mono instrumentation, exactly one editorial red.
+   Full component styling ports from src/app.css stage by stage —
+   these custom properties are the single source both sides read.
+   ============================================================ */
+@import "tailwindcss";
+
+:root {
+  --sp1: 4px;
+  --sp2: 8px;
+  --sp3: 12px;
+  --sp4: 16px;
+  --sp5: 24px;
+  --dur: 160ms;
+  --dur2: 340ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* the night desk — slate under fluorescents */
+  --bg: #191b1e;
+  --bg2: #1f2226;
+  --bg3: #272b30;
+  --line: #3a3f45;
+  --rule: #878d94;
+  --tx: #e8e6e1;
+  --tx2: #b2b0a9;
+  --tx3: #98978f;
+  --pri: #bf4234;
+  --pri2: #a33327;
+  --focus: #d5493a;
+  --pri-ink: #ffffff;
+  --ok: #6da272;
+  --warn: #c9973a;
+  --danger: #d5493a;
+  --deck: #232527;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  --rc: 0px;
+  --rm: 2px;
+  --rl: 4px;
+  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-m: 0 2px 6px rgba(0, 0, 0, 0.3), 0 16px 40px rgba(0, 0, 0, 0.35);
+  --elev-l: 0 8px 24px rgba(0, 0, 0, 0.35), 0 32px 80px rgba(0, 0, 0, 0.5);
+  --sans: "DocForge Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --display: "DocForge Serif", Georgia, serif;
+  --mono: "DocForge Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+:root[data-light] {
+  /* the day desk — newsprint under daylight; the default */
+  --bg: #f4f2ec;
+  --bg2: #ece9e1;
+  --bg3: #faf9f5;
+  --line: #d2cec2;
+  --rule: #26261f;
+  --tx: #1a1a17;
+  --tx2: #4c4b44;
+  --tx3: #64625a;
+  --pri: #bb3a2c;
+  --pri2: #a12f23;
+  --focus: #bb3a2c;
+  --pri-ink: #ffffff;
+  --ok: #2f6f4f;
+  --warn: #7d540d;
+  --danger: #a12f23;
+  --deck: #d8d5cc;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  --recess: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  --elev-m: 0 2px 6px rgba(38, 38, 31, 0.12), 0 16px 40px rgba(38, 38, 31, 0.14);
+  --elev-l: 0 8px 24px rgba(38, 38, 31, 0.14), 0 32px 80px rgba(38, 38, 31, 0.2);
+}
+
+/* The desk's tokens, surfaced to Tailwind utilities (bg-desk, text-ink, …). */
+@theme inline {
+  --color-desk: var(--bg);
+  --color-surface: var(--bg2);
+  --color-tray: var(--bg3);
+  --color-line: var(--line);
+  --color-rule: var(--rule);
+  --color-ink: var(--tx);
+  --color-ink-2: var(--tx2);
+  --color-ink-3: var(--tx3);
+  --color-press: var(--pri);
+  --color-press-hover: var(--pri2);
+  --color-focus: var(--focus);
+  --color-press-ink: var(--pri-ink);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-stone: var(--deck);
+  --font-sans: var(--sans);
+  --font-display: var(--display);
+  --font-mono: var(--mono);
+  --radius-desk: var(--rc);
+  --radius-menu: var(--rm);
+  --radius-modal: var(--rl);
+  --ease-desk: var(--ease);
+}
+
+/* The shell is a fixed viewport, never a scrolling document (see src/app.css
+   for the full account of why overflow must sit on <html>). */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  margin: 0;
+  height: 100dvh;
+  background: var(--bg);
+  background-image: var(--grain);
+  color: var(--tx);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
