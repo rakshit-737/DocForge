@@ -5,7 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    "noUncheckedIndexedAccess": true,
+    // Next type-checks the transpiled workspace packages under THIS config, and
+    // @docforge/engine (the 1:1 port) opts out of unchecked-index errors.
+    "noUncheckedIndexedAccess": false,
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "skipLibCheck": true,

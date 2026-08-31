@@ -7,9 +7,9 @@
    window.__*_SRC__ and are evaluated on first use by blob-import.ts.
    ============================================================ */
 
-import type { DocxImportApi } from "./docx-import.js";
-import type { FileImportApi } from "./file-import.js";
-import type { PdfImportApi } from "./pdf-import.js";
+import type { DocxImportApi } from "./docx-import";
+import type { FileImportApi } from "./file-import";
+import type { PdfImportApi } from "./pdf-import";
 
 declare global {
   /* ----- mammoth (vendored browser UMD; arrives as window.__MAMMOTH_SRC__) ----- */

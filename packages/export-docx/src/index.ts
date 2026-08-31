@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 /* ============================================================
    @docforge/export-docx — the .docx writer, ported 1:1 from the
    classic build (Phase 1):
@@ -10,8 +11,8 @@
    The single-file shell keeps its globals via ./global.ts.
    ============================================================ */
 
-import { build } from "./docx-export.js";
-import { embed } from "./docx-fonts.js";
+import { build } from "./docx-export";
+import { embed } from "./docx-fonts";
 
 export const DocxExport = { build };
 export const DocxFonts = { embed };
@@ -22,6 +23,6 @@ export const api = { DocxExport, DocxFonts };
 export type DocxExportApi = typeof DocxExport;
 export type DocxFontsApi = typeof DocxFonts;
 
-export type { DocxSettings } from "./docx-export.js";
-export type { EmbedFamily } from "./docx-fonts.js";
+export type { DocxSettings } from "./docx-export";
+export type { EmbedFamily } from "./docx-fonts";
 export { build, embed };

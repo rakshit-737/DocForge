@@ -21,7 +21,7 @@
    PdfImport.toMarkdown(arrayBuffer) -> { source, pages, warnings }
    ============================================================ */
 
-import { importGlobalScript } from "./blob-import.js";
+import { importGlobalScript } from "./blob-import";
 
 /* ---------- pdf.js bootstrap ---------- */
 

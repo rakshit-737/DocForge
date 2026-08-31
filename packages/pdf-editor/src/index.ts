@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 /* ============================================================
    index.ts — format-preserving edits over an existing PDF
 
@@ -21,7 +22,7 @@
    loaded on first export; pdf.js arrives via PdfImport.ensureLib().
    ============================================================ */
 
-import { importGlobalScript } from "./blob-import.js";
+import { importGlobalScript } from "./blob-import";
 
 /* ---------- types (additive; the runtime shapes are unchanged) ---------- */
 

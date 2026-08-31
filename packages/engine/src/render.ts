@@ -10,8 +10,8 @@
    the AST redesign (MASTER-PROMPT §4.1).
    ============================================================ */
 
-import { preprocess } from "./parse.js";
-import { MARGINS, PAGES } from "./themes.js";
+import { preprocess } from "./parse";
+import { MARGINS, PAGES } from "./themes";
 import type {
   Attachments,
   LineSpan,
@@ -19,8 +19,8 @@ import type {
   RenderMeta,
   RenderResult,
   Settings,
-} from "./types.js";
-import { esc, mdOpts, slugify } from "./util.js";
+} from "./types";
+import { esc, mdOpts, slugify } from "./util";
 
 /* Printable width of the text column, in CSS px — the reference both exporters
    size images against, so a figure is the same size in the PDF and in Word. */

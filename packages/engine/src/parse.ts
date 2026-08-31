@@ -11,7 +11,7 @@
    render → index) cannot reorder anything observable.
    ============================================================ */
 
-import { sysStack } from "./themes.js";
+import { sysStack } from "./themes";
 import type {
   DfMarkToken,
   DfSpanToken,
@@ -23,8 +23,8 @@ import type {
   PreprocessInherited,
   Settings,
   SpanAttrs,
-} from "./types.js";
-import { esc, mdOpts } from "./util.js";
+} from "./types";
+import { esc, mdOpts } from "./util";
 
 marked.use({ gfm: true });
 

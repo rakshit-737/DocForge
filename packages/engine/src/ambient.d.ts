@@ -11,8 +11,8 @@
    main.js to run the paginator.
    ============================================================ */
 
-import type { api } from "./index.js";
-import type { MarkedToken } from "./types.js";
+import type { api } from "./index";
+import type { MarkedToken } from "./types";
 
 declare global {
   /* ----- marked (vendored UMD; the engine mutates the shared instance

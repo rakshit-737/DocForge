@@ -6,8 +6,8 @@
    Pure declarations — no top-level side effects, so module placement
    cannot reorder anything observable.
    ============================================================ */
-import type { MarginSpec, PageSpec, Settings, Tints } from "./types.js";
-import { cssStr } from "./util.js";
+import type { MarginSpec, PageSpec, Settings, Tints } from "./types";
+import { cssStr } from "./util";
 
 /* ---------- color math ---------- */
 export function hexRgb(hex: string): number[] {

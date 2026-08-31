@@ -8,7 +8,7 @@
    real npm package and assign it onto globalThis.
    ============================================================ */
 
-import type { MathmlOmmlApi } from "./index.js";
+import type { MathmlOmmlApi } from "./index";
 
 declare global {
   /* ----- katex (vendored UMD global; only renderToString is used) ----- */

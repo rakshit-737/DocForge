@@ -11,7 +11,7 @@
    ============================================================ */
 
 import { api as MathmlOmml } from "@docforge/mathml-omml";
-import * as DocxFonts from "./docx-fonts.js";
+import * as DocxFonts from "./docx-fonts";
 
 /** The settings object main.js hands to build() — the same shape Engine reads. */
 export interface DocxSettings {

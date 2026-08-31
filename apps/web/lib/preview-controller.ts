@@ -1,0 +1,311 @@
+"use client";
+/* The press — a faithful port of the classic compose pipeline (src/js/main.js):
+   the four Paged handlers, the offscreen compose-and-swap that never blanks the
+   deck, page-observer retirement, folio bookkeeping and fit/manual zoom. React
+   never reconciles inside the deck; this class owns that DOM outright. */
+import type * as PagedNS from "pagedjs";
+import { loadDocCss, loadStudio, type StudioRuntime } from "./bootstrap";
+import type { Settings } from "./settings";
+
+type PagedPage = { element?: HTMLElement; position?: number; removeListeners?: () => void };
+type PagedFlow = { pages?: PagedPage[]; total: number };
+
+let handlersRegistered = false;
+let tickerTarget: ((n: number) => void) | null = null;
+
+function registerHandlers(Paged: typeof PagedNS) {
+  if (handlersRegistered) return;
+  handlersRegistered = true;
+  const Handler = Paged.Handler as unknown as new (...a: unknown[]) => object;
+
+  /* Repeat table headers across page breaks. Runs in renderNode, not
+     afterPageLayout, so the injected header's height is seen by findBreakToken
+     and the last row spills instead of clipping (see classic main.js). */
+  class RepeatTableHeader extends Handler {
+    renderNode(clone: Node, node: Node) {
+      const el = clone && (clone.nodeType === 1 ? (clone as Element) : clone.parentElement);
+      if (!el || !el.closest) return;
+      const destTable = el.closest("table[data-split-from]");
+      if (!destTable) return;
+      if (destTable.querySelector(":scope > thead")) return;
+      const srcEl = node && (node.nodeType === 1 ? (node as Element) : node.parentElement);
+      const srcTable = srcEl?.closest?.("table");
+      const srcHead = srcTable?.querySelector(":scope > thead");
+      if (!srcHead || !srcHead.childElementCount) return;
+      const head = srcHead.cloneNode(true) as Element;
+      head.removeAttribute("data-ref");
+      head.querySelectorAll("[data-ref]").forEach((n) => n.removeAttribute("data-ref"));
+      head.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+      head.setAttribute("data-repeated-header", "");
+      destTable.insertBefore(head, destTable.firstChild);
+    }
+  }
+
+  /* Folios: front matter runs roman, the body runs "Page n of N" counting body
+     pages only; contents entries quote the same folio the page prints. */
+  const ROMAN: Array<[number, string]> = [
+    [10, "x"],
+    [9, "ix"],
+    [5, "v"],
+    [4, "iv"],
+    [1, "i"],
+  ];
+  const roman = (n: number) => {
+    let out = "";
+    for (const [v, s] of ROMAN)
+      while (n >= v) {
+        out += s;
+        n -= v;
+      }
+    return out;
+  };
+  class PageNumbering extends Handler {
+    afterRendered(pages: PagedPage[]) {
+      const els = [...pages]
+        .map((p) => p.element || (p as unknown as HTMLElement))
+        .filter((el): el is HTMLElement => !!el && !!(el as HTMLElement).classList);
+      const kindOf = (el: HTMLElement) =>
+        el.classList.contains("pagedjs_cover_page")
+          ? "cover"
+          : el.classList.contains("pagedjs_front_page")
+            ? "front"
+            : "body";
+      const kinds = els.map(kindOf);
+      const bodyTotal = kinds.filter((k) => k === "body").length;
+
+      const folio = new Map<HTMLElement, string>();
+      let f = 0;
+      let b = 0;
+      els.forEach((el, i) => {
+        let num = "";
+        let txt = "";
+        if (kinds[i] === "front") {
+          num = roman(++f);
+          txt = num;
+        } else if (kinds[i] === "body") {
+          num = String(++b);
+          txt = `Page ${num} of ${bodyTotal}`;
+        }
+        folio.set(el, num);
+        el.style.setProperty("--df-foot", JSON.stringify(txt));
+      });
+
+      const esc = (s: string) => CSS.escape(s);
+      els.forEach((el) =>
+        el.querySelectorAll('.toc a[href^="#"]').forEach((a) => {
+          const id = (a.getAttribute("href") || "").slice(1);
+          const host = els.find((pe) => pe.querySelector(`#${esc(id)}`));
+          (a as HTMLElement).style.setProperty(
+            "--df-tocnum",
+            JSON.stringify(host ? folio.get(host) || "" : ""),
+          );
+        }),
+      );
+    }
+  }
+
+  /* pagedjs 0.4.3 footnote hardening: reclaim reserved strips for removed
+     notes; re-measure so fractional-px maths stops clipping descenders. */
+  class FootnoteFix extends Handler {
+    afterPageLayout(pageElement: HTMLElement) {
+      const area = pageElement.querySelector<HTMLElement>(".pagedjs_area");
+      const cont = pageElement.querySelector<HTMLElement>(".pagedjs_footnote_content");
+      const inner = pageElement.querySelector<HTMLElement>(".pagedjs_footnote_inner_content");
+      if (!area || !cont || !inner) return;
+
+      const reserved = parseFloat(area.style.getPropertyValue("--pagedjs-footnotes-height")) || 0;
+      const notes = inner.querySelectorAll("[data-note='footnote']");
+
+      if (!notes.length) {
+        if (reserved > 0) area.style.setProperty("--pagedjs-footnotes-height", "0px");
+        cont.classList.add("pagedjs_footnote_empty");
+        return;
+      }
+
+      const px = (v: string) => parseFloat(v) || 0;
+      const cs = getComputedStyle(cont);
+      const chrome =
+        px(cs.marginTop) +
+        px(cs.marginBottom) +
+        px(cs.paddingTop) +
+        px(cs.paddingBottom) +
+        px(cs.borderTopWidth) +
+        px(cs.borderBottomWidth);
+      let needed = 0;
+      notes.forEach((n) => {
+        needed += (n as HTMLElement).getBoundingClientRect().height;
+      });
+      const want = Math.ceil(needed + chrome);
+      if (want > Math.ceil(reserved)) area.style.setProperty("--pagedjs-footnotes-height", `${want}px`);
+      inner.style.height = "auto";
+      cont.style.height = "auto";
+    }
+  }
+
+  /* The composing ticker — truthful progress in the room's own language. */
+  class ComposeTicker extends Handler {
+    afterPageLayout(_el: HTMLElement, page: { position?: number }) {
+      const n = page && typeof page.position === "number" ? page.position + 1 : null;
+      if (n && tickerTarget) tickerTarget(n);
+    }
+  }
+
+  Paged.registerHandlers(
+    RepeatTableHeader as never,
+    PageNumbering as never,
+    FootnoteFix as never,
+    ComposeTicker as never,
+  );
+}
+
+export interface PreviewEvents {
+  onPageInfo: (text: string) => void;
+  onBusy: (busy: boolean) => void;
+  onZoomPct: (pct: number) => void;
+  onRendered?: () => void;
+}
+
+export class PreviewController {
+  private runtime: StudioRuntime | null = null;
+  private previewer: InstanceType<typeof PagedNS.Previewer> | null = null;
+  private rendering = false;
+  private renderPending: (() => void) | null = null;
+  private renderTimer: ReturnType<typeof setTimeout> | null = null;
+  private pageTotal = 0;
+  zoomMode: "fit" | "man" = "fit";
+  zoomVal = 1;
+
+  constructor(
+    private deck: HTMLElement, // #scaleWrap equivalent — pages land here
+    private scroller: HTMLElement, // the scroll container ("the stone")
+    private events: PreviewEvents,
+  ) {
+    scroller.addEventListener("scroll", () => this.updatePageIndicator());
+  }
+
+  /** Debounced source-edit path — 420ms, the classic cadence. */
+  schedule(run: () => Promise<void> | void, delay = 420) {
+    if (this.renderTimer) clearTimeout(this.renderTimer);
+    this.renderTimer = setTimeout(run, delay);
+  }
+
+  async render(source: string, settings: Settings, attachments: Record<string, unknown>) {
+    if (this.rendering) {
+      // collapse to a single trailing re-render, classic renderPending
+      await new Promise<void>((res) => {
+        this.renderPending = res;
+      });
+    }
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer);
+      this.renderTimer = null;
+    }
+    this.rendering = true;
+    this.events.onBusy(true);
+    tickerTarget = (n) => this.events.onPageInfo(`p. ${n}…`);
+    try {
+      this.runtime ??= await loadStudio();
+      const { Engine, Paged } = this.runtime;
+      registerHandlers(Paged);
+      const docCssText = await loadDocCss();
+
+      const { doc } = Engine.render(source, settings, attachments as Parameters<typeof Engine.render>[2]);
+      const css = docCssText + Engine.dynamicCss(settings);
+
+      /* Compose the new galleys offscreen while the old ones stay on the
+         stone — the reader never sees a blank deck and the scroll container
+         never collapses. */
+      const oldPreviewer = this.previewer;
+      const oldStyles = [...document.querySelectorAll("style[data-pagedjs-inserted-styles]")];
+      const stage = document.createElement("div");
+      stage.style.cssText = "position:absolute;left:-100000px;top:0;";
+      if (this.deck.style.zoom) stage.style.zoom = this.deck.style.zoom;
+      this.scroller.appendChild(stage);
+      this.previewer = new Paged.Previewer();
+      const url = URL.createObjectURL(new Blob([css], { type: "text/css" }));
+      let flow: PagedFlow;
+      try {
+        flow = (await this.previewer.preview(doc.outerHTML, [url], stage)) as PagedFlow;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      /* The flow is final — retire every page's resize observer before live
+         edits can mutate the tree (findEndToken crashes on unref'd nodes). */
+      try {
+        (flow.pages || []).forEach((p) => p.removeListeners?.());
+      } catch {}
+      this.deck.innerHTML = "";
+      while (stage.firstChild) this.deck.appendChild(stage.firstChild);
+      stage.remove();
+      if (oldPreviewer) {
+        try {
+          (oldPreviewer as unknown as { polisher: { destroy(): void } }).polisher.destroy();
+        } catch {}
+      }
+      oldStyles.forEach((s) => {
+        if (s.isConnected) s.remove();
+      });
+      this.pageTotal = flow.total;
+      this.events.onPageInfo(`${flow.total} ${flow.total === 1 ? "page" : "pages"}`);
+      this.applyZoom(settings);
+      this.updatePageIndicator();
+      this.events.onRendered?.();
+    } finally {
+      this.rendering = false;
+      this.events.onBusy(false);
+      tickerTarget = null;
+      const next = this.renderPending;
+      this.renderPending = null;
+      next?.();
+    }
+  }
+
+  /* the folio readout follows the reader: "p. 4 · 12 pages" */
+  updatePageIndicator() {
+    if (!this.pageTotal) return;
+    const top = this.scroller.getBoundingClientRect().top + 8;
+    const pages = this.deck.querySelectorAll(".pagedjs_page");
+    let cur = 1;
+    for (let i = 0; i < pages.length; i++) {
+      if (pages[i]!.getBoundingClientRect().bottom > top) {
+        cur = i + 1;
+        break;
+      }
+    }
+    this.events.onPageInfo(`p. ${cur} · ${this.pageTotal} page${this.pageTotal === 1 ? "" : "s"}`);
+  }
+
+  applyZoom(settings: Settings) {
+    if (!this.runtime) return;
+    const { Engine } = this.runtime;
+    const pg = Engine.PAGES[settings.page] || Engine.PAGES.A4!;
+    const pgPx = (pg!.w * 96) / 25.4;
+    const avail = this.scroller.clientWidth - 44;
+    const z =
+      this.zoomMode === "fit" ? Math.min(1.35, Math.max(0.25, avail / pgPx)) : this.zoomVal;
+    if (CSS.supports("zoom", "1")) {
+      this.deck.style.zoom = String(z);
+      this.deck.style.transform = "";
+    } else {
+      this.deck.style.transform = `scale(${z})`;
+    }
+    this.events.onZoomPct(Math.round(z * 100));
+  }
+
+  setZoom(mode: "fit" | "man", val: number, settings: Settings) {
+    this.zoomMode = mode;
+    this.zoomVal = val;
+    this.applyZoom(settings);
+  }
+
+  destroy() {
+    if (this.previewer) {
+      try {
+        (this.previewer as unknown as { polisher: { destroy(): void } }).polisher.destroy();
+      } catch {}
+    }
+    document
+      .querySelectorAll("style[data-pagedjs-inserted-styles]")
+      .forEach((s) => s.remove());
+  }
+}

@@ -2,7 +2,7 @@
    util.ts — shared helpers, extracted verbatim from the top of
    src/js/engine.js. No behavior change; no top-level side effects.
    ============================================================ */
-import type { Settings } from "./types.js";
+import type { Settings } from "./types";
 
 /* Whether a lone newline inside a paragraph is a hard line break. Off by default:
    authors wrap their source, and burning those wraps into the printed page is the

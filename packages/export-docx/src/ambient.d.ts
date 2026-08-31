@@ -11,7 +11,7 @@
    this package would defeat the parallel-implementation phase).
    ============================================================ */
 
-import type { DocxExportApi, DocxFontsApi } from "./index.js";
+import type { DocxExportApi, DocxFontsApi } from "./index";
 
 declare global {
   /* ----- the docx UMD global (window.docx) ----- */

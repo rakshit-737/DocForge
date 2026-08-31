@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 /* ============================================================
    @docforge/engine — the markdown → document DOM pipeline, ported
    1:1 from src/js/engine.js (Phase 1, mechanical port).
@@ -11,8 +12,8 @@
    relative order the IIFE ran them in).
    ============================================================ */
 
-import { HL_COLORS, RE_SHOT } from "./parse.js";
-import { fmtDate, render } from "./render.js";
+import { HL_COLORS, RE_SHOT } from "./parse";
+import { fmtDate, render } from "./render";
 import {
   CUT_FILE,
   dynamicCss,
@@ -26,8 +27,8 @@ import {
   sysStack,
   tints,
   WORD_CATALOG,
-} from "./themes.js";
-import { esc } from "./util.js";
+} from "./themes";
+import { esc } from "./util";
 
 /** Exactly today's public surface — the classic `Engine` global, key order preserved. */
 export const api = {
@@ -70,7 +71,7 @@ export type {
   Settings,
   SpanAttrs,
   Tints,
-} from "./types.js";
+} from "./types";
 export {
   CUT_FILE,
   dynamicCss,

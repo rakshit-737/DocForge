@@ -10,6 +10,6 @@
    shell can keep mutating it exactly as it does today.
    ============================================================ */
 
-import { api } from "./index.js";
+import { api } from "./index";
 
 globalThis.PdfEditor = api;

@@ -15,7 +15,7 @@
    for parsing ~1 MB of library at startup.
    ============================================================ */
 
-import { importGlobalScript } from "./blob-import.js";
+import { importGlobalScript } from "./blob-import";
 
 let mammothLoading: Promise<void> | null = null;
 

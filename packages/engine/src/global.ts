@@ -5,6 +5,6 @@
    shape it sees must stay writable.
    ============================================================ */
 
-import { api } from "./index.js";
+import { api } from "./index";
 
 globalThis.Engine = { ...api };

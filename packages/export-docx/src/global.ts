@@ -6,7 +6,7 @@
    so the shapes it sees must stay writable.
    ============================================================ */
 
-import { api } from "./index.js";
+import { api } from "./index";
 
 globalThis.DocxExport = { ...api.DocxExport };
 globalThis.DocxFonts = { ...api.DocxFonts };

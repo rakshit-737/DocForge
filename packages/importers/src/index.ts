@@ -1,3 +1,4 @@
+/// <reference path="./ambient.d.ts" />
 /* ============================================================
    @docforge/importers — offline format importers, ported 1:1 from the
    classic build (Phase 1):
@@ -9,14 +10,14 @@
    The single-file shell keeps its globals via ./global.ts.
    ============================================================ */
 
-import { DocxImport } from "./docx-import.js";
-import { FileImport } from "./file-import.js";
-import { PdfImport } from "./pdf-import.js";
+import { DocxImport } from "./docx-import";
+import { FileImport } from "./file-import";
+import { PdfImport } from "./pdf-import";
 
 /** Exactly today's public surface: the three module globals of the classic build. */
 export const api = { FileImport, DocxImport, PdfImport };
 
-export type { DocxImportApi } from "./docx-import.js";
-export type { FileImportApi } from "./file-import.js";
-export type { Block, Line, PageRec, PdfImportApi } from "./pdf-import.js";
+export type { DocxImportApi } from "./docx-import";
+export type { FileImportApi } from "./file-import";
+export type { Block, Line, PageRec, PdfImportApi } from "./pdf-import";
 export { DocxImport, FileImport, PdfImport };
