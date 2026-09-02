@@ -32,6 +32,7 @@
     "@serwist/next": "^9.5.12",
     "codemirror": "^6.0.2",
     "docx": "^9.7.1",
+    "dompurify": "^3.4.14",
     "highlight.js": "^11.12.0",
     "idb": "^8.0.3",
     "katex": "^0.18.4",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/dompurify": "^3.2.0",
     "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
