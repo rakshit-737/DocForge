@@ -11,6 +11,9 @@ importers:
       docx:
         specifier: ^9.7.1
         version: 9.7.1
+      dompurify:
+        specifier: ^3.4.14
+        version: 3.4.14
       esbuild:
         specifier: ^0.28.1
         version: 0.28.2
@@ -42,6 +45,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.5.11
         version: 2.5.11
+      '@types/dompurify':
+        specifier: ^3.2.0
+        version: 3.2.0
       axe-core:
         specifier: ^4.13.0
         version: 4.13.0
@@ -114,6 +120,9 @@ importers:
       docx:
         specifier: ^9.7.1
         version: 9.7.1
+      dompurify:
+        specifier: ^3.4.14
+        version: 3.4.14
       highlight.js:
         specifier: ^11.12.0
         version: 11.12.0
@@ -157,6 +166,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
+      '@types/dompurify':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@types/node':
         specifier: ^26.4.0
         version: 26.4.0
@@ -216,7 +228,14 @@ importers:
   packages/config: {}
 
   packages/engine:
+    dependencies:
+      dompurify:
+        specifier: ^3.4.14
+        version: 3.4.14
     devDependencies:
+      '@types/dompurify':
+        specifier: ^3.2.0
+        version: 3.2.0
       '@vitest/coverage-v8':
         specifier: 4.1.11
         version: 4.1.11(vitest@4.1.11)
@@ -1663,6 +1682,10 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
+  '@types/dompurify@3.2.0':
+    resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
+    deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
+
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
@@ -1989,6 +2012,9 @@ packages:
   docx@9.7.1:
     resolution: {integrity: sha512-ilXFf9Moz47ABjFpDiA5s1w9lpb4EFSp7+5iiJSbfyYDM+bpZdAgLlSr7fW4aXhVe/E+F6QCv0EvRVFEd5CsWg==}
     engines: {node: '>=10'}
+
+  dompurify@3.4.14:
+    resolution: {integrity: sha512-dVoH9z+MY+C9IilgGCk3YfFqjLi3fChm2OiKJMzh6axrJ5qwxqWaZamgmHrpv22CN/KdbZJuGEGgfQoL00LTdg==}
 
   duck@0.1.12:
     resolution: {integrity: sha512-wkctla1O6VfP89gQ+J/yDesM0S7B7XLXjKGzXxMDVFg7uEn706niAtyYovKbyq1oT9YwDcly721/iUWoc8MVRg==}
@@ -3976,6 +4002,10 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
+  '@types/dompurify@3.2.0':
+    dependencies:
+      dompurify: 3.4.14
+
   '@types/estree@1.0.9': {}
 
   '@types/node@25.9.5':
@@ -4248,6 +4278,10 @@ snapshots:
       nanoid: 5.1.16
       xml: 1.0.1
       xml-js: 1.6.11
+
+  dompurify@3.4.14:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   duck@0.1.12:
     dependencies:

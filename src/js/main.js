@@ -811,7 +811,7 @@ Land the piece: return to the opening image or question and say what it means no
          tree our contenteditable mutations no longer match (findEndToken
          crashes on execCommand-inserted nodes that carry no data-ref). */
       try { (flow.pages || []).forEach(p => p.removeListeners && p.removeListeners()); } catch {}
-      scaleWrap.innerHTML = "";
+      scaleWrap.replaceChildren();
       while (stage.firstChild) scaleWrap.appendChild(stage.firstChild);
       stage.remove();
       if (oldPreviewer) { try { oldPreviewer.polisher.destroy(); } catch {} }
@@ -963,13 +963,28 @@ Land the piece: return to the opening image or question and say what it means no
     };
   })();
 
-  function fontOptionsHtml(kind) {
-    let h = kind === "settings" ? `<option value="theme">Theme default</option>` : `<option value="">Typeface…</option>`;
-    h += `<optgroup label="Embedded — travel inside the file">`;
-    for (const [key, face] of Object.entries(Engine.FACES)) {
-      h += `<option value="${kind === "settings" ? key : face.name}">${face.label}</option>`;
+  function buildFontOptions(kind) {
+    const frag = document.createDocumentFragment();
+    const defOpt = document.createElement("option");
+    if (kind === "settings") {
+      defOpt.value = "theme";
+      defOpt.textContent = "Theme default";
+    } else {
+      defOpt.value = "";
+      defOpt.textContent = "Typeface…";
     }
-    h += `</optgroup>`;
+    frag.appendChild(defOpt);
+
+    const embedGrp = document.createElement("optgroup");
+    embedGrp.label = "Embedded — travel inside the file";
+    for (const [key, face] of Object.entries(Engine.FACES)) {
+      const o = document.createElement("option");
+      o.value = kind === "settings" ? key : face.name;
+      o.textContent = face.label;
+      embedGrp.appendChild(o);
+    }
+    frag.appendChild(embedGrp);
+
     /* The Word census, sorted into the classic specimen-book groups. These print
        exactly in Word; the preview needs the face installed on this device. */
     const GROUPS = [
@@ -977,16 +992,25 @@ Land the piece: return to the opening image or question and say what it means no
       ["script", "Word · Script & handwriting"], ["display", "Word · Display & titling"],
     ];
     for (const [gk, label] of GROUPS) {
-      h += `<optgroup label="${label}">`;
+      const grp = document.createElement("optgroup");
+      grp.label = label;
       for (const [name, fk] of Engine.WORD_CATALOG) {
         if (fk !== gk) continue;
         const miss = fontInstalled(name) ? "" : " · not on this device";
-        h += `<option value="${kind === "settings" ? "sys:" + name : name}">${name}${miss}</option>`;
+        const o = document.createElement("option");
+        o.value = kind === "settings" ? "sys:" + name : name;
+        o.textContent = name + miss;
+        grp.appendChild(o);
       }
-      h += `</optgroup>`;
+      frag.appendChild(grp);
     }
-    if (kind === "settings") h += `<option value="custom">Custom family…</option>`;
-    return h;
+    if (kind === "settings") {
+      const cust = document.createElement("option");
+      cust.value = "custom";
+      cust.textContent = "Custom family…";
+      frag.appendChild(cust);
+    }
+    return frag;
   }
 
   /* A saved custom family ("sys:Whatever") must exist as an option or the select snaps
@@ -1001,11 +1025,22 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   function buildFontSelects() {
-    $("#sFontHead").innerHTML = fontOptionsHtml("settings");
-    $("#sFontBody").innerHTML = fontOptionsHtml("settings");
-    $("#tbFont").innerHTML = fontOptionsHtml("toolbar");
-    $("#tbSize").innerHTML = `<option value="">Size…</option>` +
-      [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48].map(n => `<option value="${n}">${n} pt</option>`).join("");
+    $("#sFontHead").replaceChildren(buildFontOptions("settings"));
+    $("#sFontBody").replaceChildren(buildFontOptions("settings"));
+    $("#tbFont").replaceChildren(buildFontOptions("toolbar"));
+
+    const sizeFrag = document.createDocumentFragment();
+    const defSize = document.createElement("option");
+    defSize.value = "";
+    defSize.textContent = "Size…";
+    sizeFrag.appendChild(defSize);
+    for (const n of [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48]) {
+      const o = document.createElement("option");
+      o.value = String(n);
+      o.textContent = `${n} pt`;
+      sizeFrag.appendChild(o);
+    }
+    $("#tbSize").replaceChildren(sizeFrag);
   }
 
   function syncSettingsUI() {
@@ -1411,13 +1446,28 @@ Land the piece: return to the opening image or question and say what it means no
       menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + "px";
       menu.style.top = (r.bottom + 6) + "px";
     };
-    const closeBoth = () => { hlMenu.style.display = "none"; fcMenu.style.display = "none"; };
-    $("#hlGrid").innerHTML = Object.entries(Engine.HL_COLORS).map(([k, v]) =>
-      `<button type="button" class="pm-sw" data-k="${k}" title="${k}" aria-label="Highlight: ${k}" style="background:#${v}"></button>`).join("");
+    $("#hlGrid").replaceChildren(...Object.entries(Engine.HL_COLORS).map(([k, v]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pm-sw";
+      b.dataset.k = k;
+      b.title = k;
+      b.setAttribute("aria-label", "Highlight: " + k);
+      b.style.background = "#" + v;
+      return b;
+    }));
     const FC = ["#c00000", "#e36c09", "#bf8f00", "#1a7f37", "#0f766e", "#2563eb", "#1f3a5f", "#6d28d9", "#c026d3", "#64748b", "#111827", "#000000"];
     const FC_NAMES = ["dark red", "orange", "dark yellow", "green", "teal", "blue", "navy", "violet", "magenta", "slate", "ink", "black"];
-    $("#fcGrid").innerHTML = FC.map((c, i) =>
-      `<button type="button" class="pm-sw" data-c="${c}" title="${FC_NAMES[i]}" aria-label="Text colour: ${FC_NAMES[i]}" style="background:${c}"></button>`).join("");
+    $("#fcGrid").replaceChildren(...FC.map((c, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pm-sw";
+      b.dataset.c = c;
+      b.title = FC_NAMES[i];
+      b.setAttribute("aria-label", "Text colour: " + FC_NAMES[i]);
+      b.style.background = c;
+      return b;
+    }));
     /* opening from the keyboard lands on the first swatch; Esc hands focus back */
     const openMenu = (menu, btn) => { openAt(menu, btn); const f = menu.querySelector(".pm-sw"); if (f) f.focus(); };
     $("#tbHl").onclick = e => { e.stopPropagation(); fcMenu.style.display = "none"; openMenu(hlMenu, e.currentTarget); };
@@ -1650,9 +1700,11 @@ Land the piece: return to the opening image or question and say what it means no
     };
     $("#peExport").onclick = async () => {
       const btn = $("#peExport");
-      const label = btn.innerHTML;
+      const oldNodes = [...btn.childNodes];
       btn.disabled = true; btn.classList.add("busy");
-      btn.innerHTML = `<span class="btnspin"></span> Exporting…`;
+      const spin = document.createElement("span");
+      spin.className = "btnspin";
+      btn.replaceChildren(spin, document.createTextNode(" Exporting…"));
       try {
         const { blob, name } = await PdfEditor.exportPdf();
         downloadBlob(blob, name);
@@ -1662,7 +1714,7 @@ Land the piece: return to the opening image or question and say what it means no
         toast("PDF export failed — your edits are still here; try again", "warn");
       }
       btn.disabled = false; btn.classList.remove("busy");
-      btn.innerHTML = label;
+      btn.replaceChildren(...oldNodes);
     };
   }
   const inPdfMode = () => document.body.classList.contains("pdf-mode");
@@ -1679,10 +1731,12 @@ Land the piece: return to the opening image or question and say what it means no
     await ensureFresh();
     if (!lastContentEl) return;
     const btn = $("#btnDocx");
-    const label = btn.innerHTML;
+    const oldNodes = [...btn.childNodes];
     btn.disabled = true;
     btn.classList.add("busy");
-    btn.innerHTML = `<span class="btnspin"></span> Exporting…`;
+    const spin = document.createElement("span");
+    spin.className = "btnspin";
+    btn.replaceChildren(spin, document.createTextNode(" Exporting…"));
     try {
       const blob = await DocxExport.build(lastContentEl, state.settings, state.attachments);
       downloadBlob(blob, safeName() + ".docx");
@@ -1698,7 +1752,7 @@ Land the piece: return to the opening image or question and say what it means no
     }
     btn.disabled = false;
     btn.classList.remove("busy");
-    btn.innerHTML = label;
+    btn.replaceChildren(...oldNodes);
   }
 
   /* ---------------- command palette — the desk's spike ----------------
@@ -1780,25 +1834,44 @@ Land the piece: return to the opening image or question and say what it means no
       .map(x => x.c);
     ckSel = Math.min(ckSel, Math.max(0, ckItems.length - 1));
     if (!ckItems.length) {
-      list.innerHTML = `<div class="ck-empty">No matching command</div>`;
+      const emp = document.createElement("div");
+      emp.className = "ck-empty";
+      emp.textContent = "No matching command";
+      list.replaceChildren(emp);
       $("#cmdkInput").removeAttribute("aria-activedescendant");
       return;
     }
-    let h = "", lastG = null;
+    const nodes = [];
+    let lastG = null;
     ckItems.forEach((c, i) => {
       // group lines are visual wayfinding only — a listbox may hold options alone
-      if (c.g !== lastG) { h += `<div class="ck-group" aria-hidden="true">${c.g}</div>`; lastG = c.g; }
-      h += `<button class="ck-item" role="option" id="ck-${i}" data-i="${i}" tabindex="-1" aria-selected="${i === ckSel}">` +
-        `${Engine.esc(c.l)}${c.h ? `<span class="ck-hint">${c.h}</span>` : ""}</button>`;
+      if (c.g !== lastG) {
+        const grp = document.createElement("div");
+        grp.className = "ck-group";
+        grp.setAttribute("aria-hidden", "true");
+        grp.textContent = c.g;
+        nodes.push(grp);
+        lastG = c.g;
+      }
+      const b = document.createElement("button");
+      b.className = "ck-item";
+      b.setAttribute("role", "option");
+      b.id = `ck-${i}`;
+      b.dataset.i = String(i);
+      b.tabIndex = -1;
+      b.setAttribute("aria-selected", String(i === ckSel));
+      b.appendChild(document.createTextNode(c.l));
+      if (c.h) {
+        const hint = document.createElement("span");
+        hint.className = "ck-hint";
+        hint.textContent = c.h;
+        b.appendChild(hint);
+      }
+      b.onclick = () => cmdkRun(i);
+      b.onmousemove = () => { if (ckSel !== i) { ckSel = i; cmdkPaint(); } };
+      nodes.push(b);
     });
-    list.innerHTML = h;
-    const sel = list.querySelector(`[data-i="${ckSel}"]`);
-    if (sel) sel.scrollIntoView({ block: "nearest" });
-    $("#cmdkInput").setAttribute("aria-activedescendant", `ck-${ckSel}`);
-    list.querySelectorAll(".ck-item").forEach(b => {
-      b.onclick = () => cmdkRun(+b.dataset.i);
-      b.onmousemove = () => { if (ckSel !== +b.dataset.i) { ckSel = +b.dataset.i; cmdkPaint(); } };
-    });
+    list.replaceChildren(...nodes);
   }
   function cmdkPaint() {
     $("#cmdkList").querySelectorAll(".ck-item").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.i === ckSel)));
@@ -1839,36 +1912,65 @@ Land the piece: return to the opening image or question and say what it means no
     const list = $("#olList");
     if (!list) return;
 
+    const setEmpty = msg => {
+      const emp = document.createElement("div");
+      emp.className = "ol-empty";
+      emp.textContent = msg;
+      list.replaceChildren(emp);
+    };
+
     if (activeOlTab === "head") {
       const heads = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(h1,h2,h3)")];
-      if (!heads.length) { list.innerHTML = `<div class="ol-empty">No headings yet</div>`; return; }
-      list.innerHTML = heads.map((h, i) =>
-        `<button class="ol-item l${h.tagName[1]}" data-i="${i}">${Engine.esc(h.textContent.trim())}</button>`).join("");
-      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
-        heads[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!heads.length) { setEmpty("No headings yet"); return; }
+      const buttons = heads.map((h, i) => {
+        const b = document.createElement("button");
+        b.className = `ol-item l${h.tagName[1]}`;
+        b.dataset.i = String(i);
+        b.textContent = h.textContent.trim();
+        b.onclick = () => {
+          heads[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        return b;
       });
+      list.replaceChildren(...buttons);
     } else if (activeOlTab === "figtbl") {
       const items = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content :is(figure.shot, table[data-caption], [data-tbl])")];
-      if (!items.length) { list.innerHTML = `<div class="ol-empty">No figures or tables</div>`; return; }
-      list.innerHTML = items.map((el, i) => {
+      if (!items.length) { setEmpty("No figures or tables"); return; }
+      const buttons = items.map((el, i) => {
         const isFig = el.tagName === "FIGURE";
         const cap = el.dataset.caption || el.querySelector("figcaption")?.textContent || (isFig ? "Figure" : "Table");
-        return `<button class="ol-item l1" data-i="${i}"><b>${isFig ? "Fig" : "Tbl"}:</b> ${Engine.esc(cap.trim())}</button>`;
-      }).join("");
-      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
-        items[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const b = document.createElement("button");
+        b.className = "ol-item l1";
+        b.dataset.i = String(i);
+        const bold = document.createElement("b");
+        bold.textContent = isFig ? "Fig: " : "Tbl: ";
+        b.appendChild(bold);
+        b.appendChild(document.createTextNode(cap.trim()));
+        b.onclick = () => {
+          items[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        return b;
       });
+      list.replaceChildren(...buttons);
     } else if (activeOlTab === "notes") {
       const notes = [...scaleWrap.querySelectorAll(".pagedjs_page .doc .content .footnote, .pagedjs_page_content [data-note='footnote']")];
-      if (!notes.length) { list.innerHTML = `<div class="ol-empty">No footnotes</div>`; return; }
-      list.innerHTML = notes.map((n, i) => {
+      if (!notes.length) { setEmpty("No footnotes"); return; }
+      const buttons = notes.map((n, i) => {
         const fn = n.dataset.fn || String(i + 1);
         const txt = n.textContent.trim().slice(0, 40);
-        return `<button class="ol-item l1" data-i="${i}"><b>[^{${fn}}]:</b> ${Engine.esc(txt)}…</button>`;
-      }).join("");
-      list.querySelectorAll(".ol-item").forEach(b => b.onclick = () => {
-        notes[+b.dataset.i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const b = document.createElement("button");
+        b.className = "ol-item l1";
+        b.dataset.i = String(i);
+        const bold = document.createElement("b");
+        bold.textContent = `[^{${fn}}]: `;
+        b.appendChild(bold);
+        b.appendChild(document.createTextNode(txt + "…"));
+        b.onclick = () => {
+          notes[i]?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+        return b;
       });
+      list.replaceChildren(...buttons);
     }
   }
 
@@ -2097,16 +2199,26 @@ Land the piece: return to the opening image or question and say what it means no
     badge.hidden = !warns.length;
     badge.textContent = warns.length === 1 ? "1 warning" : warns.length + " warnings";
     if (!warns.length) { panel.hidden = true; return; }
-    panel.innerHTML = warns.slice(0, 40).map(([line, msg]) =>
-      `<button class="lint-item" data-line="${line}"><span class="ln">line ${line}</span>${Engine.esc(msg)}</button>`).join("");
-    panel.querySelectorAll(".lint-item").forEach(b => b.onclick = () => {
-      const ln = +b.dataset.line;
-      const pos = state.source.split("\n").slice(0, ln - 1).join("\n").length + (ln > 1 ? 1 : 0);
-      editor.focus();
-      editor.setSelectionRange(pos, pos);
-      const lineHeight = 21;
-      editor.scrollTop = Math.max(0, (ln - 6) * lineHeight);
+    const items = warns.slice(0, 40).map(([line, msg]) => {
+      const b = document.createElement("button");
+      b.className = "lint-item";
+      b.dataset.line = String(line);
+      const span = document.createElement("span");
+      span.className = "ln";
+      span.textContent = `line ${line}`;
+      b.appendChild(span);
+      b.appendChild(document.createTextNode(msg));
+      b.onclick = () => {
+        const ln = Number(line);
+        const pos = state.source.split("\n").slice(0, ln - 1).join("\n").length + (ln > 1 ? 1 : 0);
+        editor.focus();
+        editor.setSelectionRange(pos, pos);
+        const lineHeight = 21;
+        editor.scrollTop = Math.max(0, (ln - 6) * lineHeight);
+      };
+      return b;
     });
+    panel.replaceChildren(...items);
   }
 
   /* ---------------- focus mode — just the manuscript ---------------- */
@@ -2405,9 +2517,19 @@ Land the piece: return to the opening image or question and say what it means no
 
   function boot() {
     // populate the templates menu (labels + one-line descriptions from TEMPLATES)
-    $("#tplMenu").innerHTML = Object.entries(TEMPLATES).map(([id, t]) =>
-      `<button class="tpl-item" role="menuitem" data-id="${id}"><b>${Engine.esc(t.label)}</b><span>${Engine.esc(t.desc || "")}</span></button>`
-    ).join("");
+    $("#tplMenu").replaceChildren(...Object.entries(TEMPLATES).map(([id, t]) => {
+      const b = document.createElement("button");
+      b.className = "tpl-item";
+      b.setAttribute("role", "menuitem");
+      b.dataset.id = id;
+      const bold = document.createElement("b");
+      bold.textContent = t.label;
+      const span = document.createElement("span");
+      span.textContent = t.desc || "";
+      b.appendChild(bold);
+      b.appendChild(span);
+      return b;
+    }));
     buildFontSelects();
     bindChrome(); bindSettings(); bindImageInput(); bindShotClicks(); bindProjectInput(); bindColorMenus(); bindPdfEditor(); bindCmdk(); bindFloatingToolbar();
     bindDivider();

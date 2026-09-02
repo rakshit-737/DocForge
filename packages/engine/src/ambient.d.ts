@@ -57,6 +57,24 @@ declare global {
   }
   const hljs: HljsLib;
 
+  /* ----- DOMPurify (vendored UMD; sanitizes markdown-to-DOM boundaries) ----- */
+  interface DOMPurifyConfig {
+    ADD_TAGS?: string[];
+    ADD_ATTR?: string[];
+    FORBID_TAGS?: string[];
+    FORBID_ATTR?: string[];
+    ALLOW_DATA_ATTR?: boolean;
+    ALLOWED_URI_REGEXP?: RegExp;
+    USE_PROFILES?: { html?: boolean; svg?: boolean; mathMl?: boolean; svgFilters?: boolean };
+    RETURN_DOM_FRAGMENT?: boolean;
+    RETURN_DOM?: boolean;
+    [key: string]: unknown;
+  }
+  interface DOMPurifyLib {
+    sanitize(dirty: string | Node, cfg?: DOMPurifyConfig): string;
+  }
+  const DOMPurify: DOMPurifyLib;
+
   interface Window {
     /** base64 TTF bytes per "<stem>-<Cut>" key, inlined by build.mjs. */
     __FONT_DATA__?: Record<string, string | undefined>;

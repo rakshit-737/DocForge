@@ -11,6 +11,7 @@ const pagedPath = existsSync("node_modules/pagedjs/dist/paged.min.js")
   ? "node_modules/pagedjs/dist/paged.min.js" : "node_modules/pagedjs/dist/paged.js";
 const paged = pagedPath.endsWith(".min.js") ? read(pagedPath) : min(read(pagedPath));
 const docx = min(read("node_modules/docx/dist/index.iife.js"));
+const dompurify = read("node_modules/dompurify/dist/purify.min.js");
 
 // highlight.js "common" build (36 languages), bundled CJS -> browser global `hljs`
 const hljs = buildSync({
@@ -94,6 +95,7 @@ put("/*@HLJS@*/", guard(hljs));
 put("/*@KATEX@*/", guard(katex));
 put('"@KATEXCSS@"', JSON.stringify(katexCss));
 put("/*@IMPORTLIBS@*/", guard(importLibs));
+put("/*@DOMPURIFY@*/", guard(dompurify) + "\nwindow.DOMPurify = window.DOMPurify || DOMPurify;");
 put("/*@ENGINE@*/", guard(engine));
 put("/*@MATHMLOMML@*/", guard(mathmlOmml));
 put("/*@DOCXFONTS@*/", guard(docxFonts));

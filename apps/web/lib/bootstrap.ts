@@ -7,6 +7,7 @@
 import hljs from "highlight.js/lib/common"; // the same 36-language build the classic edition ships
 import katex from "katex";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 import type * as PagedTypes from "pagedjs";
 
 export interface StudioRuntime {
@@ -25,6 +26,7 @@ async function boot(): Promise<StudioRuntime> {
   g.marked = marked;
   g.katex = katex;
   g.hljs = hljs;
+  g.DOMPurify = DOMPurify;
   /* Paged.js comes in as the prebuilt UMD dist — the same build the classic
      edition inlines (vendored by sync-assets; the ESM source drags es5-ext
      "#" deep paths Turbopack mis-resolves, and dist/ is unexported). */

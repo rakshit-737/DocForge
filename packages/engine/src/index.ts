@@ -14,6 +14,7 @@
 
 import { HL_COLORS, RE_SHOT } from "./parse";
 import { fmtDate, render } from "./render";
+import { sanitizeHtml, SANITIZE_CONFIG } from "./sanitize";
 import {
   CUT_FILE,
   dynamicCss,
@@ -49,6 +50,8 @@ export const api = {
   HL_COLORS,
   sysStack,
   faceName,
+  sanitizeHtml,
+  SANITIZE_CONFIG,
 };
 
 export type {
@@ -87,6 +90,8 @@ export {
   PAGES,
   RE_SHOT,
   render,
+  sanitizeHtml,
+  SANITIZE_CONFIG,
   sysStack,
   tints,
   WORD_CATALOG,
