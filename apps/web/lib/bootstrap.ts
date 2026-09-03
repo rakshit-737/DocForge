@@ -4,9 +4,6 @@
    its marked extensions at import time), so the packages arrive here via
    dynamic import behind the assignments, and everything downstream awaits
    loadStudio() once. */
-import hljs from "highlight.js/lib/common"; // the same 36-language build the classic edition ships
-import katex from "katex";
-import { marked } from "marked";
 import type * as PagedTypes from "pagedjs";
 
 export interface StudioRuntime {
@@ -22,9 +19,19 @@ declare global {
 
 async function boot(): Promise<StudioRuntime> {
   const g = globalThis as Record<string, unknown>;
+  /* marked/katex/hljs load here, not at module scope: bootstrap is imported
+     (transitively) by the whole shell, and a static import would park all
+     three in the first-paint chunk. Behind boot() they split out and parse
+     after the chrome is already on screen. hljs/lib/common is the same
+     36-language build the classic edition ships. */
+  const [{ marked }, katexMod, hljsMod] = await Promise.all([
+    import("marked"),
+    import("katex"),
+    import("highlight.js/lib/common"),
+  ]);
   g.marked = marked;
-  g.katex = katex;
-  g.hljs = hljs;
+  g.katex = katexMod.default;
+  g.hljs = hljsMod.default;
   /* Paged.js comes in as the prebuilt UMD dist — the same build the classic
      edition inlines (vendored by sync-assets; the ESM source drags es5-ext
      "#" deep paths Turbopack mis-resolves, and dist/ is unexported). */

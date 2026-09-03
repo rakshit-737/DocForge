@@ -204,6 +204,33 @@ select:focus-visible {
 .pagedjs_pages {
   display: block;
 }
+/* The blank galley — a paper-white stand-in on the stone from first paint
+   until the press finishes its first composition (deferred past paint; see
+   preview-deck.tsx). Carries the same paper law and shadow as a real page. */
+.skeleton-page {
+  width: min(210mm, calc(100vw - 48px));
+  aspect-ratio: 210 / 297;
+  background: #fff;
+  box-shadow:
+    0 1px 1px rgba(18, 18, 16, 0.35),
+    0 3px 8px rgba(18, 18, 16, 0.2),
+    0 18px 44px rgba(18, 18, 16, 0.18);
+  animation: skeletonBreath 1.4s var(--ease) infinite alternate;
+}
+:root[data-light] .skeleton-page {
+  box-shadow:
+    0 1px 1px rgba(38, 38, 31, 0.25),
+    0 3px 8px rgba(38, 38, 31, 0.12),
+    0 18px 44px rgba(38, 38, 31, 0.14);
+}
+@keyframes skeletonBreath {
+  from {
+    opacity: 0.82;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .pagedjs_page_content {
   caret-color: #111827;
   cursor: text;

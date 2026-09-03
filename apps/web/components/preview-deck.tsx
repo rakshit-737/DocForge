@@ -1,7 +1,7 @@
 "use client";
 /* The stone — hosts the Paged.js deck. React renders the containers once and
    never looks inside; the PreviewController owns everything within. */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/find";
 import { docHistory } from "@/lib/history";
 import { LiveEdit } from "@/lib/live-edit";
@@ -17,6 +17,9 @@ export function PreviewDeck({
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const deck = useRef<HTMLDivElement>(null);
+  /* False until the press swaps its first galleys in — the skeleton page
+     holds the stone so first paint shows paper, not a void. */
+  const [pressReady, setPressReady] = useState(false);
 
   useEffect(() => {
     if (!scroller.current || !deck.current) return;
@@ -25,7 +28,10 @@ export function PreviewDeck({
       onPageInfo: (t) => useUiStore.getState().setPageInfo(t),
       onBusy: (b) => useUiStore.getState().setBusy(b),
       onZoomPct: (zoomPct) => useUiStore.setState({ zoomPct }),
-      onRendered,
+      onRendered: () => {
+        setPressReady(true);
+        onRendered?.();
+      },
     });
     controller.zoomMode = ui.zoomMode;
     controller.zoomVal = ui.zoomVal;
@@ -86,8 +92,20 @@ export function PreviewDeck({
     };
     document.addEventListener("keydown", onHistoryKey);
 
-    // First composition — render whatever the document holds on mount.
-    void compose();
+    /* First composition — render whatever the document holds, but AFTER the
+       first paint. The boot compose is the heaviest task the studio runs
+       (engine + Paged parse, then full pagination); fired synchronously here
+       it blanks the tab for seconds. Two animation frames guarantee the
+       chrome and skeleton page are on screen, the timeout yields once more
+       so the paint actually commits before the long task starts. */
+    let bootCancelled = false;
+    let bootTimer: ReturnType<typeof setTimeout> | null = null;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (bootCancelled) return;
+        bootTimer = setTimeout(() => void compose(), 30);
+      });
+    });
 
     const unsub = useDocStore.subscribe((s, prev) => {
       if (s.source === prev.source && s.settings === prev.settings) return;
@@ -118,6 +136,8 @@ export function PreviewDeck({
 
     const scrollEl = scroller.current;
     return () => {
+      bootCancelled = true;
+      if (bootTimer) clearTimeout(bootTimer);
       window.removeEventListener("resize", onResize);
       scrollEl?.removeEventListener("wheel", onWheel);
       document.removeEventListener("keydown", onHistoryKey);
@@ -137,6 +157,15 @@ export function PreviewDeck({
       className="relative h-full min-h-0 overflow-auto bg-stone"
       data-preview-scroll=""
     >
+      {!pressReady && (
+        <div
+          className="pointer-events-none absolute inset-0 flex flex-col items-center gap-4 py-6"
+          aria-hidden="true"
+        >
+          <div className="skeleton-page" />
+          <p className="font-mono text-ink-3 text-xs">setting type…</p>
+        </div>
+      )}
       <div ref={deck} className="mx-auto w-fit py-6" data-deck="" />
     </div>
   );
