@@ -5,9 +5,9 @@ Turn plain text into beautifully typeset **PDFs** and **Word documents** — cov
 DocForge ships twice, from one set of typed packages:
 
 - **The forever edition** — a single self-contained HTML file (`dist/DocForge.html`, ~7 MB) that works from `file://` with the network cable cut. GitHub Pages serves the current build at the site root and the frozen 1.x classic at `/classic`. This build is a feature, not legacy: it ships with every release.
-- **The web studio** (`apps/web`) — the same engine mounted in a Next.js app: CodeMirror source pane, paginated preview, live editing on the pages, IndexedDB persistence with crash recovery, one-click exports, installable PWA that keeps working offline after first load. It builds in CI today; the hosted deploy target is still being decided, and until the feature-parity audit against the classic edition completes (see Known limitations), the single-file edition remains the reference behaviour.
+- **The web studio** (`apps/web`) — the same engine mounted in a Next.js app: CodeMirror source pane, paginated preview, live editing on the pages, IndexedDB persistence with crash recovery, one-click exports, installable PWA that keeps working offline after first load. **Live at [docforge-io.vercel.app](https://docforge-io.vercel.app).** Until the feature-parity audit against the classic edition completes (see Known limitations), the single-file edition remains the reference behaviour.
 
-**▶ Use it:** open `dist/DocForge.html` in Chrome or Edge (build it with `node build.mjs`), or visit the Pages deployment. For the studio: `corepack pnpm --filter @docforge/web dev`.
+**▶ Use it:** the hosted studio at [docforge-io.vercel.app/studio](https://docforge-io.vercel.app/studio), or open `dist/DocForge.html` in Chrome or Edge (build it with `node build.mjs`), or visit the Pages deployment. For local development: `corepack pnpm --filter @docforge/web dev`.
 
 ## Local-first, and provably so
 
