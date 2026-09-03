@@ -8,7 +8,8 @@ import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import { handleImagePaste } from "@/components/image-tool";
-import { findKeymap } from "@/lib/find";
+import { findKeymap, toast } from "@/lib/find";
+import { htmlToMd } from "@/lib/html-to-md";
 import { deskKeymap } from "@/lib/keymap";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { consumeSplice, useDocStore } from "@/lib/store";
@@ -58,9 +59,27 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
           "aria-label": "Manuscript source",
           tabindex: "0",
         }),
-        // smart paste: a clipboard image becomes an attached, captioned figure
+        // smart paste: a clipboard image becomes an attached, captioned
+        // figure; rich HTML (Word, web pages) converts to Markdown behind
+        // the classic structure sniff (src/js/main.js:2292) — plain text
+        // pastes stay untouched, and Ctrl+Z restores the raw text
         EditorView.domEventHandlers({
-          paste: (e, v) => handleImagePaste(e, v),
+          paste: (e, v) => {
+            if (handleImagePaste(e, v)) return true;
+            const html = e.clipboardData?.getData("text/html");
+            if (!html || !/<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) return false;
+            const md = htmlToMd(html);
+            if (!md) return false;
+            e.preventDefault();
+            const { from, to } = v.state.selection.main;
+            v.dispatch({
+              changes: { from, to, insert: md },
+              selection: { anchor: from + md.length },
+              userEvent: "input.paste",
+            });
+            toast("Pasted as Markdown — Ctrl+Z restores the raw text");
+            return true;
+          },
         }),
         EditorView.lineWrapping,
         // Classic editor-focus call site: the source pane must never act on a

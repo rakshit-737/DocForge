@@ -121,8 +121,8 @@ the "untick headers and footers" toast fires (probe B saw it scheduled).
 | One import door, 12 formats | DONE | `lib/imports.ts` router; live via Open: csv, xlsx, html, ipynb, docx, and pdf-convert all replaced the source with converted Markdown (pdf strictly verified — source changed to the converted text); md/txt/tsv/pptx/epub ride the same dispatch + `packages/importers` tests (66 in `test/`) — not individually re-driven on the web door (03-ports.md says the same) |
 | Images (drop/Open/paste) | DONE | `processImageFile` + `insertFigure`; clipboard image smart-paste wired into CodeMirror (`source-pane.tsx` paste handler) |
 | Drag-drop | DONE | Full-window capture-phase DropZone naming what a drop does; routes through the same `handleImport` that Open uses (probed) |
-| PDF **both roads** from the studio door | PARTIAL | Convert road works (probed); the classic "edit in place, or convert?" ask (`src/js/main.js:1554`) is absent — the studio always converts, and `stashBenchFile` (`pdf-bench.tsx:57`) is exported but never called. The edit road exists only by walking to `/pdf` yourself |
-| Rich-HTML paste conversion | CLASSIC-ONLY | Classic converts pasted Word/web HTML to dialect Markdown with a toast (`main.js:2292`); the web wires only image paste — `htmlToMd` is ported (`lib/html-to-md.ts`) but no paste handler calls it, so rich pastes arrive as plain text |
+| PDF **both roads** from the studio door | DONE | Wave one: dropping/opening a PDF raises the classic "edit in place, or convert?" dialog (`studio-shell.tsx` pdfPending); edit stashes via `stashBenchFile` and client-navigates to `/pdf`, convert takes the old road |
+| Rich-HTML paste conversion | DONE | The classic structure sniff (`main.js:2292`) wired into the CM paste handler (`source-pane.tsx`) via the ported `htmlToMd`; probed live — h1/strong convert to `#`/`**`, plain text pastes untouched, one-step Ctrl+Z, classic toast |
 
 ## Row 12 — PDF bench: double-click rewrite in embedded font, fallback notice, free text, white-out, highlighter, image stamps, export from original bytes — **PARTIAL**
 
@@ -196,6 +196,13 @@ selection. Plus one live-verified defect: the Ctrl+K double-fire. Plus four
 bench flows (free text, highlighter, image stamps, fallback notice) and five
 import formats (md/txt/tsv/pptx/epub) not yet re-driven on the web surfaces
 they share code with.
+
+> **Update (2026-09-03):** five of the six classic-only sub-items have since
+> closed — ctrl+wheel zoom and Ctrl+P (`e9a8310`), Markdown export and the
+> "edit or convert?" PDF choice (`6af571b`), rich-HTML paste conversion
+> (this commit, probed live). The Ctrl+K double-fire is fixed. Remaining:
+> ribbon marks on a manuscript selection (`styleSelection` wiring), the four
+> bench flows, and the five un-re-driven import formats.
 
 **Shortest path to full parity, in order of value per line of code:**
 
