@@ -52,6 +52,7 @@ import {
   toggleSup,
   toggleUnderline,
 } from "@/lib/editor-commands";
+import { styleActiveSelection } from "@/lib/live-edit";
 
 /* ---------------- desk plate styling ---------------- */
 
@@ -632,6 +633,62 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
   };
   const run = (cmd: Command) => () => pick(cmd);
 
+  /* The four run-level controls style the MANUSCRIPT selection when there is
+     one, and otherwise wrap the source — the same button works from either
+     pane (classic main.js:1182 styleRun/applyHl; the span is built exactly
+     as the engine builds it, so the galley shows the change at once and the
+     live-edit serializer round-trips it). */
+  const sysStack = (name: string): string =>
+    (globalThis as { Engine?: { sysStack?: (n: string) => string } }).Engine?.sysStack?.(name) ??
+    `"${name}"`;
+  const applyHl = (name: string) => {
+    if (
+      styleActiveSelection({
+        tag: "mark",
+        data: { hl: name },
+        style: `background:#${HL_COLORS[name as keyof typeof HL_COLORS] ?? "FFFF00"}`,
+      })
+    )
+      return;
+    pick(setHighlight(name));
+  };
+  const applyColor = (hex: string) => {
+    if (
+      styleActiveSelection({
+        tag: "span",
+        className: "dfspan",
+        data: { color: hex.replace("#", "").toUpperCase() },
+        style: `color:${hex}`,
+      })
+    )
+      return;
+    pick(setTextColor(hex));
+  };
+  const applyFont = (name: string) => {
+    if (
+      styleActiveSelection({
+        tag: "span",
+        className: "dfspan",
+        data: { font: name },
+        style: `font-family:${sysStack(name)}`,
+      })
+    )
+      return;
+    pick(setTextFont(name));
+  };
+  const applySize = (pt: string) => {
+    if (
+      styleActiveSelection({
+        tag: "span",
+        className: "dfspan",
+        data: { size: pt },
+        style: `font-size:${pt}pt`,
+      })
+    )
+      return;
+    pick(setTextSize(pt));
+  };
+
   return (
     <Tooltip.Provider delayDuration={350} skipDelayDuration={500}>
       <Toolbar.Root
@@ -683,7 +740,7 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
               glyph={hlGlyph}
               shortcut={`${MODSHIFT}H`}
               swatches={HL_SWATCHES}
-              onPick={(name) => pick(setHighlight(name))}
+              onPick={applyHl}
             />
             <SwatchMenu
               label="Text colour"
@@ -691,7 +748,7 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
               glyph={fcGlyph}
               swatches={FC_SWATCHES}
               custom
-              onPick={(hex) => pick(setTextColor(hex))}
+              onPick={applyColor}
             />
             <SwatchMenu
               label="Text shading"
@@ -725,8 +782,8 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
         </Row>
         <Row>
           <Tray label="Type">
-            <FontSelect catalog={catalog} onPick={(name) => pick(setTextFont(name))} />
-            <SizeSelect onPick={(pt) => pick(setTextSize(pt))} />
+            <FontSelect catalog={catalog} onPick={applyFont} />
+            <SizeSelect onPick={applySize} />
           </Tray>
           <Tray label="Lists">
             <Tool label="Bullet list" run={run(toggleBulletList)}>

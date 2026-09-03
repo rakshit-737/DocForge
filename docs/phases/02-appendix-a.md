@@ -85,7 +85,7 @@ citation+locator, cross-refs, table caption, figure, pagebreak, display math.
 | Toolbar marks on a source selection | DONE | All plates present (`toolbar.tsx`); live keyboard probes produced `**…**`, `++…++`, `~~…~~`, `==…==`; highlight = 15 Word inks (HL_COLORS), colour dozen + custom, shading palette + custom, change case, clear formatting, 4 alignment blocks, sub/sup |
 | Small caps / all caps | DONE | Dialect span attrs `sc`/`caps` render in preview/PDF and export as real `smallCaps`/`allCaps` run properties (`docx-export.ts:260`); no toolbar plate in either edition — parity holds |
 | Identical in PDF / real DOCX run props | DONE | Shared engine + `@docforge/export-docx` (the classic golden path); exported file inspected below |
-| Ribbon marks on a **manuscript** selection | CLASSIC-ONLY | Classic routes toolbar acts through `LiveEdit.styleSelection` when the selection is on the page (`src/js/main.js:1187`); the web port has the serializer but no wiring (no `styleSelection` in `lib/live-edit.ts`; 02-studio.md admits it) |
+| Ribbon marks on a **manuscript** selection | DONE | `LiveEdit.styleSelection` ported (`lib/live-edit.ts`, the classic wrap-and-queue verbatim) and the four run-level controls dual-road in `toolbar.tsx` (applyHl/applyColor/applyFont/applySize — manuscript first, source-pane fallback). Probed live: highlight shows `<mark data-hl>` at once, source gains `==word==` on flush, both highlight and colour survive recompose (the round-trip proof), editor selections still take the source road |
 
 ## Row 8 — DOCX export: embedded fonts, styles, cover band, true column widths, figures, footnotes, OMML, auto-updating TOC field, page borders — **DONE**
 
@@ -197,12 +197,12 @@ bench flows (free text, highlighter, image stamps, fallback notice) and five
 import formats (md/txt/tsv/pptx/epub) not yet re-driven on the web surfaces
 they share code with.
 
-> **Update (2026-09-03):** five of the six classic-only sub-items have since
-> closed — ctrl+wheel zoom and Ctrl+P (`e9a8310`), Markdown export and the
-> "edit or convert?" PDF choice (`6af571b`), rich-HTML paste conversion
-> (this commit, probed live). The Ctrl+K double-fire is fixed. Remaining:
-> ribbon marks on a manuscript selection (`styleSelection` wiring), the four
-> bench flows, and the five un-re-driven import formats.
+> **Update (2026-09-03):** all six classic-only sub-items have since closed —
+> ctrl+wheel zoom and Ctrl+P (`e9a8310`), Markdown export and the "edit or
+> convert?" PDF choice (`6af571b`), rich-HTML paste conversion and ribbon
+> marks on a manuscript selection (probed live, same day). The Ctrl+K
+> double-fire is fixed. Remaining: the four bench flows and the five
+> un-re-driven import formats (shared-code surfaces, lower risk).
 
 **Shortest path to full parity, in order of value per line of code:**
 

@@ -351,6 +351,20 @@ export function flushActiveLiveEdit(): void {
   active?.flush();
 }
 
+export interface StyleRunOpts {
+  tag?: string;
+  className?: string;
+  data?: Record<string, string | number | boolean | null | undefined>;
+  style?: string;
+}
+
+/** Style the manuscript selection through the attached LiveEdit, if any —
+    the toolbar's first road (classic main.js styleRun/applyHl): true means
+    the galley took the mark, false means fall back to the source pane. */
+export function styleActiveSelection(opts: StyleRunOpts): boolean {
+  return active?.styleSelection(opts) ?? false;
+}
+
 export class LiveEdit {
   private deck: HTMLElement | null = null;
   private hooks: LiveEditHooks | null = null;
@@ -380,6 +394,56 @@ export class LiveEdit {
     if (active === this) active = null;
     this.deck = null;
     this.hooks = null;
+  }
+
+  /** Classic LiveEdit.styleSelection (src/js/live-edit.js:504): wrap the DOM
+      selection in the manuscript with a styled run — built exactly as the
+      engine builds it (same data-* keys, same inline style), so the galley
+      shows the change at once and the serializer round-trips it to dialect
+      on flush. Returns false when the selection isn't a styleable manuscript
+      range, so the caller can fall back to the source-pane path. */
+  styleSelection({ tag = "span", className = "", data = {}, style = "" }: StyleRunOpts): boolean {
+    if (!this.deck || !this.hooks) return false;
+    const sel = document.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+    const range = sel.getRangeAt(0);
+    const root = range.commonAncestorContainer;
+    if (!this.deck.contains(root)) return false;
+    const host = root.nodeType === 1 ? (root as HTMLElement) : root.parentElement;
+    if (!host || !host.closest('[contenteditable="true"]')) return false;
+
+    const touched = this.rangeOfSelection();
+    if (!touched) return false;
+    this.pending = union(this.pending, touched);
+
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    for (const [k, v] of Object.entries(data)) {
+      if (v != null && v !== false) node.dataset[k] = v === true ? "1" : String(v);
+    }
+    if (style) node.setAttribute("style", style);
+    // surroundContents throws when the range straddles an element boundary
+    // (half a bold run, say); extract-and-insert handles that shape.
+    try {
+      range.surroundContents(node);
+    } catch {
+      node.appendChild(range.extractContents());
+      range.insertNode(node);
+    }
+    if (!node.textContent) {
+      node.remove();
+      return false;
+    }
+
+    const after = document.createRange();
+    after.selectNodeContents(node);
+    sel.removeAllRanges();
+    sel.addRange(after);
+
+    if (this.flushTimer) clearTimeout(this.flushTimer);
+    this.flushTimer = setTimeout(() => this.flush(), 250);
+    this.hooks.editPending();
+    return true;
   }
 
   /* ================= locating blocks ================= */
