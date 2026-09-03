@@ -1,0 +1,33 @@
+name: Release
+# Every version tag ships the forever edition as a release artifact —
+# the single-file build is a feature, not legacy (README, MASTER-PROMPT §2).
+on:
+  push:
+    # dotted version tags only — v2.0.0 releases, v1-classic (the frozen
+    # baseline tag) must never re-release
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable # before setup-node so its pnpm cache probe finds pnpm
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Build the forever edition
+        run: node build.mjs
+      - name: Checksum
+        run: sha256sum dist/DocForge.html > dist/DocForge.html.sha256
+      - name: Create release with the single-file build attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/DocForge.html dist/DocForge.html.sha256 \
+            --title "DocForge $GITHUB_REF_NAME" \
+            --generate-notes
