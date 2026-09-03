@@ -118,7 +118,7 @@ the "untick headers and footers" toast fires (probe B saw it scheduled).
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
-| One import door, 12 formats | DONE | `lib/imports.ts` router; live via Open: csv, xlsx, html, ipynb, docx, and pdf-convert all replaced the source with converted Markdown (pdf strictly verified — source changed to the converted text); md/txt/tsv/pptx/epub ride the same dispatch + `packages/importers` tests (66 in `test/`) — not individually re-driven on the web door (03-ports.md says the same) |
+| One import door, 12 formats | DONE | `lib/imports.ts` router; live via Open: csv, xlsx, html, ipynb, docx, and pdf-convert all replaced the source with converted Markdown (pdf strictly verified — source changed to the converted text); md/txt/tsv/pptx/epub re-driven through the real Open door 2026-09-03 (fixture files fed to the file input; each converted onto the page — md/txt verbatim, tsv as a table, pptx title as a heading, epub chapter through htmlToMd; console clean) |
 | Images (drop/Open/paste) | DONE | `processImageFile` + `insertFigure`; clipboard image smart-paste wired into CodeMirror (`source-pane.tsx` paste handler) |
 | Drag-drop | DONE | Full-window capture-phase DropZone naming what a drop does; routes through the same `handleImport` that Open uses (probed) |
 | PDF **both roads** from the studio door | DONE | Wave one: dropping/opening a PDF raises the classic "edit in place, or convert?" dialog (`studio-shell.tsx` pdfPending); edit stashes via `stashBenchFile` and client-navigates to `/pdf`, convert takes the old road |
@@ -201,8 +201,10 @@ they share code with.
 > ctrl+wheel zoom and Ctrl+P (`e9a8310`), Markdown export and the "edit or
 > convert?" PDF choice (`6af571b`), rich-HTML paste conversion and ribbon
 > marks on a manuscript selection (probed live, same day). The Ctrl+K
-> double-fire is fixed. Remaining: the four bench flows and the five
-> un-re-driven import formats (shared-code surfaces, lower risk).
+> double-fire is fixed, and the five import formats (md/txt/tsv/pptx/epub)
+> are re-driven through the real Open door. Remaining: the four bench flows
+> (free text, highlighter, image stamps, fallback notice — shared-code
+> surfaces, lower risk).
 
 **Shortest path to full parity, in order of value per line of code:**
 
