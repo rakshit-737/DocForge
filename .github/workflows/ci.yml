@@ -42,5 +42,13 @@ jobs:
         run: |
           corepack pnpm --filter "@docforge/cli" run build
           node qa/cli-corpus.mjs
+      # Phase-5 gate: the two npm packages, imported from plain Node ESM —
+      # the workspace eats their TypeScript source, so only this would catch
+      # a dist that bundlers forgive and Node rejects.
+      - name: The npm builds import under plain Node
+        run: |
+          corepack pnpm --filter "@docforge/engine" run build
+          corepack pnpm --filter "@docforge/mathml-omml" run build
+          node qa/dist-consume.mjs
       - name: Build web studio
         run: corepack pnpm --filter "@docforge/web" run build

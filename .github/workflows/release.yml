@@ -31,3 +31,23 @@ jobs:
             dist/DocForge.html dist/DocForge.html.sha256 \
             --title "DocForge $GITHUB_REF_NAME" \
             --generate-notes
+
+      # The two library packages go to npm from the same tag — but only once
+      # the repository owner has added an NPM_TOKEN secret. Without it these
+      # steps skip, so a tag still cuts a GitHub release either way.
+      - name: Build the npm packages
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          corepack pnpm --filter "@docforge/engine" run build
+          corepack pnpm --filter "@docforge/mathml-omml" run build
+          node qa/dist-consume.mjs
+      - name: Publish @docforge/engine and @docforge/mathml-omml
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
+          # --no-git-checks: the tag is the release, and the working tree
+          # carries the freshly built dist/ these packages publish.
+          corepack pnpm --filter "@docforge/engine" publish --no-git-checks --access public
+          corepack pnpm --filter "@docforge/mathml-omml" publish --no-git-checks --access public

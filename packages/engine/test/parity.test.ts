@@ -135,17 +135,32 @@ function loadClassic(): ClassicEngine {
     classic = loadClassic();
   });
 
-  it.each(cases.map((c) => [c.id, c] as [string, GoldenCase]))("render: %s", (_id, c) => {
-    const src = readFileSync(join(ROOT, "qa", "golden", c.doc), "utf8");
-    const ours = render(src, c.settings, {});
-    const theirs = classic.render(src, c.settings, {});
-    expect(ours.doc.outerHTML).toBe(theirs.doc.outerHTML);
-    expect(ours.meta).toEqual(theirs.meta);
-  });
+  /* Each case renders the document TWICE (ours and classic's) through KaTeX and
+     highlight.js; the torture documents alone take seconds, and `pnpm -r test`
+     runs every package's suite at once. The default 5s timeout turns that
+     contention into a red parity gate that isn't a parity failure — so these
+     two get room, and a genuine mismatch still fails instantly. */
+  const SLOW = 120_000;
 
-  it.each(cases.map((c) => [c.id, c] as [string, GoldenCase]))("dynamicCss: %s", (_id, c) => {
-    expect(dynamicCss(c.settings)).toBe(classic.dynamicCss(c.settings));
-  });
+  it.each(cases.map((c) => [c.id, c] as [string, GoldenCase]))(
+    "render: %s",
+    (_id, c) => {
+      const src = readFileSync(join(ROOT, "qa", "golden", c.doc), "utf8");
+      const ours = render(src, c.settings, {});
+      const theirs = classic.render(src, c.settings, {});
+      expect(ours.doc.outerHTML).toBe(theirs.doc.outerHTML);
+      expect(ours.meta).toEqual(theirs.meta);
+    },
+    SLOW,
+  );
+
+  it.each(cases.map((c) => [c.id, c] as [string, GoldenCase]))(
+    "dynamicCss: %s",
+    (_id, c) => {
+      expect(dynamicCss(c.settings)).toBe(classic.dynamicCss(c.settings));
+    },
+    SLOW,
+  );
 
   it("fontFaceCss parity (with and without __FONT_DATA__)", () => {
     expect(fontFaceCss()).toBe(classic.fontFaceCss());

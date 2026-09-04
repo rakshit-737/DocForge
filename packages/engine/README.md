@@ -1,9 +1,29 @@
 # @docforge/engine
 
-**Internal workspace package — `private: true`, not published to npm.** This is the
-DocForge dialect engine: Markdown plus the DocForge dialect in, a fully themed
+The DocForge dialect engine: Markdown plus the DocForge dialect in, a fully themed
 document DOM out. Every surface in the product — the paginated preview, the PDF
 export, the `.docx` exporter's walk — renders from what this package produces.
+
+```bash
+npm i @docforge/engine
+```
+
+```js
+// marked, katex and highlight.js are read as ambient globals (the classic
+// contract the single-file build depends on) — assign them before importing.
+globalThis.marked = marked;
+globalThis.katex = katex;
+globalThis.hljs = hljs;
+
+const { render, dynamicCss } = await import("@docforge/engine");
+const { doc, meta } = render(source, settings, attachments);
+```
+
+The published package ships compiled ESM plus declarations (`dist/`), built by
+`node build.mjs`; the tarball carries `src/` as well. Inside this monorepo the
+workspace copy resolves to `src/index.ts` so every surface compiles the live source,
+and `publishConfig` swaps the entry points at publish time. A browser needs a DOM;
+under Node give it one (happy-dom or jsdom) before calling `render`.
 
 ## What it is
 

@@ -137,12 +137,20 @@ byte. Written against the OMML shapes in ECMA-376 Part 1 §22.1 and against what
   (`ImportedXmlComponent.fromXmlString`, or splice into `document.xml` yourself), not
   a node tree.
 
+## Install
+
+```bash
+npm i @docforge/mathml-omml
+```
+
 ## Shipping format
 
-The package currently ships **TypeScript source** via its exports map
-(`.` → `./src/index.ts`) and is consumed by bundlers and TS-aware runtimes (Vite,
-esbuild, Next, tsx). Compiled `dist/` + `.d.ts` emission lands with the actual npm
-publish.
+The published package ships **compiled ESM plus declarations** — `dist/index.js` and
+`dist/index.d.ts`, built by `node build.mjs` (tsc, then relative specifiers gain their
+`.js` so plain Node ESM resolves them). Inside the DocForge monorepo the workspace
+copy still resolves to `src/index.ts`, so the studio and the single-file build compile
+the live source; `publishConfig` swaps the entry points at publish time. The tarball
+carries `src/` too, for readers who want the annotated original.
 
 ## License
 

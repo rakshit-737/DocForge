@@ -1,6 +1,6 @@
 {
   "name": "@docforge/mathml-omml",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": false,
   "description": "KaTeX MathML to Word OMML (Office Math) converter — real, editable Word equations",
   "keywords": [
@@ -23,10 +23,24 @@
     "directory": "packages/mathml-omml"
   },
   "files": [
-    "src"
+    "dist",
+    "src",
+    "README.md"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./global": {
+        "types": "./dist/global.d.ts",
+        "default": "./dist/global.js"
+      }
+    }
   },
   "type": "module",
   "exports": {
@@ -34,6 +48,7 @@
     "./global": "./src/global.ts"
   },
   "scripts": {
+    "build": "node build.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },

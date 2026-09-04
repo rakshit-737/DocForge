@@ -47,9 +47,26 @@ The law has two clauses:
 | Byte-parity suite | `RUN_PARITY=1 corepack pnpm test` | Asserts the typed engine's output byte-for-byte against the frozen classic fixtures (`packages/engine/test/parity.test.ts`). CI always arms it. |
 | Golden gate | `corepack pnpm golden` | The merge law, above. |
 | UI suites | `node qa/<suite>.mjs` | Headless Playwright driving the built `dist/DocForge.html` by its real selector ids — build first with `node build.mjs`. Suites: `smoke`, `deep`, `borders`, `import-smoke`, `manuscript-smoke`, `cmdk-smoke`, `convert-smoke`, `firstrun-smoke`, `font-smoke`, `pdfedit-smoke`, `run-styles-smoke`, `proposal`, `tier4`; `run.mjs` is the quick end-to-end pass, `uishot.mjs` takes chrome screenshots. |
+| Offline gate | `node build.mjs && node qa/offline-gate.mjs` | Opens `dist/DocForge.html` from `file://` with every non-file request aborted. Zero network attempts is the bar — the forever edition's whole promise. CI runs it. |
+| CLI corpus gate | `corepack pnpm --filter @docforge/cli build && node qa/cli-corpus.mjs` | Converts all 17 golden-corpus documents headlessly; `--pdf` also prints two through Chromium. CI runs the `.docx` half. |
+| npm build gate | `node qa/dist-consume.mjs` | Imports the two publishable packages' `dist/` from plain Node ESM (build them first). Catches a dist that bundlers forgive and Node rejects. CI runs it. |
 | Visual contact sheet | `node qa/visual.mjs` | Renders the torture document in every theme, exports both formats, and — on Windows with Office installed — converts the `.docx` through real Word for a side-by-side sheet. Optional lane; don't block on it if you have no Word. |
 
 A change is ready when lint, typecheck, unit tests (parity armed) and the golden gate are green, plus whichever UI suites cover the surface you touched.
+
+## Cutting a release
+
+Push a dotted version tag (`v2.0.0`, `v2.1.0-rc.1`) and `.github/workflows/release.yml`
+builds the forever edition, attaches `dist/DocForge.html` plus its SHA-256 to a
+generated GitHub Release, and — **only if the repository carries an `NPM_TOKEN`
+secret** — builds and publishes `@docforge/engine` and `@docforge/mathml-omml`.
+Without the secret those steps skip and the tag still cuts a release. The frozen
+`v1-classic` baseline tag can never re-release: the workflow only matches dotted
+versions.
+
+Publishing to npm is a one-way door, so it stays a deliberate act by the owner:
+create an npm automation token with publish rights to the `@docforge` scope, add it
+as the `NPM_TOKEN` repository secret, then tag. See `docs/phases/05-platform.md`.
 
 ## The dialect is additive-only
 

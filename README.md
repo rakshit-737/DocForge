@@ -55,11 +55,12 @@ The full markup reference — every construct, with the golden-corpus document t
 apps/
   web/            the studio — Next.js App Router, React 19, Tailwind 4, CodeMirror 6, Zustand
 packages/
-  engine/         dialect → typed AST → HTML; themes; typography (the parser is the contract)
+  engine/         dialect → typed AST → HTML; themes; typography (the parser is the contract;
+                  publishable to npm alongside mathml-omml)
   export-docx/    AST → .docx: embedded fonts, styles, cover band, OMML, TOC field
   importers/      docx/pdf/xlsx/pptx/epub/ipynb/csv/html/image → dialect markdown
   pdf-editor/     the in-place PDF bench (ToUnicode inversion, original-byte export)
-  mathml-omml/    KaTeX MathML → Word OMML converter (own work, MIT — headed for npm)
+  mathml-omml/    KaTeX MathML → Word OMML converter (own work, MIT — publishable to npm)
   config/         shared tsconfig / tooling presets
 src/              the classic shell (index.html, app.css, doc.css, main.js, live-edit.js)
                   — consumes the packages; build.mjs inlines it all into dist/DocForge.html

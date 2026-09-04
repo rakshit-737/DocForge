@@ -6,6 +6,7 @@
       "apps/**",
       "!**/coverage",
       "!**/.next",
+      "!**/dist",
       "!apps/web/lib/vendor",
       "!apps/web/public",
       "!packages/engine/test/fixtures/classic-engine.js"
