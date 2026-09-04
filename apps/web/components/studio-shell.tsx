@@ -34,6 +34,7 @@ import { anyDialogOpen, CommandPalette } from "./command-palette";
 import { DocumentsMenu } from "./documents-menu";
 import { DropZone } from "./drop-zone";
 import { EmptyState } from "./empty-state";
+import { EquationPalette } from "./equation-palette";
 import { FindBar, ToastRack } from "./find-bar";
 import { FirstRun } from "./first-run";
 import { HelpDialog } from "./help-dialog";
@@ -55,6 +56,7 @@ export function StudioShell() {
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [symbolsOpen, setSymbolsOpen] = useState(false);
   const [pdfPending, setPdfPending] = useState<File | null>(null);
   const [savedStamp, setSavedStamp] = useState<string>("");
   /* Mirrors project-file.ts's open target so the desk can name the file a
@@ -457,6 +459,12 @@ export function StudioShell() {
     { group: "Actions", label: "Export Markdown", hint: ".md source", run: doExportMd },
     {
       group: "Actions",
+      label: "Equation symbols…",
+      hint: "search by what it does",
+      run: () => setSymbolsOpen(true),
+    },
+    {
+      group: "Actions",
       label: "Export standalone HTML",
       hint: "one shareable file",
       run: () => void doExportHtml(),
@@ -677,7 +685,7 @@ export function StudioShell() {
           data-chrome=""
           className="flex min-h-0 flex-col border-r border-line"
         >
-          <FormatToolbar view={view} />
+          <FormatToolbar view={view} onSymbols={() => setSymbolsOpen(true)} />
           <FindBar
             view={view}
             open={findOpen}
@@ -776,6 +784,7 @@ export function StudioShell() {
       <SettingsDrawer />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} commands={commands} />
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      <EquationPalette open={symbolsOpen} onOpenChange={setSymbolsOpen} view={view} />
       <VersionPanel
         open={versionsOpen}
         onOpenChange={setVersionsOpen}

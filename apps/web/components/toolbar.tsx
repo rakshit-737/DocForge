@@ -624,7 +624,14 @@ function SizeSelect({ onPick }: { onPick: (pt: string) => void }) {
 
 /* ---------------- the toolbar ---------------- */
 
-export function FormatToolbar({ view }: { view: EditorView | null }) {
+export function FormatToolbar({
+  view,
+  onSymbols,
+}: {
+  view: EditorView | null;
+  /** Opens the equation palette (§8.2) — owned by the shell, like the other dialogs. */
+  onSymbols?: () => void;
+}) {
   const baseCatalog = useFontCatalog();
   /* The reader's own typefaces sit beside the embedded ones in the Typeface
      select — a per-selection face is written as a span attribute, and
@@ -820,6 +827,9 @@ export function FormatToolbar({ view }: { view: EditorView | null }) {
             </Tool>
             <Tool label="Equation" run={run(insertEquation)}>
               ∑
+            </Tool>
+            <Tool label="Equation symbols — searchable" run={() => onSymbols?.()}>
+              √x
             </Tool>
             <Tool label="Footnote" run={run(insertFootnote)}>
               f¹

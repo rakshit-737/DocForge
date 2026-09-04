@@ -30,6 +30,7 @@ These are commitments, not marketing (MASTER-PROMPT §5):
 - **Professional page numbering** — the cover is unnumbered, the contents page runs in romans (i, ii…), and the body starts at "Page 1 of N" where N counts body pages only; identical scheme in Word
 - **Footnotes** — `[^1]` calls with `[^1]: text` definitions; placed at the foot of the correct page in the PDF and exported as real Word footnotes
 - **Citations** — `[@key]` in text, `[@key]: Full entry` definitions, `[references]` for the list; numeric `[1]` (IEEE-like) or Author–year (APA-like) style, chosen in Settings; locators like `[@key, p. 33]` supported. **Drop a `.bib`, `.ris` or Zotero CSL-JSON export** and its entries merge in as definitions you can cite — entries you already defined are never overwritten, and the studio says which of the new ones nothing cites yet
+- **An equation palette** — search the symbols by what they *do* (“fraction”, “implies”, “tolerance”, “power”), see each one drawn as it will print, and insert correct LaTeX with the caret where the writing continues — it brings its own `$…$` unless you are already inside maths
 - **Mathematics** — `$inline$` and `$$display$$` LaTeX, rendered with KaTeX in the preview/PDF and exported to Word as **real editable equations** (OMML), not pictures
 - **Cross-references** — `[#fig:name]`, `[#tbl:name]`, `[#sec:name]` resolve to "Figure 3", "Table 1", "Section 2.1"
 - **Table captions** — `[table: caption]` above a table numbers it as *Table N*; `[lof]` and `[lot]` print lists of figures and tables

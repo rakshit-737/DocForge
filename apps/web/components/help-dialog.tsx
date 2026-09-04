@@ -256,6 +256,11 @@ export function HelpDialog({
                 one out. <code>Tab</code> / <code>Shift</code>+<code>Tab</code> nest and un-nest the
                 item
               </Row>
+              <Row k={<code>√x</code>}>
+                <b>Equation symbols</b> — the toolbar button (or the palette) opens a searchable
+                picker: type what the symbol <i>does</i> and take it with Enter. It brings its own
+                <code>$…$</code> unless the caret is already inside maths
+              </Row>
               <Row k={<code>/</code>}>
                 <b>Slash commands</b> — type <code>/</code> at the start of a line and the dialect
                 offers itself: <code>/table 3x4</code>, <code>/figure</code>, <code>/equation</code>
