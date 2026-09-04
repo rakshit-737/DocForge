@@ -64,7 +64,9 @@
   --rule: #26261f;      /* structural ink rule */
   --tx: #1a1a17;        /* ink */
   --tx2: #4c4b44;
-  --tx3: #64625a;   /* tertiary — ≥4.5:1 on every day surface incl. --bg2 */
+  --tx3: #5e5c54;   /* tertiary — ≥4.5:1 on every day surface, INCLUDING the
+                       preview pane's own #d8d5cc ground, where the old #64625a
+                       came to 4.16 and axe was right to call it */
   --pri: #bb3a2c;       /* grease-pencil red */
   --pri2: #a12f23;
   --focus: #bb3a2c;
@@ -289,7 +291,10 @@ body.pdf-mode #btnSettings, body.pdf-mode #btnDocx, body.pdf-mode #btnPdf { disp
 }
 .sgroup[open] summary::after { transform: rotate(45deg); }
 .field { margin-bottom: 12px; }
-.field label { display: block; font-size: 12px; color: var(--tx2); margin-bottom: 4px; }
+/* .lblish names a GROUP of controls (the accent swatches) — it reads like a
+   label and is wired with aria-labelledby, because a <label> may only point at
+   one control and the swatches are eight. */
+.field label, .field .lblish { display: block; font-size: 12px; color: var(--tx2); margin-bottom: 4px; }
 /* printed-form fields: a ruled hairline box, not a soft well —
    focus swaps the rule for the grease pencil */
 .field input[type="text"], .field input[type="date"], .field select, .field textarea {

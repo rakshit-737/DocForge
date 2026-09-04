@@ -81,17 +81,17 @@ finish review, the verdict, and DESIGN.md
 <div id="main">
   <aside id="settings">
     <h3>Document</h3>
-    <div class="field"><label>Title</label><input type="text" id="sTitle" placeholder="Document title"></div>
-    <div class="field"><label>Subtitle</label><input type="text" id="sSubtitle" placeholder="One-line description"></div>
-    <div class="field"><label>Author</label><input type="text" id="sAuthor" placeholder="Your name"></div>
+    <div class="field"><label for="sTitle">Title</label><input type="text" id="sTitle" placeholder="Document title"></div>
+    <div class="field"><label for="sSubtitle">Subtitle</label><input type="text" id="sSubtitle" placeholder="One-line description"></div>
+    <div class="field"><label for="sAuthor">Author</label><input type="text" id="sAuthor" placeholder="Your name"></div>
     <div class="frow">
-      <div class="field"><label>Top label <span style="opacity:.6">(course / company)</span></label><input type="text" id="sKicker" placeholder="e.g. CS-101 · Sem 4"></div>
+      <div class="field"><label for="sKicker">Top label <span style="opacity:.6">(course / company)</span></label><input type="text" id="sKicker" placeholder="e.g. CS-101 · Sem 4"></div>
     </div>
-    <div class="field"><label>Extra line <span style="opacity:.6">(roll no / email)</span></label><input type="text" id="sMetaExtra" placeholder="e.g. Roll No. 42"></div>
-    <div class="field"><label>Date</label><input type="date" id="sDate"></div>
+    <div class="field"><label for="sMetaExtra">Extra line <span style="opacity:.6">(roll no / email)</span></label><input type="text" id="sMetaExtra" placeholder="e.g. Roll No. 42"></div>
+    <div class="field"><label for="sDate">Date</label><input type="date" id="sDate"></div>
 
     <h3>Style</h3>
-    <div class="field"><label>Theme</label>
+    <div class="field"><label for="sTheme">Theme</label>
       <select id="sTheme">
         <option value="modern">Modern — clean sans</option>
         <option value="executive">Executive — serif headings</option>
@@ -99,8 +99,8 @@ finish review, the verdict, and DESIGN.md
         <option value="minimal">Minimal — quiet & spare</option>
       </select>
     </div>
-    <div class="field"><label>Accent colour</label>
-      <div class="swatches">
+    <div class="field"><span class="lblish" id="sAccentLabel">Accent colour</span>
+      <div class="swatches" role="group" aria-labelledby="sAccentLabel">
         <button type="button" class="sw" data-c="#1f3a5f" style="background:#1f3a5f" aria-label="Accent: deep navy"></button>
         <button type="button" class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Accent: blue"></button>
         <button type="button" class="sw" data-c="#0f766e" style="background:#0f766e" aria-label="Accent: teal"></button>
@@ -113,16 +113,16 @@ finish review, the verdict, and DESIGN.md
       </div>
     </div>
     <div class="frow">
-      <div class="field"><label>Page size</label>
+      <div class="field"><label for="sPage">Page size</label>
         <select id="sPage"><option value="A4">A4</option><option value="Letter">Letter</option></select>
       </div>
-      <div class="field"><label>Margins</label>
+      <div class="field"><label for="sMargins">Margins</label>
         <select id="sMargins"><option value="normal">Normal</option><option value="narrow">Narrow</option><option value="wide">Wide</option></select>
       </div>
     </div>
     <details class="sgroup" open>
     <summary>Typography</summary>
-    <div class="field"><label>Headings typeface</label>
+    <div class="field"><label for="sFontHead">Headings typeface</label>
       <select id="sFontHead">
         <option value="theme">Theme default</option>
         <option value="sans">Source Sans — humanist</option>
@@ -133,7 +133,7 @@ finish review, the verdict, and DESIGN.md
         <option value="crimson">Crimson — scholarly</option>
       </select>
     </div>
-    <div class="field"><label>Body typeface</label>
+    <div class="field"><label for="sFontBody">Body typeface</label>
       <select id="sFontBody">
         <option value="theme">Theme default</option>
         <option value="sans">Source Sans — humanist</option>
@@ -145,7 +145,7 @@ finish review, the verdict, and DESIGN.md
       </select>
     </div>
     <div class="frow">
-      <div class="field"><label>Base font size</label>
+      <div class="field"><label for="sBaseSize">Base font size</label>
         <select id="sBaseSize">
           <option value="10">10 pt</option>
           <option value="10.5">10.5 pt</option>
@@ -155,7 +155,7 @@ finish review, the verdict, and DESIGN.md
           <option value="13">13 pt</option>
         </select>
       </div>
-      <div class="field"><label>Line spacing</label>
+      <div class="field"><label for="sLineSpacing">Line spacing</label>
         <select id="sLineSpacing">
           <option value="default">Default</option>
           <option value="1">Single</option>
@@ -169,7 +169,7 @@ finish review, the verdict, and DESIGN.md
 
     <details class="sgroup">
     <summary>Border &amp; citations</summary>
-    <div class="field"><label>Page border</label>
+    <div class="field"><label for="sBorderStyle">Page border</label>
       <select id="sBorderStyle">
         <option value="none">None</option>
         <option value="rule">Rule — single line</option>
@@ -182,14 +182,14 @@ finish review, the verdict, and DESIGN.md
       </select>
     </div>
     <div class="frow">
-      <div class="field"><label>Border weight</label>
+      <div class="field"><label for="sBorderWeight">Border weight</label>
         <select id="sBorderWeight">
           <option value="fine">Fine</option>
           <option value="medium">Medium</option>
           <option value="bold">Bold</option>
         </select>
       </div>
-      <div class="field"><label>Border colour</label>
+      <div class="field"><label for="sBorderColor">Border colour</label>
         <select id="sBorderColor">
           <option value="ink">Ink</option>
           <option value="accent">Accent</option>
@@ -197,7 +197,7 @@ finish review, the verdict, and DESIGN.md
       </div>
     </div>
 
-    <div class="field"><label>Citation style</label>
+    <div class="field"><label for="sCiteStyle">Citation style</label>
       <select id="sCiteStyle">
         <option value="ieee">Numeric — [1], IEEE-style</option>
         <option value="apa">Author–year — (Smith, 2020)</option>
