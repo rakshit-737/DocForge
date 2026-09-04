@@ -40,24 +40,48 @@ export async function applyDoc(page, { source, settings = {} }) {
   await page.evaluate(
     ({ source, settings, FIELDS, SELECTS, TOGGLES }) => {
       const fire = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+      /* A control this build has never heard of is skipped, not thrown over:
+         the golden BASELINE is the v1-classic tag, which predates every
+         setting added since — the cases that use them are `postBaseline` for
+         exactly that reason, and the baseline side captures them with the
+         defaults it does understand. Throwing here failed the case instead,
+         and each failure cost the runner two 120-second retries. */
+      const missing = [];
       for (const [k, id] of Object.entries(FIELDS)) {
         if (settings[k] == null) continue;
         const el = document.getElementById(id);
+        if (!el) {
+          missing.push(id);
+          continue;
+        }
         el.value = settings[k];
         fire(el, "input");
       }
       for (const [k, id] of Object.entries(SELECTS)) {
         if (settings[k] == null) continue;
         const el = document.getElementById(id);
+        if (!el) {
+          missing.push(id);
+          continue;
+        }
+        /* A <select> silently keeps its old value when handed an option it
+           does not have (an older build's citeStyle, say) — say so rather
+           than let the case look as though it set something. */
         el.value = settings[k];
+        if (el.value !== String(settings[k])) missing.push(`${id}=${settings[k]}`);
         fire(el, "change");
       }
       for (const [k, id] of Object.entries(TOGGLES)) {
         if (settings[k] == null) continue;
         const el = document.getElementById(id);
+        if (!el) {
+          missing.push(id);
+          continue;
+        }
         el.checked = !!settings[k];
         fire(el, "change");
       }
+      if (missing.length) window.__dfUnexpressed = missing;
       if (settings.accent) {
         const el = document.getElementById("cAccent");
         el.value = settings.accent;
@@ -72,6 +96,13 @@ export async function applyDoc(page, { source, settings = {} }) {
     { source, settings, FIELDS, SELECTS, TOGGLES }
   );
   await settle(page);
+  /* Handed back so a caller can SAY a case could not be expressed by this
+     build, instead of quietly capturing the defaults and calling it evidence. */
+  return page.evaluate(() => {
+    const m = window.__dfUnexpressed || [];
+    window.__dfUnexpressed = undefined;
+    return m;
+  });
 }
 
 export async function settle(page, timeout = 60000) {

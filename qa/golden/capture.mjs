@@ -91,7 +91,11 @@ async function captureOnce(b, distUrl, outDir, c, scale) {
   try {
     const source = readFileSync(resolve(HERE, c.doc), "utf8");
     page = await openApp(b, distUrl);
-    await applyDoc(page, { source, settings: c.settings });
+    const unexpressed = await applyDoc(page, { source, settings: c.settings });
+    /* The baseline edition predates settings the current one has, so this is
+       expected there and recorded rather than hidden; on the HEAD side it
+       means a case is claiming to exercise something the drawer cannot say. */
+    if (unexpressed.length) entry.unexpressed = unexpressed;
 
     // Pin the preview to MANUAL zoom (out then in lands back on 1.0 in "man" mode).
     // In fit mode every resize/observer re-runs applyZoom, and the screenshot loop's

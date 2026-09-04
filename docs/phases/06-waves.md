@@ -77,6 +77,13 @@ asserting on CSS:
   own background paints after it, the mark vanishes completely. It rides over
   the page instead, in a tenth of the page's ink, so the prose reads straight
   through it.
+- **The harness threw on a build older than the setting.** `applyDoc` assumed
+  every mapped control existed, so the moment the maps grew, the BASELINE side
+  — the v1-classic tag, which predates all of them — raised a TypeError and
+  the case failed into two 120-second retries. It skips what a build has never
+  heard of now, and hands back the list, which is how `stamped` was caught
+  asking for a 12 mm letterhead: a height no drawer offers, so the select kept
+  14 and the case had been proving the default.
 - **The golden gate could not express the settings at all.** The harness drives
   the forever edition's real drawer, and that drawer had no fields for the
   running-head slots, `apa7`, or either stamp — so the `running-heads` case had

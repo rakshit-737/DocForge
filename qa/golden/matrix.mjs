@@ -75,7 +75,7 @@ export const CASES = [
   // the three of them apart. Postdates v1-classic AND the frozen classic engine.
   // The logo is a 96×24 PNG written by hand — 139 bytes, so the matrix carries
   // its own fixture rather than reaching for a file.
-  { id: "stamped", postBaseline: true, postClassic: true, doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, title: "Fracture Mechanics", watermark: "CONFIDENTIAL", letterhead: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAAAYCAIAAACKi2/DAAAAUklEQVR42u3YsREAEBBFQR0IVSDRlvIVQQeXYAT2z6tgs7uUS1NQQgAI0FWgaeEAAdoEqn0cCRAgQIAAAQIECBCgv4AcE4AAXQXyEvNRBAToYQuPvG2grm3pMAAAAABJRU5ErkJggg==`, letterheadSize: "12" }) },
+  { id: "stamped", postBaseline: true, postClassic: true, doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, title: "Fracture Mechanics", watermark: "CONFIDENTIAL", letterhead: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAAAYCAIAAACKi2/DAAAAUklEQVR42u3YsREAEBBFQR0IVSDRlvIVQQeXYAT2z6tgs7uUS1NQQgAI0FWgaeEAAdoEqn0cCRAgQIAAAQIECBCgv4AcE4AAXQXyEvNRBAToYQuPvG2grm3pMAAAAABJRU5ErkJggg==`, letterheadSize: "18" }) },
 
   // ---- typography knobs: base size and line spacing off the defaults ----
   { id: "type-large-loose", doc: "corpus/01-inline-marks.md", settings: s({ theme: "executive", page: "A4", margins: "normal", baseSize: "12", lineSpacing: "1.5", cover: false, pageNums: true }) },
