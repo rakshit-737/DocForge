@@ -300,6 +300,22 @@ export function StudioShell() {
     [convertFile],
   );
 
+  /** Several files, one at a time and awaited: each opens its own document,
+      and two of those racing would interleave a save with a create and lose a
+      manuscript. A batch is a queue, not a stampede (§8.4). */
+  const importMany = useCallback(
+    async (files: File[]) => {
+      let opened = 0;
+      for (const f of files) {
+        if (await handleImport(f)) opened++;
+      }
+      if (files.length > 1) {
+        toast(`${files.length} files read — ${opened} opened as documents`, "info", 5000);
+      }
+    },
+    [handleImport],
+  );
+
   /* The Open door, Phase 5: where the browser can hand back a writable handle
      the file opens IN PLACE — the same file the next Save writes back to —
      and everywhere else the hidden `<input type=file>` does what it always
@@ -817,20 +833,17 @@ export function StudioShell() {
         </div>
       ) : null}
       <ToastRack />
-      <DropZone
-        onFiles={(files) => {
-          for (const f of files) void handleImport(f);
-        }}
-      />
+      <DropZone onFiles={(files) => void importMany([...files])} />
       <input
         ref={fileInput}
         type="file"
         accept=".md,.markdown,.txt,.json,.docx,.pdf,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,.html,.htm,.bib,.ris,image/*"
         className="hidden"
+        multiple
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void handleImport(f);
+          const files = [...(e.target.files ?? [])];
           e.target.value = "";
+          if (files.length) void importMany(files);
         }}
       />
     </div>
