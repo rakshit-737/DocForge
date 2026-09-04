@@ -38,6 +38,10 @@ lists** (`b5b2eed`, 20 tests, probe 9/9).
 | --- | --- | --- |
 | Headers/footers editor (§8.2) | **Shipped** (`a72c2a3`) | four slots with {title} {author} {date} {kicker} {section}; {section} stays live on BOTH sides (string(sect) / STYLEREF). 18 engine tests, 13 export tests reading the real OOXML, probe 10/10, parity green, and a golden matrix case (`1665aa8`) |
 | Equation palette (§8.2) | **Shipped** (`52f3648`) | searchable by what a symbol does; 23 tests, probe 8/8 |
+| One zoom instrument in both modes (ledger I4) | **Shipped** (`d5db7a0`) | shared `<ZoomCluster>`; the pdf-editor api gained setZoom/getZoom/fitZoom/onZoomChange; probe 9/9 |
+| Focus & flow (§8.1) | **Shipped** (`d124f28`) | prose word count + breakdown + session goal + typewriter scrolling in focus mode; 24 tests, probe 11/11 |
+| Batch convert (§8.4) | **Shipped** (`a2c7b77`) | Open and drop both take several files; one queue, awaited, so two imports can't race; probe 5/5 |
+| Theme designer (§8.2) | **Shipped** (`9921e27`) | save a look, apply it anywhere, share it as JSON; the look/content line is what the 18 tests press on; probe 10/10 |
 
 The headers/footers work carried one trap worth remembering: adding the
 new `@bottom-left` / `@bottom-right` boxes to `@page cover`
@@ -75,6 +79,13 @@ reached readers:
   re-delivers the same launch: the file opened twice.
 - **`loadFontData` re-fetched installed faces**, 404ing on every export,
   because a reader's typeface is EMBEDDED but has no file under `/fonts`.
+- **A multi-file drop fired every import at once.** Harmless while an import
+  replaced the document; once each one CREATED a document, two racing imports
+  would interleave a save with a create and lose a manuscript. Both doors
+  share one awaited queue now.
+- **Two scroll regions no keyboard could reach** (axe: the bench's proof
+  scroller and an overflowing toolbar row). The row earns a tab stop only
+  while it actually scrolls, so ledger A4's one-stop strip survives.
 
 ## Still waiting on the owner (MASTER-PROMPT §5.10)
 
