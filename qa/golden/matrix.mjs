@@ -64,6 +64,12 @@ export const CASES = [
   // ---- the title plate; `:::banner` postdates v1-classic, so the merge gate exempts it ----
   { id: "banner-plate", postBaseline: true, doc: "corpus/19-banner-plate.md", settings: s({ theme: "academic", accent: "#c2410c", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, numbered: true, justify: true, borderStyle: "thickthin", borderWeight: "bold", borderColor: "ink" }) },
 
+  // ---- running header/footer content (§8.2): both header slots written, both
+  // foot slots too, and {section} left live. Postdates v1-classic AND the frozen
+  // classic engine, so it is exempt from both comparisons and stands as the
+  // gate's own record of what the feature renders.
+  { id: "running-heads", postBaseline: true, postClassic: true, doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, title: "Fracture Mechanics", author: "E. Marrow", kicker: "MECH 401", date: "2026-09-04", headerLeft: "{kicker} · {title}", headerRight: "§ {section}", footerLeft: "{author}", footerRight: "{date}" }) },
+
   // ---- typography knobs: base size and line spacing off the defaults ----
   { id: "type-large-loose", doc: "corpus/01-inline-marks.md", settings: s({ theme: "executive", page: "A4", margins: "normal", baseSize: "12", lineSpacing: "1.5", cover: false, pageNums: true }) },
   { id: "type-small-single", doc: "corpus/10-code.md", settings: s({ theme: "minimal", page: "A4", margins: "narrow", baseSize: "10", lineSpacing: "1", cover: false, pageNums: true }) },
