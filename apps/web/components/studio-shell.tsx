@@ -28,8 +28,9 @@ import type { TemplateDocument } from "@/lib/templates";
 import { resolveTemplate, TEMPLATES } from "@/lib/templates";
 import { useUserFonts } from "@/lib/user-fonts";
 import { armVersionSnapshots, snapshot } from "@/lib/versions";
+import { adoptRememberedDocument, useWorkspace } from "@/lib/workspace";
 import { anyDialogOpen, CommandPalette } from "./command-palette";
-import { ConfirmDialog } from "./confirm-dialog";
+import { DocumentsMenu } from "./documents-menu";
 import { DropZone } from "./drop-zone";
 import { EmptyState } from "./empty-state";
 import { FindBar, ToastRack } from "./find-bar";
@@ -53,7 +54,6 @@ export function StudioShell() {
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
-  const [confirmNew, setConfirmNew] = useState(false);
   const [pdfPending, setPdfPending] = useState<File | null>(null);
   const [savedStamp, setSavedStamp] = useState<string>("");
   /* Mirrors project-file.ts's open target so the desk can name the file a
@@ -81,12 +81,16 @@ export function StudioShell() {
     /* The reader's own typefaces register before the first compose, so a
        document set in one is drawn in it from the first paint (§8.2). */
     void useUserFonts.getState().refresh();
+    /* …and the desk comes back to the document they left open (§8.1). This
+       must land before restoreSession reads a slot. */
+    adoptRememberedDocument();
     (async () => {
       const restored = await restoreSession();
       if (!restored && !useDocStore.getState().source) {
         const t = resolveTemplate("welcome");
         useDocStore.getState().replaceDocument({ source: t.source, settings: t.settings });
       }
+      void useWorkspace.getState().refresh();
       disarm = armAutosave((at) =>
         setSavedStamp(new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })),
       );
@@ -141,9 +145,36 @@ export function StudioShell() {
     },
     [],
   );
-  const handleTemplate = useCallback(
-    ({ label, source, settings }: TemplateDocument) => applyWithUndo(label, { source, settings }),
+  /* The destructive-replace killer (§8.1): anything that arrives whole — a
+     template, an imported file, a project — opens as ITS OWN document, and
+     what you were writing stays where it was. The one exception is a blank
+     desk, which would otherwise leave an empty document behind for every
+     template a reader tries. */
+  const openAsDocument = useCallback(
+    async (
+      label: string,
+      doc: { source: string; settings: Settings; attachments?: Record<string, unknown> },
+    ) => {
+      const live = useDocStore.getState();
+      if (!live.source.trim()) {
+        applyWithUndo(label, doc);
+        return;
+      }
+      await useWorkspace.getState().create({
+        source: doc.source,
+        settings: doc.settings,
+        attachments: doc.attachments,
+        title: (doc.settings.title as string) || label,
+      });
+      toast(`Opened “${label}” as a new document — your other work is untouched`, "info", 6000);
+    },
     [applyWithUndo],
+  );
+
+  const handleTemplate = useCallback(
+    ({ label, source, settings }: TemplateDocument) =>
+      void openAsDocument(label, { source, settings }),
+    [openAsDocument],
   );
 
   /* ---------------- save / open / new ---------------- */
@@ -183,19 +214,22 @@ export function StudioShell() {
     async (file: File): Promise<boolean> => {
       try {
         const doc = parseProject(await file.text());
-        applyWithUndo(file.name.replace(/\.docforge\.json$|\.json$/i, ""), doc);
+        await openAsDocument(file.name.replace(/\.docforge\.json$|\.json$/i, ""), doc);
         return true;
       } catch (e) {
         toast(e instanceof Error ? e.message : "That file did not open", "warn", 5000);
         return false;
       }
     },
-    [applyWithUndo],
+    [openAsDocument],
   );
 
   const newDocument = useCallback(() => {
-    handleTemplate(resolveTemplate("blank"));
-  }, [handleTemplate]);
+    void useWorkspace
+      .getState()
+      .create({ source: "" })
+      .then(() => toast("New document started — your other documents are untouched", "info", 4500));
+  }, []);
 
   /* ---------------- ports of entry: one handler for Open and the drop zone ---------------- */
   /* Resolves true when the document was REPLACED — the open-in-place road
@@ -235,9 +269,9 @@ export function StudioShell() {
       }
       if (res.source != null) {
         const title = f.name.replace(/\.[a-z0-9]+$/i, "");
-        applyWithUndo(f.name, {
+        await openAsDocument(f.name, {
           source: res.source,
-          settings: { ...useDocStore.getState().settings, title },
+          settings: { ...useDocStore.getState().settings, title } as Settings,
           attachments: res.attachments ?? {},
         });
         for (const w of res.warnings ?? []) toast(w, "warn", 5000);
@@ -245,7 +279,7 @@ export function StudioShell() {
       }
       return false;
     },
-    [view, applyWithUndo, openProjectFile],
+    [view, openAsDocument, openProjectFile],
   );
 
   /* A PDF has two roads (classic parity): edit it in place on the bench, or
@@ -392,7 +426,7 @@ export function StudioShell() {
     { group: "Actions", label: "Save on this device", hint: "Ctrl+S", run: saveLocal },
     { group: "Actions", label: "Save project file", hint: ".docforge.json", run: saveProject },
     { group: "Actions", label: "Open project…", run: () => void doOpen() },
-    { group: "Actions", label: "New document", run: () => setConfirmNew(true) },
+    { group: "Actions", label: "New document", run: newDocument },
     {
       group: "Actions",
       label: "Version history…",
@@ -530,6 +564,7 @@ export function StudioShell() {
             holds the small verbs, the products stand apart with ONE red plate,
             and the utilities recede to quiet ink. */}
         <div className="ml-auto flex flex-wrap items-center gap-2.5">
+          <DocumentsMenu />
           <TemplatesMenu onApply={handleTemplate} />
           <fieldset
             aria-label="Project"
@@ -555,7 +590,7 @@ export function StudioShell() {
             >
               Save
             </button>
-            <button type="button" className="btn-tray" onClick={() => setConfirmNew(true)}>
+            <button type="button" className="btn-tray" onClick={newDocument}>
               New
             </button>
           </fieldset>
@@ -709,17 +744,6 @@ export function StudioShell() {
         onRestore={(label, doc) => applyWithUndo(label, doc)}
       />
       <FirstRun />
-      <ConfirmDialog
-        open={confirmNew}
-        onOpenChange={setConfirmNew}
-        title="Start a new document?"
-        body="The current manuscript is saved on this device; loading a blank sheet is undoable from the toast."
-        confirmLabel="New document"
-        onConfirm={() => {
-          setConfirmNew(false);
-          newDocument();
-        }}
-      />
       {/* the classic edit-or-convert ask for an incoming PDF */}
       {pdfPending ? (
         <div

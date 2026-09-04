@@ -201,6 +201,21 @@ select:focus-visible {
     0 3px 8px rgba(38, 38, 31, 0.12),
     0 18px 44px rgba(38, 38, 31, 0.14);
 }
+/* Radix menus settle in on open — and ONLY on open. An animation that also
+   applies while data-state="closed" leaves the content mounted forever
+   waiting for an exit `animationend` that never comes; the orphan then sits
+   over the desk and swallows the next click on its own trigger (a real bug,
+   caught by the workspace probe). */
+[data-radix-menu-content][data-state="open"] {
+  animation: df-menu-in var(--dur) var(--ease);
+}
+@keyframes df-menu-in {
+  from {
+    transform: scale(0.97) translateY(-3px);
+    opacity: 0;
+  }
+}
+
 .pagedjs_pages {
   display: block;
 }

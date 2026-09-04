@@ -15,7 +15,7 @@
    duplicate bytes the restored source already resolves.
    ============================================================ */
 import { flushActiveLiveEdit } from "./live-edit";
-import { docforgeDB, type StoredVersion } from "./persistence";
+import { activeDocId, docforgeDB, type StoredVersion } from "./persistence";
 import { useDocStore } from "./store";
 
 export type VersionKind = "auto" | "manual";
@@ -24,7 +24,9 @@ export type VersionKind = "auto" | "manual";
     this module owns the policy, that one owns the connection. */
 export type Version = StoredVersion;
 
-const DOC_ID = "current";
+/* The timeline follows whichever document is live — each keeps its own
+   history, and switching documents switches the drawer with it. */
+const DOC_ID = () => activeDocId();
 /** The timeline's ceiling. 60 states is days of work at the snapshot cadence. */
 export const CAP = 60;
 /** Quiet time before an automatic snapshot is considered. */
@@ -166,7 +168,7 @@ export function condense(
 
 const newId = () => `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
-export async function listVersions(docId = DOC_ID): Promise<Version[]> {
+export async function listVersions(docId = DOC_ID()): Promise<Version[]> {
   try {
     const all = await (await docforgeDB()).getAll("versions");
     return all.filter((v) => v.docId === docId).sort((a, b) => b.at - a.at);
@@ -180,7 +182,7 @@ export async function listVersions(docId = DOC_ID): Promise<Version[]> {
 export async function snapshot(
   kind: VersionKind = "manual",
   label?: string,
-  docId = DOC_ID,
+  docId = DOC_ID(),
 ): Promise<Version | null> {
   try {
     flushActiveLiveEdit(); // a pending manuscript edit belongs in the snapshot
@@ -216,7 +218,7 @@ export async function deleteVersion(id: string): Promise<void> {
   } catch {}
 }
 
-export async function clearVersions(docId = DOC_ID): Promise<void> {
+export async function clearVersions(docId = DOC_ID()): Promise<void> {
   try {
     const d = await docforgeDB();
     for (const v of await listVersions(docId)) await d.delete("versions", v.id);

@@ -61,12 +61,8 @@ export function TemplatesMenu({
             align="end"
             sideOffset={6}
             className="z-[60] min-w-[300px] rounded-menu bg-tray p-1.5 shadow-[var(--elev-m)]"
-            style={{
-              animation: "df-menu-in var(--dur) var(--ease)",
-              transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)",
-            }}
+            style={{ transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)" }}
           >
-            <style>{`@keyframes df-menu-in { from { transform: scale(0.97) translateY(-3px); opacity: 0; } }`}</style>
             {Object.entries(TEMPLATES).map(([id, t]) => (
               <DropdownMenu.Item
                 key={id}
@@ -87,15 +83,16 @@ export function TemplatesMenu({
         onOpenChange={(open) => {
           if (!open) setPending(null);
         }}
-        title="Load template?"
+        title="Open this template?"
         body={
           <p className="m-0">
-            &ldquo;{pendingLabel}&rdquo; will replace the current document and its settings.{" "}
-            <b className="text-ink">Undo</b> on the toast that follows brings your work back.
+            &ldquo;{pendingLabel}&rdquo; opens as a <b className="text-ink">new document</b> — what
+            you are writing now stays where it is, in the Documents rack. (On a blank desk it simply
+            fills the sheet in front of you.)
           </p>
         }
-        cancelLabel="Keep current"
-        confirmLabel="Load template"
+        cancelLabel="Not now"
+        confirmLabel="Open template"
         onConfirm={() => {
           if (pending) onApply(resolveTemplate(pending));
           setPending(null);

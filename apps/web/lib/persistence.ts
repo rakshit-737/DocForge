@@ -1,7 +1,8 @@
 "use client";
 /* Local-first persistence — IndexedDB via idb (ledger D3: documents leave
-   localStorage). One store, multi-document-ready keys; the studio uses the
-   "current" slot until the multi-document workspace arrives (§8.1).
+   localStorage). One store, keyed per document: the workspace (lib/workspace.ts)
+   decides WHICH key is live, and every reader who arrived before it existed
+   keeps writing to the "current" slot they already had (§8.1).
 
    Ctrl+S = persist locally (ledger I2) — the shell binds it to flushNow and
    stamps the save state; explicit export actions produce files. */
@@ -75,15 +76,26 @@ export function docforgeDB(): Promise<IDBPDatabase<DocForgeDB>> {
 }
 const open = docforgeDB;
 
-const CURRENT = "current";
+/** The slot every reader had before the workspace existed — still the
+    default, so nobody's document moves on upgrade. */
+export const CURRENT = "current";
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lastSavedAt = 0;
+
+/* Which document is live. lib/workspace.ts owns the switching; persistence
+   only needs to know where to write, and a stale id here would autosave one
+   document over another, so it is set in exactly one place. */
+let activeId = CURRENT;
+export const activeDocId = (): string => activeId;
+export function setActiveDocId(id: string): void {
+  activeId = id || CURRENT;
+}
 
 export async function persistNow(): Promise<number> {
   flushActiveLiveEdit(); // any pending manuscript edit reaches the source first
   const { source, settings, attachments } = useDocStore.getState();
   const doc: StoredDoc = {
-    id: CURRENT,
+    id: activeId,
     title: (settings.title as string) || "Untitled document",
     source,
     settings,
@@ -99,10 +111,10 @@ export function savedAt(): number {
   return lastSavedAt;
 }
 
-/** Restore the last session's document; true when something was restored. */
+/** Restore the live document; true when something was restored. */
 export async function restoreSession(): Promise<boolean> {
   try {
-    const doc = await (await open()).get("documents", CURRENT);
+    const doc = await (await open()).get("documents", activeId);
     if (!doc || (!doc.source && !doc.settings?.title)) return false;
     useDocStore.getState().replaceDocument({
       source: doc.source,
