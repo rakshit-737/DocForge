@@ -40,6 +40,7 @@ export interface CliSettings {
   theme: string;
   accent: string;
   page: string;
+  orientation: string;
   margins: string;
   cover: boolean;
   header: boolean;
@@ -89,6 +90,7 @@ export function defaultSettings(): CliSettings {
     theme: "modern",
     accent: "#2563eb",
     page: "A4",
+    orientation: "portrait",
     margins: "normal",
     cover: false,
     header: true,
@@ -123,6 +125,7 @@ const STRING_FLAGS: Record<string, string> = {
   "--theme": "theme",
   "--accent": "accent",
   "--page": "page",
+  "--orientation": "orientation",
   "--margins": "margins",
   "--cite-style": "citeStyle",
   "--border-style": "borderStyle",
@@ -153,6 +156,7 @@ const BOOL_FLAGS: Record<string, [key: string, value: boolean]> = {
 const CHOICES: Record<string, string[]> = {
   theme: ["modern", "executive", "academic", "minimal"],
   page: ["A4", "Letter"],
+  orientation: ["portrait", "landscape"],
   margins: ["normal", "narrow", "wide"],
   borderStyle: ["none", "rule", "double", "triple", "dashed", "dotted", "thickthin", "thinthick"],
   borderWeight: ["fine", "medium", "bold"],

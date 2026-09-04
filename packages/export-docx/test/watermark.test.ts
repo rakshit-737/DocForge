@@ -158,3 +158,33 @@ describe("the letterhead", () => {
     expect(head.indexOf("w:drawing")).toBeLessThan(head.indexOf("FRACTURE MECHANICS"));
   });
 });
+
+describe("landscape", () => {
+  it("hands Word the upright sheet plus an orientation, and Word turns it", async () => {
+    const blob = await build(
+      content("<h1>Wide</h1><p>Body.</p>"),
+      { ...BASE, orientation: "landscape" },
+      {},
+    );
+    const zip = readZip(Buffer.from(await blob.arrayBuffer()));
+    const doc = zip.get("word/document.xml")!.toString("utf8");
+    /* A4 upright is 11905 x 16837 twips by the library's own conversion;
+       w:pgSz must come out SWAPPED with the orientation named — the library
+       does that swap itself, so handing it the already-turned sheet as well
+       would turn it back. */
+    expect(doc).toContain('w:w="16837"');
+    expect(doc).toContain('w:h="11905"');
+    expect(doc).toContain('w:orient="landscape"');
+  });
+
+  it("leaves an upright document exactly as it was", async () => {
+    const blob = await build(content("<h1>Tall</h1><p>Body.</p>"), BASE, {});
+    const zip = readZip(Buffer.from(await blob.arrayBuffer()));
+    const doc = zip.get("word/document.xml")!.toString("utf8");
+    expect(doc).toContain('w:w="11905"');
+    expect(doc).toContain('w:h="16837"');
+    /* The library names the orientation either way; what must not change is
+       which number is the width. */
+    expect(doc).toContain('w:orient="portrait"');
+  });
+});

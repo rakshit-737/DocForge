@@ -212,6 +212,8 @@ export interface Settings {
   theme?: string; // "modern" | "executive" | "academic" | "minimal"
   accent?: string; // hex accent colour, e.g. "#0f62fe"
   page?: string; // "A4" | "Letter"
+  /** "portrait" (default) | "landscape" — swaps the sheet in BOTH formats. */
+  orientation?: string;
   margins?: string; // "normal" | "narrow" | "wide"
   fontHead?: string; // FACES key | "sys:Family Name" | "theme"
   fontBody?: string;

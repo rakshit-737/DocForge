@@ -20,6 +20,7 @@ export const LOOK_KEYS = [
   "theme",
   "accent",
   "page",
+  "orientation",
   "margins",
   "fontHead",
   "fontBody",

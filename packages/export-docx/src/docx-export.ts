@@ -35,6 +35,8 @@ export interface DocxSettings {
   /* Watermark & letterhead (§8.2). The mark is drawn as a VML textpath in the
      header; the letterhead is a PNG/JPEG data URL centred above the running
      head, `letterheadSize` millimetres tall. */
+  /** "portrait" (default) | "landscape". */
+  orientation?: string;
   watermark?: string;
   letterhead?: string;
   letterheadSize?: string | number;
@@ -198,7 +200,10 @@ export async function build(
     head: Engine.faceName(settings.fontHead) || themeF.head,
     body: Engine.faceName(settings.fontBody) || themeF.body,
   };
-  const pg = Engine.PAGES[settings.page] || Engine.PAGES.A4;
+  /* The sheet the document really has: pageSpec applies the reader's
+     orientation, so every measurement below — margins, the text column, the
+     tab stops — is taken from the same page the preview composes on. */
+  const pg = Engine.pageSpec(settings);
   const mg = Engine.MARGINS[settings.margins] || Engine.MARGINS.normal;
   const availPx = Math.floor(((pg.w - mg.l - mg.r) * 96) / 25.4) - 4;
   const centeredCover = settings.theme === "academic";
@@ -1315,7 +1320,18 @@ export async function build(
     footer: mm2t(12),
     gutter: 0,
   };
-  const pageSize = { width: mm2t(pg.w), height: mm2t(pg.h) };
+  /* Word wants the PORTRAIT sheet plus an orientation, and swaps the two
+     itself when it writes w:pgSz — handing it the already-swapped sheet as
+     well would swap it back. */
+  const upright = Engine.PAGES[settings.page] || Engine.PAGES.A4;
+  const pageSize =
+    String(settings.orientation ?? "").toLowerCase() === "landscape"
+      ? {
+          width: mm2t(upright.w),
+          height: mm2t(upright.h),
+          orientation: D.PageOrientation.LANDSCAPE,
+        }
+      : { width: mm2t(pg.w), height: mm2t(pg.h) };
 
   // Mono rides along only when the document actually sets code in it.
   // System families (`sys:` keys, attribute spans naming Word fonts) simply don't

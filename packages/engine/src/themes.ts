@@ -524,6 +524,20 @@ export function headContent(template: unknown, settings: Settings): string {
     .join(" ");
 }
 
+/** The page as it will actually be printed: the named size with the reader's
+    orientation applied. Landscape swaps the sheet, and everything downstream —
+    the margin boxes, the text column, the watermark's diagonal, the .docx's
+    tab stops — is measured from the sheet the document really has, so the two
+    formats cannot disagree about which way up the paper is.
+
+    Portrait returns the PAGES entry itself, so a document that never asks for
+    landscape emits the bytes it always did. */
+export function pageSpec(settings: { page?: unknown; orientation?: unknown }): PageSpec {
+  const base = PAGES[settings.page as string] || PAGES.A4;
+  if (String(settings.orientation ?? "").toLowerCase() !== "landscape") return base;
+  return { w: base.h, h: base.w, label: `${base.label} landscape` };
+}
+
 /* ---------- letterhead & watermark geometry (§8.2) ---------- */
 
 /** The pixel size written inside a PNG, JPEG or GIF data URL.
@@ -634,7 +648,7 @@ export function dynamicCss(settings: Settings): string {
     head: faceStack(settings.fontHead) || themeF.head,
     body: faceStack(settings.fontBody) || themeF.body,
   };
-  const pg = PAGES[settings.page as string] || PAGES.A4;
+  const pg = pageSpec(settings);
   const m = MARGINS[settings.margins as string] || MARGINS.normal;
   const title = cssStr(settings.title || "");
 

@@ -28,6 +28,7 @@ declare global {
     WidthType: any;
     BorderStyle: any;
     PageNumber: any;
+    PageOrientation: any;
     Footer: any;
     Header: any;
     PageBreak: any;
@@ -104,6 +105,9 @@ declare global {
         string(sect) in the CSS — so both formats say the same thing on the
         same page. */
     headParts(template: unknown, settings: unknown): { kind: "text" | "section"; text: string }[];
+    /** The page with the reader's orientation applied (§8.2) — both formats
+        measure from the same sheet. */
+    pageSpec(settings: unknown): EnginePage;
     /** The pixel size inside a PNG/JPEG/GIF data URL (§8.2) — the letterhead
         is never an element on the page, so both formats read it from here. */
     imageMetrics(dataUrl: unknown): { w: number; h: number } | null;

@@ -10,6 +10,7 @@ const settings = {
   theme: "academic",
   accent: "#7f1d1d",
   page: "Letter",
+  orientation: "landscape",
   margins: "wide",
   fontHead: "garamond",
   fontBody: "crimson",
@@ -44,6 +45,7 @@ describe("lookOf", () => {
   it("takes every part of the appearance", () => {
     for (const key of LOOK_KEYS) expect(look).toHaveProperty(key);
     expect(look.theme).toBe("academic");
+    expect(look.orientation).toBe("landscape");
     expect(look.citeStyle).toBe("apa7");
     expect(look.headerRight).toBe("{section}");
   });

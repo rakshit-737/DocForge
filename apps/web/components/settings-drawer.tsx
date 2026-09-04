@@ -82,6 +82,10 @@ const PAGE_OPTIONS = [
   ["A4", "A4"],
   ["Letter", "Letter"],
 ] as const;
+const ORIENTATION_OPTIONS = [
+  ["portrait", "Portrait"],
+  ["landscape", "Landscape"],
+] as const;
 const MARGIN_OPTIONS = [
   ["normal", "Normal"],
   ["narrow", "Narrow"],
@@ -864,6 +868,13 @@ export function SettingsDrawer() {
                 value={settings.page}
                 options={PAGE_OPTIONS}
                 onChange={(v) => patch({ page: v })}
+              />
+              <SelectField
+                id="sOrientation"
+                label="Orientation"
+                value={String(settings.orientation ?? "portrait")}
+                options={ORIENTATION_OPTIONS}
+                onChange={(v) => patch({ orientation: v })}
               />
               <SelectField
                 id="sMargins"

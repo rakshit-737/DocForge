@@ -14,6 +14,7 @@ export interface Settings {
   theme: string;
   accent: string;
   page: string;
+  orientation: string;
   margins: string;
   cover: boolean;
   header: boolean;
@@ -60,6 +61,7 @@ export function defaultSettings(): Settings {
     theme: "modern",
     accent: "#2563eb",
     page: "A4",
+    orientation: "portrait",
     margins: "normal",
     cover: false,
     header: true,

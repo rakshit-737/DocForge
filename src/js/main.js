@@ -22,7 +22,7 @@
   const THEME_ACCENT = { modern: "#2563eb", executive: "#1f3a5f", academic: "#7f1d1d", minimal: "#111827" };
   const DEFAULTS = {
     title: "", subtitle: "", author: "", kicker: "", metaExtra: "", date: todayISO(),
-    theme: "modern", accent: "#2563eb", page: "A4", margins: "normal",
+    theme: "modern", accent: "#2563eb", page: "A4", orientation: "portrait", margins: "normal",
     cover: false, header: true, pageNums: true, numbered: false, justify: false, h1break: false,
     hardWrap: false, citeStyle: "ieee",
     borderStyle: "none", borderWeight: "medium", borderColor: "ink",
@@ -935,7 +935,7 @@ Land the piece: return to the opening image or question and say what it means no
     sLetterhead: "letterhead",
   };
   const SELECTS = {
-    sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle",
+    sTheme: "theme", sPage: "page", sOrientation: "orientation", sMargins: "margins", sCiteStyle: "citeStyle",
     sBorderStyle: "borderStyle", sBorderWeight: "borderWeight", sBorderColor: "borderColor",
     sFontHead: "fontHead", sFontBody: "fontBody",
     sBaseSize: "baseSize", sLineSpacing: "lineSpacing",

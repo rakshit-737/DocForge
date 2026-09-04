@@ -17,7 +17,7 @@ const FIELDS = {
      it straight in, which is the same road the setting takes either way */
   letterhead: "sLetterhead",
 };
-const SELECTS = { theme: "sTheme", page: "sPage", margins: "sMargins", citeStyle: "sCiteStyle", borderStyle: "sBorderStyle", borderWeight: "sBorderWeight", borderColor: "sBorderColor", fontHead: "sFontHead", fontBody: "sFontBody", baseSize: "sBaseSize", lineSpacing: "sLineSpacing", letterheadSize: "sLetterheadSize" };
+const SELECTS = { theme: "sTheme", page: "sPage", orientation: "sOrientation", margins: "sMargins", citeStyle: "sCiteStyle", borderStyle: "sBorderStyle", borderWeight: "sBorderWeight", borderColor: "sBorderColor", fontHead: "sFontHead", fontBody: "sFontBody", baseSize: "sBaseSize", lineSpacing: "sLineSpacing", letterheadSize: "sLetterheadSize" };
 const TOGGLES = { cover: "tCover", header: "tHeader", pageNums: "tPageNums", numbered: "tNumbered", justify: "tJustify", h1break: "tH1break", hardWrap: "tHardWrap" };
 
 export async function open(browser, { viewport = { width: 1560, height: 980 } } = {}) {
