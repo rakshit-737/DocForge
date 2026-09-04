@@ -26,6 +26,7 @@ import {
   toggleStrike,
   toggleUnderline,
 } from "./editor-commands";
+import { continueList, indentListItem, outdentListItem } from "./list-editing";
 
 export const deskKeymap: Extension = Prec.high(
   keymap.of([
@@ -42,5 +43,11 @@ export const deskKeymap: Extension = Prec.high(
        setHighlight("yellow"), the classic ==…== wrap) */
     { key: "Mod-Shift-x", run: toggleStrike },
     { key: "Mod-Shift-h", run: toggleMark },
+    /* Smart lists (§8.1): Enter carries the marker to the next item and an
+       empty item ends the list; Tab/Shift-Tab nest and un-nest the item.
+       Each returns false outside a list, so the editor's own Enter and the
+       indentWithTab binding still run everywhere else. */
+    { key: "Enter", run: continueList },
+    { key: "Tab", run: indentListItem, shift: outdentListItem },
   ]),
 );

@@ -250,6 +250,12 @@ export function HelpDialog({
 
             <H>DocForge extras</H>
             <Crib>
+              <Row k={<code>Enter</code>}>
+                <b>Smart lists</b> — inside a list, Enter carries the marker to the next item
+                (numbered lists count on); Enter on an empty item ends the list, or steps a nested
+                one out. <code>Tab</code> / <code>Shift</code>+<code>Tab</code> nest and un-nest the
+                item
+              </Row>
               <Row k={<code>/</code>}>
                 <b>Slash commands</b> — type <code>/</code> at the start of a line and the dialect
                 offers itself: <code>/table 3x4</code>, <code>/figure</code>, <code>/equation</code>
