@@ -359,7 +359,7 @@ async function renderSource(
      marked.use at import time). The exporter reads the classic ambient
      Engine global — a plain spread, mutable, like packages/engine/src/global.ts. */
   const engineMod: EngineModule = await import("@docforge/engine");
-  g.Engine = { ...engineMod.api };
+  g.Engine = { ...engineMod.globalApi };
 
   /* 4 — font bytes reach both sides through the __FONT_DATA__ contract. */
   const fontData = collectFontData(engineMod.api);

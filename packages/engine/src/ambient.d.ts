@@ -11,7 +11,7 @@
    main.js to run the paginator.
    ============================================================ */
 
-import type { api } from "./index";
+import type { globalApi } from "./index";
 import type { MarkedToken } from "./types";
 
 declare global {
@@ -62,7 +62,9 @@ declare global {
     __FONT_DATA__?: Record<string, string | undefined>;
   }
 
-  /* The classic global src/global.ts assigns (plain, mutable object). */
+  /* The global src/global.ts assigns (plain, mutable object): the classic
+     surface plus the members consumers reach only through the global — see
+     globalApi in index.ts. */
   // eslint-disable-next-line no-var
-  var Engine: typeof api;
+  var Engine: typeof globalApi;
 }

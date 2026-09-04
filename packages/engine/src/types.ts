@@ -229,6 +229,16 @@ export interface Settings {
   citeStyle?: string; // "numeric" (default) | "apa" | "apa7" (apa + same-author same-year a/b/c suffixes)
   header?: boolean;
   pageNums?: boolean;
+  /* Running header/footer content (§8.2). Empty means the classic behaviour:
+     the header carries the title at the left and the current section at the
+     right, and the footer carries only the centred folio. Each accepts plain
+     text plus the tokens {title} {author} {date} {kicker} {section}; page
+     numbers stay in the folio, which is the one place both formats can count
+     the dual front-matter/body sequence. */
+  headerLeft?: string;
+  headerRight?: string;
+  footerLeft?: string;
+  footerRight?: string;
   baseSize?: number | string;
   lineSpacing?: string; // "1" | "1.15" | "1.5" | "2"
   borderStyle?: string; // rule|double|triple|dashed|dotted|thickthin|thinthick

@@ -99,6 +99,11 @@ declare global {
     EMBEDDED: EngineEmbeddedFamily[];
     CUT_FILE: Record<string, string>;
     HL_COLORS: Record<string, string>;
+    /** Running header/footer slot resolution (§8.2): literal text plus the
+        live {section} marker, which becomes a STYLEREF field on this side and
+        string(sect) in the CSS — so both formats say the same thing on the
+        same page. */
+    headParts(template: unknown, settings: unknown): { kind: "text" | "section"; text: string }[];
   }
   // eslint-disable-next-line no-var
   var Engine: EngineApi;

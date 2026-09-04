@@ -162,10 +162,45 @@ function fmtDate(iso?: string): string {
   }
 }
 
+/* Running header/footer slots (§8.2), mirroring the engine's own resolution:
+   literal text plus the live {section} marker the exporter turns into a
+   STYLEREF field. Verbatim like the rest of this fixture — the real function
+   lives in packages/engine/src/themes.ts and is tested there. */
+const HEAD_TOKEN = /\{(title|author|date|kicker|section)\}/g;
+function headParts(
+  template: unknown,
+  settings: Record<string, unknown>,
+): { kind: "text" | "section"; text: string }[] {
+  const raw = String(template ?? "");
+  if (!raw.trim()) return [];
+  const out: { kind: "text" | "section"; text: string }[] = [];
+  const push = (kind: "text" | "section", text: string) => {
+    if (kind === "text" && !text) return;
+    const last = out[out.length - 1];
+    if (kind === "text" && last?.kind === "text") last.text += text;
+    else out.push({ kind, text });
+  };
+  let at = 0;
+  HEAD_TOKEN.lastIndex = 0;
+  let m: RegExpExecArray | null = HEAD_TOKEN.exec(raw);
+  while (m) {
+    push("text", raw.slice(at, m.index));
+    const token = m[1];
+    if (token === "section") push("section", "");
+    else if (token === "date") push("text", fmtDate(settings.date as string));
+    else push("text", String(settings[token as string] ?? ""));
+    at = m.index + m[0].length;
+    m = HEAD_TOKEN.exec(raw);
+  }
+  push("text", raw.slice(at));
+  return out.filter((p) => p.kind === "section" || p.text !== "");
+}
+
 export const EngineFixture = {
   tints,
   faceName,
   fmtDate,
+  headParts,
   PAGES,
   MARGINS,
   EMBEDDED,

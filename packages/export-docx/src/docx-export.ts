@@ -26,6 +26,12 @@ export interface DocxSettings {
   justify?: boolean;
   header?: boolean;
   pageNums?: boolean;
+  /* Running header/footer content (§8.2) — the same four slots the engine
+     reads, so the two formats say the same thing on the same page. */
+  headerLeft?: string;
+  headerRight?: string;
+  footerLeft?: string;
+  footerRight?: string;
   title?: string;
   subtitle?: string;
   author?: string;
@@ -1105,16 +1111,32 @@ export async function build(
   // The PDF header carries the title at top-left and the current section at top-right
   // (string(sect)). STYLEREF is Word's equivalent — a live field, not a frozen copy.
   // The run properties ride on a paragraph style so the field text inherits them too.
+  /* When the reader sets their own header text (§8.2), the same pieces the
+     CSS emits are built here: {section} stays a live STYLEREF exactly as it
+     stays string(sect) in the preview, so both formats say the same thing on
+     the same page, and everything else resolves at render. Unset slots
+     produce the classic runs, unchanged. */
+  const slotRuns = (template: unknown, upper: boolean): unknown[] =>
+    Engine.headParts(template, settings as never).map((part) =>
+      part.kind === "section"
+        ? new SimpleField("STYLEREF 1 \\* MERGEFORMAT")
+        : new TextRun({
+            text: upper ? part.text.toUpperCase() : part.text,
+            ...(upper ? { characterSpacing: 26 } : {}),
+          }),
+    );
+  const leftRuns = settings.headerLeft
+    ? slotRuns(settings.headerLeft, true)
+    : [new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 })];
+  const rightRuns = settings.headerRight
+    ? slotRuns(settings.headerRight, false)
+    : [new SimpleField("STYLEREF 1 \\* MERGEFORMAT")];
   const headerChildren = settings.header
     ? [
         new Paragraph({
           style: "DFHeader",
           tabStops: [{ type: TabStopType.RIGHT, position: mm2t(pg.w - mg.l - mg.r) }],
-          children: [
-            new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 }),
-            new TextRun({ children: [new Tab()] }),
-            new SimpleField("STYLEREF 1 \\* MERGEFORMAT"),
-          ],
+          children: [...leftRuns, new TextRun({ children: [new Tab()] }), ...rightRuns] as never,
         }),
       ]
     : [];
@@ -1124,27 +1146,55 @@ export async function build(
     ? [
         new Paragraph({
           style: "DFHeader",
-          children: [
-            new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 }),
-          ],
+          children: (settings.headerLeft
+            ? leftRuns
+            : [
+                new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 }),
+              ]) as never,
         }),
       ]
     : [];
 
   const pgRun = (kids2: any[]) => new TextRun({ size: HP(8.2), color: "71798A", children: kids2 });
-  const footerChildren = settings.pageNums
+  /* The foot's side slots (§8.2). One paragraph carries all three positions:
+     left text, the centred folio, right text — tab stops rather than three
+     paragraphs, so the foot stays one line deep as it does in the PDF. */
+  const footL = settings.footerLeft ? slotRuns(settings.footerLeft, false) : [];
+  const footR = settings.footerRight ? slotRuns(settings.footerRight, false) : [];
+  const folioRuns = settings.pageNums
     ? [
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            pgRun(["Page "]),
-            pgRun([PageNumber.CURRENT]),
-            pgRun([" of "]),
-            pgRun([PageNumber.TOTAL_PAGES_IN_SECTION]),
-          ],
-        }),
+        pgRun(["Page "]),
+        pgRun([PageNumber.CURRENT]),
+        pgRun([" of "]),
+        pgRun([PageNumber.TOTAL_PAGES_IN_SECTION]),
       ]
     : [];
+  const footWidth = mm2t(pg.w - mg.l - mg.r);
+  const footerChildren =
+    footL.length || footR.length
+      ? [
+          new Paragraph({
+            tabStops: [
+              { type: TabStopType.CENTER, position: Math.round(footWidth / 2) },
+              { type: TabStopType.RIGHT, position: footWidth },
+            ],
+            children: [
+              ...footL,
+              new TextRun({ children: [new Tab()] }),
+              ...folioRuns,
+              new TextRun({ children: [new Tab()] }),
+              ...footR,
+            ] as never,
+          }),
+        ]
+      : settings.pageNums
+        ? [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: folioRuns,
+            }),
+          ]
+        : [];
   // Front matter shows a bare roman numeral, matching the PDF.
   const frontFooterChildren = settings.pageNums
     ? [

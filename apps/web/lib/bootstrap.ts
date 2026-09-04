@@ -40,7 +40,7 @@ async function boot(): Promise<StudioRuntime> {
   g.Paged = Paged;
   const Engine = await import("@docforge/engine");
   // The exporters read the classic ambient global (export-docx's Engine.* lookups).
-  g.Engine = Engine.api;
+  g.Engine = { ...Engine.globalApi };
   return { Engine, Paged };
 }
 

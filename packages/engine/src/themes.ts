@@ -7,7 +7,7 @@
    cannot reorder anything observable.
    ============================================================ */
 import type { MarginSpec, PageSpec, Settings, Tints } from "./types";
-import { cssStr } from "./util";
+import { cssStr, fmtDate } from "./util";
 
 /* ---------- color math ---------- */
 export function hexRgb(hex: string): number[] {
@@ -465,6 +465,65 @@ export function sysStack(name: unknown): string {
   return `"${clean}", ${GENERIC[cat ? cat[1] : "sans"]}`;
 }
 
+/* ---------- running header and footer content (§8.2) ----------
+   A reader can set what stands in the four side slots. Empty means the
+   classic behaviour, byte for byte: the title upper-cased at top-left, the
+   current section at top-right, and nothing at the foot but the folio.
+
+   Tokens resolve at render except {section}, which has to stay live — it is
+   `string(sect)` in CSS and a STYLEREF field in Word, so the running head
+   follows the reader down the document instead of freezing one heading.
+
+   Page numbers are deliberately NOT tokens here. The folio counts a dual
+   sequence (romans through the front matter, "Page n of N" over body pages
+   only), which the numbering handler writes per page; a CSS margin box can't
+   express it, so promising {page} in a side slot would be promising something
+   one of the two formats could not keep. */
+export interface HeadPart {
+  kind: "text" | "section";
+  text: string;
+}
+
+const HEAD_TOKEN = /\{(title|author|date|kicker|section)\}/g;
+
+/** Resolve a slot into the pieces a renderer can emit: literal text, and the
+    live section marker. Adjacent literals are merged so the CSS content list
+    stays as short as the classic one. */
+export function headParts(template: unknown, settings: Settings): HeadPart[] {
+  const raw = String(template ?? "");
+  if (!raw.trim()) return [];
+  const out: HeadPart[] = [];
+  const push = (kind: HeadPart["kind"], text: string) => {
+    if (kind === "text" && !text) return;
+    const last = out[out.length - 1];
+    if (kind === "text" && last?.kind === "text") last.text += text;
+    else out.push({ kind, text });
+  };
+  let at = 0;
+  HEAD_TOKEN.lastIndex = 0;
+  let m: RegExpExecArray | null = HEAD_TOKEN.exec(raw);
+  while (m) {
+    push("text", raw.slice(at, m.index));
+    const token = m[1];
+    if (token === "section") push("section", "");
+    else if (token === "date") push("text", fmtDate(settings.date as string));
+    else push("text", String(settings[token as keyof Settings] ?? ""));
+    at = m.index + m[0].length;
+    m = HEAD_TOKEN.exec(raw);
+  }
+  push("text", raw.slice(at));
+  return out.filter((p) => p.kind === "section" || p.text !== "");
+}
+
+/** The same pieces as a CSS `content:` value. */
+export function headContent(template: unknown, settings: Settings): string {
+  const parts = headParts(template, settings);
+  if (!parts.length) return "";
+  return parts
+    .map((p) => (p.kind === "section" ? "string(sect)" : `"${cssStr(p.text)}"`))
+    .join(" ");
+}
+
 /* ---------- dynamic CSS (@page + vars) ---------- */
 export function dynamicCss(settings: Settings): string {
   const t = tints(settings.accent as string);
@@ -493,9 +552,28 @@ export function dynamicCss(settings: Settings): string {
   size: ${pg.label};
   margin: ${m.t}mm ${m.r}mm ${m.b}mm ${m.l}mm;`;
   if (settings.header) {
+    /* The two side slots are the reader's when they set them, and the classic
+       title/section pair when they don't — an empty setting emits exactly the
+       bytes it always did (§8.2). */
+    const left = headContent(settings.headerLeft, settings) || `"${title}"`;
+    const right = headContent(settings.headerRight, settings) || "string(sect)";
     css += `
-  @top-left { content: "${title}"; font-family:${f.head}; font-size:7.6pt; letter-spacing:0.13em; text-transform:uppercase; color:#828a99; margin-bottom:6mm; }
-  @top-right { content: string(sect); font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-bottom:6mm; max-width:60mm; overflow:hidden; }`;
+  @top-left { content: ${left}; font-family:${f.head}; font-size:7.6pt; letter-spacing:0.13em; text-transform:uppercase; color:#828a99; margin-bottom:6mm; }
+  @top-right { content: ${right}; font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-bottom:6mm; max-width:60mm; overflow:hidden; }`;
+  }
+  /* The foot's side slots are new ground: nothing is emitted unless asked
+     for, so a document that never sets them is untouched. The centre stays
+     the folio's, which is the only place either format can count the dual
+     front-matter/body sequence. */
+  const footL = headContent(settings.footerLeft, settings);
+  const footR = headContent(settings.footerRight, settings);
+  if (footL) {
+    css += `
+  @bottom-left { content: ${footL}; font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-top:6mm; max-width:60mm; overflow:hidden; }`;
+  }
+  if (footR) {
+    css += `
+  @bottom-right { content: ${footR}; font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-top:6mm; max-width:60mm; overflow:hidden; }`;
   }
   if (settings.pageNums) {
     // The folio text is written per page by the PageNumbering handler in main.js, because
@@ -513,7 +591,12 @@ export function dynamicCss(settings: Settings): string {
   }
 }
 @page cover { margin: 0;
-  @top-left { content: none; } @top-right { content: none; } @bottom-center { content: none; }
+  @top-left { content: none; } @top-right { content: none; } @bottom-center { content: none; }${
+    footL || footR
+      ? `
+  @bottom-left { content: none; } @bottom-right { content: none; }`
+      : ""
+  }
 }
 @page front {
   @top-right { content: none; }

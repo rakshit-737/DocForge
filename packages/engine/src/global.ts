@@ -5,6 +5,9 @@
    shape it sees must stay writable.
    ============================================================ */
 
-import { api } from "./index";
+import { globalApi } from "./index";
 
-globalThis.Engine = { ...api };
+/* globalApi, not `api`: the classic surface plus the members consumers reach
+   only through the global (the .docx exporter's headParts). `api` itself is
+   held to the classic shape by the parity gate. */
+globalThis.Engine = { ...globalApi };

@@ -22,6 +22,8 @@ import {
   FONTS,
   faceName,
   fontFaceCss,
+  headContent,
+  headParts,
   MARGINS,
   PAGES,
   registerUserFace,
@@ -56,9 +58,21 @@ export const api = {
 /* NOT part of `api`: that object is the classic Engine global, member for
    member in the classic order, and the parity gate holds it there. The
    reader-supplied-typeface registry (§8.2) is a named export the studio
-   imports directly — additive, and invisible to anything that never calls it. */
+   imports directly — additive, and invisible to anything that never calls it.
 
-export type { UserFace } from "./themes";
+   `globalApi` is what every EDITION assigns to `globalThis.Engine`: the
+   classic surface plus the additions consumers reach through the global
+   (the .docx exporter needs headParts to mirror the running head). `api`
+   stays exactly as it was, so the parity claim about its members holds. */
+export const globalApi = {
+  ...api,
+  headParts,
+  headContent,
+  registerUserFace,
+  unregisterUserFaces,
+};
+
+export type { HeadPart, UserFace } from "./themes";
 export type {
   Attachment,
   Attachments,
@@ -91,6 +105,8 @@ export {
   fmtDate,
   fontFaceCss,
   HL_COLORS,
+  headContent,
+  headParts,
   MARGINS,
   PAGES,
   RE_SHOT,

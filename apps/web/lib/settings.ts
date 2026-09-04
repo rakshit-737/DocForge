@@ -61,6 +61,13 @@ export function defaultSettings(): Settings {
     cover: false,
     header: true,
     pageNums: true,
+    /* Running header/footer slots (§8.2). Empty is the classic furniture:
+       title at the head's left, the current section at its right, and nothing
+       at the foot but the folio. */
+    headerLeft: "",
+    headerRight: "",
+    footerLeft: "",
+    footerRight: "",
     numbered: false,
     justify: false,
     h1break: false,

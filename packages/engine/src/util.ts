@@ -31,3 +31,15 @@ export const slugify = (t: string) =>
     .replace(/[\s_]+/g, "-")
     .replace(/-+/g, "-")
     .slice(0, 60) || "sec";
+
+/** The cover's date wording, and the running head's. Moved here from render.ts
+    unchanged, so themes.ts can use it without a circular import. */
+export function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso + "T12:00:00");
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}

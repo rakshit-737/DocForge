@@ -696,6 +696,69 @@ export function SettingsDrawer() {
               />
             </details>
 
+            <details className="group mt-6">
+              <summary
+                className={`flex cursor-pointer select-none list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden ${GROUP_HEAD} ${FOCUS_RING}`}
+              >
+                Running header &amp; footer
+                <span
+                  aria-hidden="true"
+                  className="ml-auto mr-1 h-[7px] w-[7px] -rotate-45 border-b-[1.5px] border-r-[1.5px] border-ink-3 transition-transform duration-[160ms] ease-out group-open:rotate-45"
+                />
+              </summary>
+              <p className="mb-2.5 text-[11.5px] leading-[1.5] text-ink-3">
+                Leave these empty for the house style — the title at the head&rsquo;s left, the
+                current section at its right. Tokens: <code>{"{title}"}</code>{" "}
+                <code>{"{author}"}</code> <code>{"{date}"}</code> <code>{"{kicker}"}</code>{" "}
+                <code>{"{section}"}</code>. Page numbers stay in the footer&rsquo;s centre, the one
+                place both the PDF and Word can count the front matter and the body separately.
+              </p>
+              <div className="flex gap-2 [&>div]:flex-1 [&>div]:min-w-0">
+                <Field id="sHeaderLeft" label="Header, left">
+                  <input
+                    id="sHeaderLeft"
+                    type="text"
+                    className={CONTROL}
+                    placeholder="{title}"
+                    value={String(settings.headerLeft ?? "")}
+                    onChange={(e) => patch({ headerLeft: e.target.value })}
+                  />
+                </Field>
+                <Field id="sHeaderRight" label="Header, right">
+                  <input
+                    id="sHeaderRight"
+                    type="text"
+                    className={CONTROL}
+                    placeholder="{section}"
+                    value={String(settings.headerRight ?? "")}
+                    onChange={(e) => patch({ headerRight: e.target.value })}
+                  />
+                </Field>
+              </div>
+              <div className="flex gap-2 [&>div]:flex-1 [&>div]:min-w-0">
+                <Field id="sFooterLeft" label="Footer, left">
+                  <input
+                    id="sFooterLeft"
+                    type="text"
+                    className={CONTROL}
+                    placeholder="—"
+                    value={String(settings.footerLeft ?? "")}
+                    onChange={(e) => patch({ footerLeft: e.target.value })}
+                  />
+                </Field>
+                <Field id="sFooterRight" label="Footer, right">
+                  <input
+                    id="sFooterRight"
+                    type="text"
+                    className={CONTROL}
+                    placeholder="—"
+                    value={String(settings.footerRight ?? "")}
+                    onChange={(e) => patch({ footerRight: e.target.value })}
+                  />
+                </Field>
+              </div>
+            </details>
+
             <h3 className={`mt-6 ${GROUP_HEAD}`}>Layout</h3>
             {TOGGLES.map((t) => (
               <ToggleRow
