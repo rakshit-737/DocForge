@@ -29,5 +29,18 @@ jobs:
           RUN_PARITY: "1"
       - name: Build single-file edition
         run: node build.mjs
+      # Phase-5 gate: the forever edition, opened from file:// in a browser
+      # whose every non-file request is aborted. A single network attempt
+      # fails the run — "works offline" must not lean on anyone's cache.
+      - name: Offline gate (file://, network cut)
+        run: node qa/offline-gate.mjs
+        env:
+          PW_CHROMIUM: /usr/bin/google-chrome
+      # Phase-5 gate: the core is genuinely headless — every torture document
+      # in the golden corpus converts through the CLI with no browser.
+      - name: CLI builds the golden corpus
+        run: |
+          corepack pnpm --filter "@docforge/cli" run build
+          node qa/cli-corpus.mjs
       - name: Build web studio
         run: corepack pnpm --filter "@docforge/web" run build

@@ -14,7 +14,13 @@ import { importFile, isHeavyImport } from "@/lib/imports";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { armAutosave, persistNow, restoreSession } from "@/lib/persistence";
 import type { PreviewController } from "@/lib/preview-controller";
-import { parseProject, saveProjectFile } from "@/lib/project-file";
+import {
+  forgetOpenFile,
+  openFileName,
+  openWithPicker,
+  parseProject,
+  saveDocumentFile,
+} from "@/lib/project-file";
 import type { Settings } from "@/lib/settings";
 import { useDocStore, useUiStore } from "@/lib/store";
 import type { TemplateDocument } from "@/lib/templates";
@@ -45,6 +51,9 @@ export function StudioShell() {
   const [confirmNew, setConfirmNew] = useState(false);
   const [pdfPending, setPdfPending] = useState<File | null>(null);
   const [savedStamp, setSavedStamp] = useState<string>("");
+  /* Mirrors project-file.ts's open target so the desk can name the file a
+     Save would overwrite; that module stays the single source of truth. */
+  const [openFile, setOpenFile] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -95,6 +104,12 @@ export function StudioShell() {
         attachments: s.attachments,
         accentTouched: s.accentTouched,
       };
+      /* Whatever file was open on disk no longer holds THIS document — the
+         open-in-place road re-adopts its handle right after this call, and
+         nothing else may inherit it (a template must never be saved over the
+         reader's manuscript). */
+      forgetOpenFile();
+      setOpenFile(null);
       s.replaceDocument(doc);
       toast(`Loaded “${label}”`, "info", 6000, {
         label: "Undo",
@@ -130,24 +145,33 @@ export function StudioShell() {
     flushActiveLiveEdit();
     const s = useDocStore.getState();
     try {
-      const how = await saveProjectFile({
+      const out = await saveDocumentFile({
         source: s.source,
         settings: s.settings,
         attachments: s.attachments,
       });
-      toast(how === "saved" ? "Project saved in place" : "Project downloaded");
+      setOpenFile(openFileName());
+      toast(
+        out.how === "in-place"
+          ? `Saved to “${out.name}”`
+          : out.how === "saved"
+            ? `Project saved as “${out.name}” — Save writes straight back now`
+            : "Project downloaded",
+      );
     } catch (e) {
       if ((e as DOMException)?.name !== "AbortError") toast("Project save failed", "warn");
     }
   }, []);
 
   const openProjectFile = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<boolean> => {
       try {
         const doc = parseProject(await file.text());
         applyWithUndo(file.name.replace(/\.docforge\.json$|\.json$/i, ""), doc);
+        return true;
       } catch (e) {
         toast(e instanceof Error ? e.message : "That file did not open", "warn", 5000);
+        return false;
       }
     },
     [applyWithUndo],
@@ -158,18 +182,17 @@ export function StudioShell() {
   }, [handleTemplate]);
 
   /* ---------------- ports of entry: one handler for Open and the drop zone ---------------- */
+  /* Resolves true when the document was REPLACED — the open-in-place road
+     only adopts a file handle for a load that actually took. */
   const convertFile = useCallback(
-    async (f: File) => {
+    async (f: File): Promise<boolean> => {
       if (isHeavyImport(f.name)) toast(`Reading “${f.name}”…`, "info", 1800);
       const res = await importFile(f);
       if (res.error) {
         toast(res.error, "warn", 5000);
-        return;
+        return false;
       }
-      if (res.project) {
-        void openProjectFile(f);
-        return;
-      }
+      if (res.project) return openProjectFile(f);
       if (res.image) {
         try {
           const key = await processImageFile(res.image);
@@ -178,7 +201,7 @@ export function StudioShell() {
         } catch {
           toast("Could not read that image", "warn");
         }
-        return;
+        return false;
       }
       if (res.source != null) {
         const title = f.name.replace(/\.[a-z0-9]+$/i, "");
@@ -188,7 +211,9 @@ export function StudioShell() {
           attachments: res.attachments ?? {},
         });
         for (const w of res.warnings ?? []) toast(w, "warn", 5000);
+        return true;
       }
+      return false;
     },
     [view, applyWithUndo, openProjectFile],
   );
@@ -196,15 +221,36 @@ export function StudioShell() {
   /* A PDF has two roads (classic parity): edit it in place on the bench, or
      convert it to a manuscript. Ask before doing either. */
   const handleImport = useCallback(
-    (f: File) => {
+    async (f: File): Promise<boolean> => {
       if (/\.pdf$/i.test(f.name)) {
         setPdfPending(f);
-        return;
+        return false; // the dialog decides; nothing is loaded yet
       }
-      void convertFile(f);
+      return convertFile(f);
     },
     [convertFile],
   );
+
+  /* The Open door, Phase 5: where the browser can hand back a writable handle
+     the file opens IN PLACE — the same file the next Save writes back to —
+     and everywhere else the hidden `<input type=file>` does what it always
+     did. A cancelled picker is not an error; a broken one falls back. */
+  const doOpen = useCallback(async () => {
+    try {
+      const picked = await openWithPicker();
+      if (!picked) {
+        fileInput.current?.click();
+        return;
+      }
+      if (await handleImport(picked.file)) {
+        picked.adopt();
+        setOpenFile(openFileName());
+      }
+    } catch (e) {
+      if ((e as DOMException)?.name === "AbortError") return;
+      fileInput.current?.click();
+    }
+  }, [handleImport]);
 
   const jumpToLine = useCallback(
     (n: number) => {
@@ -315,7 +361,7 @@ export function StudioShell() {
     { group: "Actions", label: "Export Markdown", hint: ".md source", run: doExportMd },
     { group: "Actions", label: "Save on this device", hint: "Ctrl+S", run: saveLocal },
     { group: "Actions", label: "Save project file", hint: ".docforge.json", run: saveProject },
-    { group: "Actions", label: "Open project…", run: () => fileInput.current?.click() },
+    { group: "Actions", label: "Open project…", run: () => void doOpen() },
     { group: "Actions", label: "New document", run: () => setConfirmNew(true) },
     {
       group: "Actions",
@@ -355,7 +401,7 @@ export function StudioShell() {
       group: "Actions",
       label: "Import a file…",
       hint: "docx · pdf · xlsx · epub …",
-      run: () => fileInput.current?.click(),
+      run: () => void doOpen(),
     },
     { group: "Actions", label: theme === "dark" ? "Day desk" : "Night shift", run: toggleTheme },
     {
@@ -411,6 +457,14 @@ export function StudioShell() {
         >
           {(title as string) || "Untitled document"}
         </button>
+        {openFile ? (
+          <span
+            className="max-w-48 truncate font-mono text-[11.5px] text-ink-3"
+            title={`Save writes straight back to “${openFile}”`}
+          >
+            {openFile}
+          </span>
+        ) : null}
         <span className="font-mono text-[11.5px] text-ink-3" aria-live="polite">
           {savedStamp ? `saved ${savedStamp}` : ""}
         </span>
@@ -427,7 +481,7 @@ export function StudioShell() {
             <button
               type="button"
               className="btn-tray"
-              onClick={() => fileInput.current?.click()}
+              onClick={() => void doOpen()}
               title="Open a document or project file"
             >
               Open
@@ -436,7 +490,11 @@ export function StudioShell() {
               type="button"
               className="btn-tray"
               onClick={saveProject}
-              title="Save a .docforge.json project file"
+              title={
+                openFile
+                  ? `Save straight back to “${openFile}”`
+                  : "Save a .docforge.json project file"
+              }
             >
               Save
             </button>
@@ -508,7 +566,7 @@ export function StudioShell() {
               view?.focus();
             }}
             onTemplates={() => setPaletteOpen(true)}
-            onOpen={() => fileInput.current?.click()}
+            onOpen={() => void doOpen()}
           />
           {outlineOpen && (
             <OutlinePanel
