@@ -47,6 +47,7 @@ import { SourcePane } from "./source-pane";
 import { TemplatesMenu } from "./templates-menu";
 import { FormatToolbar } from "./toolbar";
 import { VersionPanel } from "./version-panel";
+import { ZoomCluster } from "./zoom-cluster";
 
 export function StudioShell() {
   const [view, setView] = useState<EditorView | null>(null);
@@ -749,35 +750,9 @@ export function StudioShell() {
             Preview
           </button>
         </fieldset>
-        <fieldset className="ml-auto flex items-center gap-1 border-0 p-0" aria-label="Zoom">
-          <button
-            type="button"
-            onClick={() => zoom(-0.1)}
-            className="min-h-6 min-w-6 px-1 hover:text-ink"
-            aria-label="Zoom out"
-          >
-            −
-          </button>
-          <button
-            type="button"
-            onClick={zoomFit}
-            className="min-w-12 px-1 tabular-nums hover:text-ink"
-            title="Reset to fit"
-          >
-            {zoomPct}%
-          </button>
-          <button
-            type="button"
-            onClick={() => zoom(0.1)}
-            className="min-h-6 min-w-6 px-1 hover:text-ink"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          <button type="button" onClick={zoomFit} className="px-1 hover:text-ink">
-            Fit
-          </button>
-        </fieldset>
+        <div className="ml-auto">
+          <ZoomCluster pct={zoomPct} onStep={zoom} onFit={zoomFit} />
+        </div>
       </footer>
 
       {/* surfaces */}

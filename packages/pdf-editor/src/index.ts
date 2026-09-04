@@ -791,7 +791,8 @@ async function onImageFile(): Promise<void> {
 /* ---------- zoom ---------- */
 
 function applyZoom(now: boolean): void {
-  els.zoomPct.textContent = Math.round(zoom * 100) + "%";
+  if (els.zoomPct) els.zoomPct.textContent = Math.round(zoom * 100) + "%";
+  onZoom?.(zoom);
   for (let i = 0; i < pages.length; i++) {
     sizePage(i);
     syncLayer(i);
@@ -813,6 +814,22 @@ function setZoom(z: number): void {
   zoom = z;
   applyZoom(false);
 }
+
+/** The scale at which the widest page fits the scroller, minus its gutters —
+    the studio's "Fit", brought to the bench (ledger I4). */
+function fitZoom(): number {
+  const scroll = els?.scroll as HTMLElement | undefined;
+  const widest = pages.reduce((w, p) => Math.max(w, p?.w ?? 0), 0);
+  if (!scroll || !widest) return zoom;
+  const avail = scroll.clientWidth - 48;
+  /* 1.35 is the studio's own fit cap: past that a small page stops being
+     "fitted" and starts being magnified, and the two modes should mean the
+     same thing by the same word (ledger I4). */
+  return clamp(Math.round((avail / widest) * 100) / 100, 0.5, 1.35);
+}
+
+/* A host chrome that renders its own cluster needs to know the level. */
+let onZoom: ((z: number) => void) | null = null;
 
 /* ---------- one-time DOM binding ---------- */
 
@@ -863,8 +880,11 @@ function bindOnce(): void {
       ed.color = els.color.value;
     }),
   );
-  els.zoomIn.addEventListener("click", () => setZoom(zoom + 0.1));
-  els.zoomOut.addEventListener("click", () => setZoom(zoom - 0.1));
+  /* The bar's own buttons are optional: a host chrome may mount its own zoom
+     cluster and drive setZoom/fitZoom instead (ledger I4 — one instrument,
+     one behaviour, in both modes). */
+  els.zoomIn?.addEventListener("click", () => setZoom(zoom + 0.1));
+  els.zoomOut?.addEventListener("click", () => setZoom(zoom - 0.1));
   els.scroll.addEventListener(
     "wheel",
     (e: WheelEvent) => {
@@ -1299,6 +1319,14 @@ export const api = {
   isOpen: () => opened,
   hasEdits: () => dirty && [...edits.values()].some((l) => l.length),
   addEdit: pushEdit, // programmatic path shares the interactive one (QA leans on this)
+  /* Zoom, for a host chrome that mounts the studio's own cluster instead of
+     the bar's buttons (ledger I4). */
+  setZoom,
+  getZoom: () => zoom,
+  fitZoom: () => setZoom(fitZoom()),
+  onZoomChange: (fn: ((z: number) => void) | null) => {
+    onZoom = fn;
+  },
   getEdits: () => edits,
   editLineAt, // double-click path, callable directly (QA + power users)
   getTextLines: ensureLines,

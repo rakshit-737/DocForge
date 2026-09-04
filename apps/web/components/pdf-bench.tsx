@@ -40,6 +40,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastRack } from "@/components/find-bar";
 import { downloadBlob } from "@/lib/exports";
 import { toast } from "@/lib/find";
+import { ZoomCluster } from "./zoom-cluster";
 
 /* ---------------- module-level state (survives route remounts) ---------------- */
 
@@ -124,6 +125,30 @@ function loadPdfEditor(): Promise<PdfEditorApi> {
 /** Pages currently on the bench, read from the deck the package rendered. */
 function benchPageCount(): number {
   return benchRoot ? benchRoot.querySelectorAll(".pe-page").length : 0;
+}
+
+/** The studio's zoom instrument, driven by the bench's own scale (ledger I4). */
+function BenchZoom() {
+  const [pct, setPct] = useState(100);
+  useEffect(() => {
+    let live = true;
+    void loadPdfEditor().then((api) => {
+      if (!live) return;
+      setPct(Math.round(api.getZoom() * 100));
+      api.onZoomChange((z) => setPct(Math.round(z * 100)));
+    });
+    return () => {
+      live = false;
+      editorApi?.onZoomChange(null);
+    };
+  }, []);
+  const step = (delta: number) => {
+    void loadPdfEditor().then((api) => api.setZoom(api.getZoom() + delta));
+  };
+  const fit = () => {
+    void loadPdfEditor().then((api) => api.fitZoom());
+  };
+  return <ZoomCluster pct={pct} onStep={step} onFit={fit} label="Zoom the proof" />;
 }
 
 function PageToolbar({ onReopened }: { onReopened: () => void }) {
@@ -223,6 +248,7 @@ function PageToolbar({ onReopened }: { onReopened: () => void }) {
         ))}
       </div>
       <span className="font-mono text-[10.5px] text-ink-3">{scope}</span>
+      <BenchZoom />
       <div className="ml-auto flex flex-wrap items-center gap-1.5">
         <button
           type="button"
@@ -403,9 +429,10 @@ const BENCH_HTML = `
   <input type="number" id="peSize" class="tbsel narrow" value="12" min="6" max="72" step="1" title="Text size (pt)" aria-label="Text size in points">
   <input type="color" id="peColor" value="#111111" title="Text colour" aria-label="Text colour">
   <div class="tbsep"></div>
-  <button type="button" class="btn small ghost" id="peZoomOut" aria-label="Zoom out">−</button>
-  <span id="peZoomPct">100%</span>
-  <button type="button" class="btn small ghost" id="peZoomIn" aria-label="Zoom in">+</button>
+  <!-- The zoom cluster is NOT here any more (ledger I4): the React chrome
+       mounts the studio's own −/%/+/Fit, so the same instrument behaves the
+       same way in both modes. The package tolerates their absence and is
+       driven through its api instead. -->
 </div>
 <div id="peScroll"><div id="peDeck"></div></div>
 <input type="file" id="peImgInput" hidden accept="image/png,image/jpeg">

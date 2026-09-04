@@ -15,18 +15,26 @@ const { encodeWith, wrapWidth, wrapLines, hexRgb, clamp } = _internals;
 /* ---------- public surface (the classic PdfEditor global, exactly) ---------- */
 
 describe("public surface", () => {
-  it("exposes exactly the classic PdfEditor members", () => {
+  it("exposes the classic PdfEditor members, and the four the studio drives", () => {
+    /* The first ten are the classic surface, unchanged. The zoom four came
+       with ledger I4 (one zoom instrument in both modes): the studio's chrome
+       mounts its own cluster and drives the bench through these, and the
+       bar's own buttons became optional. */
     expect(Object.keys(api).sort()).toEqual([
       "addEdit",
       "close",
       "editLineAt",
       "exportPdf",
+      "fitZoom",
       "getEdits",
       "getTextLines",
+      "getZoom",
       "hasEdits",
       "hooks",
       "isOpen",
+      "onZoomChange",
       "open",
+      "setZoom",
     ]);
   });
   it("starts closed, clean and empty", () => {
