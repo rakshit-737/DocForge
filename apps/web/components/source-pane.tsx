@@ -10,6 +10,7 @@ import { EditorView, keymap, placeholder } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import { handleImagePaste } from "@/components/image-tool";
 import { findKeymap, toast } from "@/lib/find";
+import { useFocusMode } from "@/lib/focus-mode";
 import { htmlToMd } from "@/lib/html-to-md";
 import { deskKeymap } from "@/lib/keymap";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
@@ -139,6 +140,22 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
             closeCompletion(v); // a menu must never outlive the caret that opened it
             return false;
           },
+        }),
+        /* Typewriter scrolling (§8.1 "focus & flow"), armed only in focus
+           mode: the line being written stays near the middle of the pane
+           instead of crawling to the bottom edge. Off elsewhere, because
+           moving the text under a reader who did not ask for it is worse
+           than a caret near the foot. */
+        EditorView.updateListener.of((u) => {
+          if (!useFocusMode.getState().on) return;
+          if (!u.docChanged && !u.selectionSet) return;
+          const head = u.state.selection.main.head;
+          const line = u.view.lineBlockAt(head);
+          const box = u.view.scrollDOM;
+          const target = line.top - box.clientHeight / 2 + line.height / 2;
+          const max = box.scrollHeight - box.clientHeight;
+          const want = Math.max(0, Math.min(max, target));
+          if (Math.abs(box.scrollTop - want) > 8) box.scrollTop = want;
         }),
         EditorView.updateListener.of((u) => {
           if (!u.docChanged) return;

@@ -47,6 +47,7 @@ import { SourcePane } from "./source-pane";
 import { TemplatesMenu } from "./templates-menu";
 import { FormatToolbar } from "./toolbar";
 import { VersionPanel } from "./version-panel";
+import { WritingMeter } from "./writing-meter";
 import { ZoomCluster } from "./zoom-cluster";
 
 export function StudioShell() {
@@ -734,6 +735,7 @@ export function StudioShell() {
           Outline
         </button>
         <LintBadge expanded={lintOpen} onClick={() => setLintOpen((o) => !o)} />
+        <WritingMeter />
         <fieldset data-mobile-tabs="" className="m-0 border-0 p-0" aria-label="Pane">
           <button
             type="button"
