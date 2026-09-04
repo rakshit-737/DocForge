@@ -11,6 +11,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # The `secrets` context cannot be read from a step's `if` — GitHub rejects
+    # the whole workflow file for it. Hoisting the token into the job's env
+    # makes the same test legal (`env.NPM_TOKEN != ''`).
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - run: corepack enable # before setup-node so its pnpm cache probe finds pnpm
@@ -36,17 +41,15 @@ jobs:
       # the repository owner has added an NPM_TOKEN secret. Without it these
       # steps skip, so a tag still cuts a GitHub release either way.
       - name: Build the npm packages
-        if: ${{ secrets.NPM_TOKEN != '' }}
+        if: ${{ env.NPM_TOKEN != '' }}
         run: |
           corepack pnpm --filter "@docforge/engine" run build
           corepack pnpm --filter "@docforge/mathml-omml" run build
           node qa/dist-consume.mjs
       - name: Publish @docforge/engine and @docforge/mathml-omml
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ env.NPM_TOKEN != '' }}
         run: |
-          npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
           # --no-git-checks: the tag is the release, and the working tree
           # carries the freshly built dist/ these packages publish.
           corepack pnpm --filter "@docforge/engine" publish --no-git-checks --access public
