@@ -2091,6 +2091,39 @@ Land the piece: return to the opening image or question and say what it means no
     return block(doc.body).replace(/\n{3,}/g, "\n\n").replace(/[ \t]+$/gm, "").trim();
   }
 
+  /* The plain-text half of smart paste, the same two rules the studio applies
+     (apps/web/lib/smart-paste.ts, where they are unit-tested) — kept in step
+     by hand, exactly as htmlToMd above is. */
+  const pasteCell = s => s.trim().replace(/\|/g, "\\|");
+  function tableFromTsv(text) {
+    const raw = String(text == null ? "" : text).replace(/\r\n?/g, "\n");
+    if (!raw.includes("\t")) return null;
+    const lines = raw.replace(/\n+$/, "").split("\n");
+    if (lines.length < 2 || lines.length > 200) return null;
+    const rows = lines.map(l => l.split("\t"));
+    const width = rows[0].length;
+    if (width < 2 || width > 20) return null;
+    if (!rows.every(r => r.length === width)) return null;
+    if (rows.some(r => r.some(c => c.length > 200))) return null;
+    const head = rows[0].map(pasteCell);
+    return [
+      "| " + head.join(" | ") + " |",
+      "| " + head.map(() => "---").join(" | ") + " |",
+      ...rows.slice(1).map(r => "| " + r.map(pasteCell).join(" | ") + " |"),
+      "",
+    ].join("\n");
+  }
+  const URL_ONLY = /^(?:https?:\/\/[^\s<>"']+|mailto:[^\s<>"']+)$/i;
+  function linkAround(pasted, selected) {
+    const url = String(pasted == null ? "" : pasted).trim();
+    const text = String(selected == null ? "" : selected).trim();
+    if (!url || !text) return null;
+    if (!URL_ONLY.test(url)) return null;
+    if (URL_ONLY.test(text)) return null;      // never throw away the reader's own URL
+    if (/\n/.test(selected)) return null;      // a selection across blocks is not a label
+    return "[" + text.replace(/[[\]]/g, "\\$&") + "](" + url + ")";
+  }
+
   /* ---------------- structure linter ----------------
      Gentle warnings for the shapes that break exports; never blocks anything. */
   function lintSource(src) {
@@ -2344,16 +2377,49 @@ Land the piece: return to the opening image or question and say what it means no
     /* dark chrome */
     $("#btnDark").onclick = () => applyUiTheme(!document.documentElement.hasAttribute("data-light"));
 
-    /* paste cleanup */
+    /* paste cleanup — four readings of one clipboard (§8.1), in the order that
+       leaves the fewest surprises: a URL over a selection links it, rich HTML
+       becomes Markdown, a tab-separated range becomes a table, and anything
+       else lands exactly as it came. */
     editor.addEventListener("paste", e => {
-      const html = e.clipboardData && e.clipboardData.getData("text/html");
-      if (!html || !/<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) return; // plain text pastes untouched
-      const md = htmlToMd(html);
-      if (!md) return;
-      e.preventDefault();
-      editor.setRangeText(md, editor.selectionStart, editor.selectionEnd, "end");
-      state.source = editor.value; markDirty(); scheduleRender();
-      toast("Pasted as Markdown — Ctrl+Z restores the raw text");
+      const cd = e.clipboardData;
+      if (!cd) return;
+      const raw = cd.getData("text/plain") || "";
+      const s0 = editor.selectionStart, s1 = editor.selectionEnd;
+      /* One undo returns what was COPIED, not an empty line: the clipboard's
+         own text is written first and closed as its own history entry
+         (hist.t = 0 breaks recordSource's 900 ms coalescing window), then the
+         reading of it replaces that text. The toast has always promised this;
+         until now it wasn't true. */
+      const apply = (md, said) => {
+        e.preventDefault();
+        if (raw) {
+          editor.setRangeText(raw, s0, s1, "end");
+          state.source = editor.value;
+          markDirty();
+          hist.t = 0;
+          editor.setRangeText(md, s0, s0 + raw.length, "end");
+        } else {
+          editor.setRangeText(md, s0, s1, "end");
+        }
+        state.source = editor.value;
+        markDirty();
+        scheduleRender();
+        toast(said);
+      };
+
+      const linked = linkAround(raw, editor.value.slice(s0, s1));
+      if (linked) return apply(linked, "Linked the selection — Ctrl+Z restores it");
+
+      const html = cd.getData("text/html");
+      if (html && /<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) {
+        const md = htmlToMd(html);
+        if (md) return apply(md, "Pasted as Markdown — Ctrl+Z restores the raw text");
+      }
+
+      const table = tableFromTsv(raw);
+      if (table) return apply(table, "Pasted as a table — Ctrl+Z restores the raw text");
+      // plain text pastes untouched
     });
     editor.addEventListener("keydown", e => {
       const mod = e.ctrlKey || e.metaKey;
