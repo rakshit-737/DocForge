@@ -18,14 +18,14 @@ what's recorded here.
 
 ---
 
-## Row 1 — Live paginated preview: A4/Letter, 3 margin presets, zoom (ctrl+wheel, fit, %), folio readout, outline navigator — **PARTIAL**
+## Row 1 — Live paginated preview: A4/Letter, 3 margin presets, zoom (ctrl+wheel, fit, %), folio readout, outline navigator — **PARTIAL → DONE (2026-09-03)**
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
 | A4 / Letter | DONE | `settings-drawer.tsx` PAGE_OPTIONS → `Engine.PAGES`; A4 composed live (probe A) |
 | 3 margin presets | DONE | MARGIN_OPTIONS normal/narrow/wide → `@page margin` in `packages/engine/src/themes.ts` |
 | Zoom: fit + % buttons | DONE | Live: footer cluster 100% → +→ 120% → Fit → 114% (fit recalc); `preview-controller.ts` setZoom/applyZoom, fit cap 1.35 |
-| Zoom: ctrl+wheel | CLASSIC-ONLY | Classic `src/js/main.js:2350` binds it; no `wheel` handler anywhere in `apps/web` (grep) — live probe: two ctrl+wheel events left zoom unchanged |
+| Zoom: ctrl+wheel | DONE (`e9a8310`) | Ported onto `[data-preview-scroll]` (`preview-deck.tsx`): ctrl+wheel steps 0.1 within 0.25–2, clicking the percentage still snaps back to fit. Audit-day verdict was CLASSIC-ONLY — classic `src/js/main.js:2350` binds it, the web shell then bound nothing |
 | Folio readout | DONE | Live: wire ticker reads "p. 3 · 3 pages" and follows scroll (outline jump moved it p. 1 → p. 3); `updatePageIndicator()` |
 | Outline navigator | DONE | Live: panel lists One/Two/Three (h1–h3), click scrolled the stone to page 3 (scrollTop 0 → 2425); `outline-panel.tsx` roving list |
 
@@ -78,7 +78,7 @@ citation+locator, cross-refs, table caption, figure, pagebreak, display math.
 | ~190-name Word menu + installed-detection | DONE | `WORD_CATALOG` = 191 names in 5 specimen groups; canvas-measured `fontInstalled` appends " · not on this device" in both the toolbar select and the settings drawer |
 | Per-selection font/size | DONE | Toolbar Typeface…/Size… selects (snap-back grammar) → `setTextFont`/`setTextSize` span attributes (`editor-commands.ts`), the same wrapCmd machinery live-probed for the other marks |
 
-## Row 7 — Word ribbon parity: underline/strike/highlight(15)/sub/sup/colour/shading/size/face/small caps/all caps/alignment/change case/clear formatting — identical in PDF, real run properties in DOCX — **PARTIAL**
+## Row 7 — Word ribbon parity: underline/strike/highlight(15)/sub/sup/colour/shading/size/face/small caps/all caps/alignment/change case/clear formatting — identical in PDF, real run properties in DOCX — **PARTIAL → DONE (2026-09-03)**
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
@@ -107,14 +107,14 @@ text, so print-to-PDF output is selectable. The print dialog itself cannot be
 driven headless — mechanism verified in code, identical to the classic route;
 the "untick headers and footers" toast fires (probe B saw it scheduled).
 
-## Row 10 — Markdown export; `.docforge.json` round-trip with images — **PARTIAL**
+## Row 10 — Markdown export; `.docforge.json` round-trip with images — **PARTIAL → DONE (2026-09-03)**
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
-| Markdown export | CLASSIC-ONLY | Classic `exportMd` (`src/js/main.js:1461`, button + palette entry); the web studio has no `.md` export anywhere (grep of `apps/web` — no command, no button) |
+| Markdown export | DONE (`6af571b`) | `doExportMd` in `studio-shell.tsx` (the classic `exportMd` ported: source blob, document-title filename) with a command-palette entry. Audit-day verdict was CLASSIC-ONLY |
 | Project round-trip with images | DONE | `lib/project-file.ts`: Zod v1 schema, legacy `pageBorder` migration, attachments serialized both ways; File System Access save with download fallback; `.json` routes through the project opener (`imports.ts`) |
 
-## Row 11 — Import: docx, pdf (both roads), md, txt, html, csv/tsv, xlsx, pptx, epub, ipynb, images — drag-drop + Open + paste conversion — **PARTIAL**
+## Row 11 — Import: docx, pdf (both roads), md, txt, html, csv/tsv, xlsx, pptx, epub, ipynb, images — drag-drop + Open + paste conversion — **PARTIAL → DONE (2026-09-03)**
 
 | Item | Verdict | Evidence |
 | --- | --- | --- |
@@ -124,18 +124,22 @@ the "untick headers and footers" toast fires (probe B saw it scheduled).
 | PDF **both roads** from the studio door | DONE | Wave one: dropping/opening a PDF raises the classic "edit in place, or convert?" dialog (`studio-shell.tsx` pdfPending); edit stashes via `stashBenchFile` and client-navigates to `/pdf`, convert takes the old road |
 | Rich-HTML paste conversion | DONE | The classic structure sniff (`main.js:2292`) wired into the CM paste handler (`source-pane.tsx`) via the ported `htmlToMd`; probed live — h1/strong convert to `#`/`**`, plain text pastes untouched, one-step Ctrl+Z, classic toast |
 
-## Row 12 — PDF bench: double-click rewrite in embedded font, fallback notice, free text, white-out, highlighter, image stamps, export from original bytes — **PARTIAL**
+## Row 12 — PDF bench: double-click rewrite in embedded font, fallback notice, free text, white-out, highlighter, image stamps, export from original bytes — **PARTIAL → DONE (2026-09-03)**
 
 Live on `/pdf` (own route, no studio masthead — the §3.2 bug designed out):
 opened a real PDF (4 canvases, "4 pages"), **double-click spawned an editable
 `pe-edit pe-text` box carrying the original glyphs** ("C O U R S E") with the
 Original-font select present, **white-out drag created a `pe-white` box**, and
-**Export downloaded `assignment-edited.pdf` from the original bytes**. Free
-text, highlighter, image stamps and the font-fallback notice exist as the same
-`@docforge/pdf-editor` package the classic `qa/pdfedit-smoke.mjs` covers (tool
-plates all present and armed), but those flows have not been re-driven on
-`/pdf` itself — the honest gap 03-ports.md already records. (Bonus: the bench
-*does* have ctrl+wheel zoom, via the package.)
+**Export downloaded `assignment-edited.pdf` from the original bytes**. (Bonus:
+the bench *does* have ctrl+wheel zoom, via the package.)
+
+**Re-driven 2026-09-03** — the four remaining flows, live on `/pdf` against a
+minimal Helvetica PDF: **free text** (`pe-text` box spawned and typed into),
+**highlighter** (drag created a `pe-hl` band), **image stamp** (`pe-img` from
+a PNG at the clicked spot), and the **font-fallback notice** ("Some characters
+aren't in this PDF's embedded font…") raised on export after a double-click
+rewrite of the printed line — export downloaded `bench-edited.pdf`, console
+clean. Every Row-12 flow is now verified on the web surface itself.
 
 ## Row 13 — Templates ×6 working specimens; command palette; focus mode; find/replace; structure linter; autosave + crash recovery; light/dark chrome; mobile layout — **DONE**
 
@@ -150,7 +154,7 @@ plates all present and armed), but those flows have not been re-driven on
 | Light/dark chrome | DONE | Live: Night shift/Day desk toggled `data-light` on `<html>`; documents always render on white |
 | Mobile layout | DONE | Live at 780 px: one column, Source/Preview pane tabs in the ticker (`body[data-mobile-pane]` block) |
 
-## Row 14 — Keyboard map ≥ current (Ctrl+B/I/U/F/H/S/K + new Ctrl+1/2/3, Shift+Tab) — **PARTIAL**
+## Row 14 — Keyboard map ≥ current (Ctrl+B/I/U/F/H/S/K + new Ctrl+1/2/3, Shift+Tab) — **PARTIAL → DONE (2026-09-03)**
 
 Every shortcut that works in the web studio, live-verified key by key (probe B):
 
@@ -172,7 +176,7 @@ Every shortcut that works in the web studio, live-verified key by key (probe B):
 | Ctrl+Z / Ctrl+Y | one history — editor and manuscript both | live |
 | Esc | closes find/palette/help/drawer, then focus mode | live |
 
-Deltas that keep this row from DONE:
+Deltas that kept this row from DONE on audit day — **all three closed since**:
 
 - **Ctrl+P — CLASSIC-ONLY.** Classic exports PDF on it (`main.js:2321`); the web
   shell binds nothing (probed: no export fires, the browser dialog would).
@@ -183,11 +187,17 @@ Deltas that keep this row from DONE:
   whether the editor consumed the key.
 - Ctrl+wheel zoom missing (row 1).
 
+**Closed:** Ctrl+P now runs `doExportPdf` and the shell's Ctrl+K handler carries
+the same `.cm-editor` guard its F/H branch always had, so the editor keeps the
+link wrap and the palette stays out of it (`e9a8310`); ctrl+wheel zoom landed in
+the same commit.
+
 ---
 
 ## Summary
 
-**Row verdicts: 8 DONE · 6 PARTIAL · 0 CLASSIC-ONLY · 0 N/A** (14 rows).
+**Row verdicts on audit day: 8 DONE · 6 PARTIAL · 0 CLASSIC-ONLY · 0 N/A**
+(14 rows). Every PARTIAL row closed within four days — see the update below.
 
 Classic-only sub-items inside the PARTIAL rows (6): ctrl+wheel preview zoom ·
 Ctrl+P export-PDF key · Markdown export · rich-HTML paste conversion · the
@@ -197,14 +207,15 @@ bench flows (free text, highlighter, image stamps, fallback notice) and five
 import formats (md/txt/tsv/pptx/epub) not yet re-driven on the web surfaces
 they share code with.
 
-> **Update (2026-09-03):** all six classic-only sub-items have since closed —
-> ctrl+wheel zoom and Ctrl+P (`e9a8310`), Markdown export and the "edit or
-> convert?" PDF choice (`6af571b`), rich-HTML paste conversion and ribbon
-> marks on a manuscript selection (probed live, same day). The Ctrl+K
-> double-fire is fixed, and the five import formats (md/txt/tsv/pptx/epub)
-> are re-driven through the real Open door. Remaining: the four bench flows
-> (free text, highlighter, image stamps, fallback notice — shared-code
-> surfaces, lower risk).
+> **Update (2026-09-03) — the audit is closed out: 14 DONE · 0 PARTIAL.**
+> All six classic-only sub-items shipped — ctrl+wheel zoom and Ctrl+P
+> (`e9a8310`), Markdown export and the studio-door "edit or convert?" PDF
+> choice (`6af571b`), rich-HTML paste conversion (`638e098`) and ribbon marks
+> on a manuscript selection (`63a9650`). The Ctrl+K double-fire is fixed. Both
+> deferred re-drives are done on the real web surfaces: the five import
+> formats (md/txt/tsv/pptx/epub) through the Open door, and the four bench
+> flows (free text, highlighter, image stamps, font-fallback notice) on
+> `/pdf`. Nothing in this appendix is outstanding.
 
 **Shortest path to full parity, in order of value per line of code:**
 
