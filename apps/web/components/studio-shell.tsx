@@ -12,6 +12,7 @@ import { downloadBlob, exportDocx, exportHtml, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
 import { useFocusMode, useMobilePane } from "@/lib/focus-mode";
 import { importFile, isHeavyImport } from "@/lib/imports";
+import { armLaunchQueue, consumeSharedPayload, sharedToMarkdown } from "@/lib/launch-files";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { armAutosave, persistNow, restoreSession } from "@/lib/persistence";
 import type { PreviewController } from "@/lib/preview-controller";
@@ -315,6 +316,24 @@ export function StudioShell() {
       fileInput.current?.click();
     }
   }, [handleImport]);
+
+  /* The operating system's two roads in (§8.5): a file DocForge was launched
+     with, and text shared to it. Both land as their own document, and a
+     launched file keeps its handle so Save writes back to it. */
+  useEffect(() => {
+    const shared = consumeSharedPayload();
+    if (shared) {
+      void openAsDocument(shared.title || "Shared text", {
+        source: sharedToMarkdown(shared),
+        settings: { ...useDocStore.getState().settings, title: shared.title } as Settings,
+      });
+    }
+    return armLaunchQueue(async (file) => {
+      const loaded = await handleImport(file);
+      if (loaded) setOpenFile(openFileName());
+      return loaded;
+    });
+  }, [handleImport, openAsDocument]);
 
   const jumpToLine = useCallback(
     (n: number) => {

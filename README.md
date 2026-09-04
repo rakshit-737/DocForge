@@ -49,6 +49,7 @@ These are commitments, not marketing (MASTER-PROMPT §5):
 - **Export a standalone web page** — one `.html` file carrying the document, the product stylesheet, the embedded typefaces and KaTeX's maths fonts. It opens anywhere, forever, with no network and no DocForge — the same promise the single-file edition makes for the app
 - **Export Markdown** — the document handed back as a plain `.md` file; with Open, that's a MarkItDown-style converter that runs entirely offline
 - **Templates** — one house style across the set, each a working specimen rather than a bare skeleton: assignment/lab report, business proposal, project report, formal letter, article/essay, and a guided quick tour
+- **Installed, it behaves like an app you own** — double-click a `.md` or `.docforge.json` and it opens in DocForge as its own document, with the file kept open so Save writes straight back to it; text and links shared to DocForge arrive as a new document too
 - **Autosave** in the browser + `.docforge.json` project files (images included) you can reopen anywhere
 
 The full markup reference — every construct, with the golden-corpus document that pins it — lives in [`docs/DIALECT.md`](docs/DIALECT.md). The dialect only ever grows; existing markup never changes meaning.

@@ -187,6 +187,32 @@ export async function openWithPicker(): Promise<{ file: File; adopt(): void } | 
   };
 }
 
+/** Read a platform-supplied handle (the File Handling API hands these over
+    when the OS opens a file WITH DocForge) without claiming it. */
+export async function fileFromHandle(handle: unknown): Promise<File | null> {
+  const h = handle as FsFileHandle | null;
+  if (!h || typeof h.getFile !== "function") return null;
+  return h.getFile();
+}
+
+/** Claim a platform-supplied handle, once its document has actually loaded.
+    It must be called AFTER the load: opening a document clears the open-file
+    target by design, so adopting first would simply be undone (a real bug the
+    probe caught). Same rule as the picker road otherwise — only the shapes
+    DocForge itself writes are adopted, so a save can never claim to have
+    written a .docx it merely converted. */
+export async function adoptExternalHandle(handle: unknown): Promise<string | null> {
+  const h = handle as FsFileHandle | null;
+  if (!h || typeof h.getFile !== "function") {
+    target = null;
+    return null;
+  }
+  const file = await h.getFile();
+  const kind = kindOf(file.name);
+  target = kind ? { handle: h, kind, name: file.name } : null;
+  return target ? target.name : null;
+}
+
 async function writable(handle: FsFileHandle): Promise<FsWritable | null> {
   if (handle.queryPermission) {
     let state = await handle.queryPermission({ mode: "readwrite" });
