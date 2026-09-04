@@ -3,7 +3,13 @@
    textarea with real editor machinery: markdown highlighting, proper undo,
    multiple cursors, and (stage 3) the search panel with counts and toggles. */
 import { autocompletion, closeCompletion, completionKeymap } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+  isolateHistory,
+} from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, placeholder } from "@codemirror/view";
@@ -15,6 +21,7 @@ import { htmlToMd } from "@/lib/html-to-md";
 import { deskKeymap } from "@/lib/keymap";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
 import { slashCompletions } from "@/lib/slash";
+import { linkAround, tableFromTsv } from "@/lib/smart-paste";
 import { consumeSplice, useDocStore } from "@/lib/store";
 
 const deskTheme = EditorView.theme({
@@ -107,26 +114,62 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
           "aria-label": "Manuscript source",
           tabindex: "0",
         }),
-        // smart paste: a clipboard image becomes an attached, captioned
-        // figure; rich HTML (Word, web pages) converts to Markdown behind
-        // the classic structure sniff (src/js/main.js:2292) — plain text
-        // pastes stay untouched, and Ctrl+Z restores the raw text
+        /* Smart paste (§8.1). Four readings of one clipboard, tried in the
+           order that leaves the fewest surprises, and every one of them
+           undone by a single Ctrl+Z:
+             1. an image becomes an attached, captioned figure;
+             2. a URL dropped on selected text links that text;
+             3. rich HTML (Word, a web page, a spreadsheet range) converts to
+                Markdown behind the classic structure sniff (main.js:2292);
+             4. a tab-separated block becomes a dialect table.
+           Anything else lands exactly as it came. */
         EditorView.domEventHandlers({
           paste: (e, v) => {
             if (handleImagePaste(e, v)) return true;
-            const html = e.clipboardData?.getData("text/html");
-            if (!html || !/<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) return false;
-            const md = htmlToMd(html);
-            if (!md) return false;
-            e.preventDefault();
             const { from, to } = v.state.selection.main;
-            v.dispatch({
-              changes: { from, to, insert: md },
-              selection: { anchor: from + md.length },
-              userEvent: "input.paste",
-            });
-            toast("Pasted as Markdown — Ctrl+Z restores the raw text");
-            return true;
+            const text = e.clipboardData?.getData("text/plain") ?? "";
+            /* Two transactions, and the second is isolated so it becomes its
+               own undo step: the clipboard's own text lands first, then the
+               reading of it replaces that text. One Ctrl+Z therefore returns
+               what was actually copied, which is what the toast promises and
+               what the paste before this one only claimed. */
+            const apply = (insert: string, said: string) => {
+              e.preventDefault();
+              if (text) {
+                v.dispatch({
+                  changes: { from, to, insert: text },
+                  selection: { anchor: from + text.length },
+                  userEvent: "input.paste",
+                });
+                v.dispatch({
+                  changes: { from, to: from + text.length, insert },
+                  selection: { anchor: from + insert.length },
+                  annotations: isolateHistory.of("before"),
+                  userEvent: "input.paste",
+                });
+              } else {
+                v.dispatch({
+                  changes: { from, to, insert },
+                  selection: { anchor: from + insert.length },
+                  userEvent: "input.paste",
+                });
+              }
+              toast(said);
+              return true;
+            };
+
+            const linked = linkAround(text, v.state.sliceDoc(from, to));
+            if (linked) return apply(linked, "Linked the selection — Ctrl+Z restores it");
+
+            const html = e.clipboardData?.getData("text/html");
+            if (html && /<(h[1-6]|p|li|table|b|strong|em|i|a)\b/i.test(html)) {
+              const md = htmlToMd(html);
+              if (md) return apply(md, "Pasted as Markdown — Ctrl+Z restores the raw text");
+            }
+
+            const table = tableFromTsv(text);
+            if (table) return apply(table, "Pasted as a table — Ctrl+Z restores the raw text");
+            return false;
           },
         }),
         EditorView.lineWrapping,

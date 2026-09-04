@@ -43,6 +43,7 @@ lists** (`b5b2eed`, 20 tests, probe 9/9).
 | Batch convert (§8.4) | **Shipped** (`a2c7b77`) | Open and drop both take several files; one queue, awaited, so two imports can't race; probe 5/5 |
 | Theme designer (§8.2) | **Shipped** (`9921e27`) | save a look, apply it anywhere, share it as JSON; the look/content line is what the 18 tests press on; probe 10/10 |
 | Watermark & letterhead (§8.2) | **Shipped** | a diagonal word and a logo in the top margin, in BOTH formats — Word gets a real VML watermark shape and a real header image. 19 engine tests, 11 export tests reading the OOXML, studio probe 12/12, and `qa/stamp.mjs`: one document built both ways, the .docx opened and printed by the real Word, the ink counted in both prints |
+| Smart paste (§8.1) | **Shipped** | the two halves that were missing: a tab-separated range becomes a table, a URL over a selection links it. 14 unit tests, probe 9/9. The paste toast also stopped lying — the converted text is now a second, isolated undo step, so one Ctrl+Z really does return the clipboard's own text |
 
 The headers/footers work carried one trap worth remembering: adding the
 new `@bottom-left` / `@bottom-right` boxes to `@page cover`
