@@ -7,6 +7,7 @@ import type * as PagedNS from "pagedjs";
 import { loadDocCss, loadStudio, type StudioRuntime } from "./bootstrap";
 import type { LiveEdit, LiveEditView } from "./live-edit";
 import type { Settings } from "./settings";
+import { installedFontCss } from "./user-fonts";
 
 type PagedPage = { element?: HTMLElement; position?: number; removeListeners?: () => void };
 type PagedFlow = { pages?: PagedPage[]; total: number };
@@ -237,7 +238,10 @@ export class PreviewController {
         attachments as Parameters<typeof Engine.render>[2],
       );
       this.lastContentEl = (doc.querySelector(".content")?.cloneNode(true) as HTMLElement) ?? null;
-      const css = docCssText + Engine.dynamicCss(settings);
+      /* The reader's own typefaces ride in as @font-face rules on the same
+         stylesheet, so the preview and the printed PDF draw the real outlines
+         rather than a fallback (§8.2). Empty when none are installed. */
+      const css = docCssText + Engine.dynamicCss(settings) + installedFontCss();
 
       /* Compose the new galleys offscreen while the old ones stay on the
          stone — the reader never sees a blank deck and the scroll container

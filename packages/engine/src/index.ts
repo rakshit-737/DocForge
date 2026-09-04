@@ -24,8 +24,10 @@ import {
   fontFaceCss,
   MARGINS,
   PAGES,
+  registerUserFace,
   sysStack,
   tints,
+  unregisterUserFaces,
   WORD_CATALOG,
 } from "./themes";
 import { esc } from "./util";
@@ -51,6 +53,12 @@ export const api = {
   faceName,
 };
 
+/* NOT part of `api`: that object is the classic Engine global, member for
+   member in the classic order, and the parity gate holds it there. The
+   reader-supplied-typeface registry (§8.2) is a named export the studio
+   imports directly — additive, and invisible to anything that never calls it. */
+
+export type { UserFace } from "./themes";
 export type {
   Attachment,
   Attachments,
@@ -86,8 +94,10 @@ export {
   MARGINS,
   PAGES,
   RE_SHOT,
+  registerUserFace,
   render,
   sysStack,
   tints,
+  unregisterUserFaces,
   WORD_CATALOG,
 };

@@ -15,11 +15,13 @@
    Every field writes through useDocStore.patchSettings — the store owns the
    classic accent-follows-theme behaviour. */
 import * as Dialog from "@radix-ui/react-dialog";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { loadStudio } from "@/lib/bootstrap";
+import { toast } from "@/lib/find";
 import type { Settings } from "@/lib/settings";
 import { useDocStore } from "@/lib/store";
+import { type UserFont, userFaceEntries, useUserFonts } from "@/lib/user-fonts";
 
 /* ---------- drawer state — the shell (and later the palette) opens it ---------- */
 interface SettingsDrawerState {
@@ -342,6 +344,81 @@ function ToggleRow({
   );
 }
 
+/* ---------- the reader's own typefaces (§8.2) ---------- */
+
+function UserFontShelf() {
+  const fonts = useUserFonts((s) => s.fonts);
+  const add = useUserFonts((s) => s.add);
+  const remove = useUserFonts((s) => s.remove);
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const take = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const font = await add(file);
+      const cuts = Object.keys(font.cuts).length;
+      toast(
+        `“${font.name}” installed — ${cuts} cut${cuts === 1 ? "" : "s"}. It travels inside your Word exports`,
+        "info",
+        5000,
+      );
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "That font could not be read", "warn", 6000);
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  };
+
+  return (
+    <div className="mt-3">
+      <p className="m-0 mb-1.5 text-[11.5px] text-ink-3">
+        Your typefaces — embedded in the preview, the PDF <i>and</i> the Word file
+      </p>
+      {fonts.length > 0 ? (
+        <ul className="m-0 mb-2 list-none border border-line p-0">
+          {fonts.map((f: UserFont) => (
+            <li
+              key={f.name}
+              className="flex items-center gap-2 border-line border-b px-2.5 py-1.5 last:border-b-0"
+            >
+              <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink">{f.name}</span>
+              <span className="shrink-0 font-mono text-[10.5px] text-ink-3">
+                {Object.keys(f.cuts).length} cut{Object.keys(f.cuts).length === 1 ? "" : "s"}
+              </span>
+              <button
+                type="button"
+                className="btn-quiet shrink-0"
+                onClick={() => void remove(f.name)}
+                title={`Remove ${f.name} from this device`}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <button
+        type="button"
+        className="btn-tray"
+        disabled={busy}
+        onClick={() => input.current?.click()}
+      >
+        {busy ? "Reading…" : "Add a typeface…"}
+      </button>
+      <input
+        ref={input}
+        type="file"
+        accept=".ttf,.otf,font/ttf,font/otf"
+        className="hidden"
+        onChange={(e) => void take(e.target.files?.[0])}
+      />
+    </div>
+  );
+}
+
 /* ---------- the drawer ---------- */
 export function SettingsDrawer() {
   const open = useSettingsDrawer((s) => s.open);
@@ -350,12 +427,23 @@ export function SettingsDrawer() {
   const patch = useDocStore((s) => s.patchSettings);
   const [catalog, setCatalog] = useState<FontCatalog | null>(null);
   const titleInput = useRef<HTMLInputElement>(null);
+  /* The reader's own families come from the store rather than from a second
+     read of Engine.FACES, so a font installed mid-session appears in the
+     pickers the moment it lands (§8.2). */
+  const userFonts = useUserFonts((s) => s.fonts);
+  const withUserFaces = useMemo(
+    () =>
+      catalog
+        ? { ...catalog, faces: { ...catalog.faces, ...userFaceEntries(userFonts) } }
+        : catalog,
+    [catalog, userFonts],
+  );
 
   useEffect(() => {
     let alive = true;
     loadStudio()
       .then(({ Engine }) => {
-        if (alive) setCatalog({ faces: Engine.FACES, words: Engine.WORD_CATALOG });
+        if (alive) setCatalog({ faces: { ...Engine.FACES }, words: Engine.WORD_CATALOG });
       })
       .catch(() => {
         /* the drawer still works — the selects just stay at "Theme default" */
@@ -537,16 +625,17 @@ export function SettingsDrawer() {
                 id="sFontHead"
                 label="Headings typeface"
                 value={settings.fontHead}
-                catalog={catalog}
+                catalog={withUserFaces}
                 onPick={pickFont("fontHead")}
               />
               <FontSelect
                 id="sFontBody"
                 label="Body typeface"
                 value={settings.fontBody}
-                catalog={catalog}
+                catalog={withUserFaces}
                 onPick={pickFont("fontBody")}
               />
+              <UserFontShelf />
               <div className="flex gap-2 [&>div]:flex-1 [&>div]:min-w-0">
                 <SelectField
                   id="sBaseSize"

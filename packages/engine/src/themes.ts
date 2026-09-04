@@ -135,6 +135,53 @@ export const FACES: Record<string, { name: string; kind: "sans" | "serif"; label
   garamond: { name: "DocForge Garamond", kind: "serif", label: "Garamond — classic book" },
   crimson: { name: "DocForge Crimson", kind: "serif", label: "Crimson — scholarly" },
 };
+/* ---------- reader-supplied typefaces (§8.2) ----------
+   A font a reader uploads becomes an EMBEDDED family and a selectable FACE at
+   runtime, so every existing path — the @font-face CSS, sysStack's quoting,
+   the .docx font payload, faceName's mapping — treats it exactly as it
+   treats the seven that ship. Nothing here runs unless a font is registered,
+   so a document that uses none renders byte-for-byte as before.
+
+   The bytes themselves never live in this module: they arrive through the
+   same `__FONT_DATA__` contract, keyed `<stem>-<Cut>`. */
+export interface UserFace {
+  /** FACES key the settings store — always `user:` prefixed. */
+  key: string;
+  name: string;
+  stem: string;
+  kind: "sans" | "serif";
+  label: string;
+  family: string;
+  pitch: string;
+  cuts: Record<string, 1>;
+}
+
+export function registerUserFace(face: UserFace): void {
+  const i = EMBEDDED.findIndex((f) => f.name === face.name);
+  const entry: EmbeddedFace = {
+    name: face.name,
+    stem: face.stem,
+    family: face.family,
+    pitch: face.pitch,
+    cuts: face.cuts,
+  };
+  if (i >= 0) EMBEDDED[i] = entry;
+  else EMBEDDED.push(entry);
+  FACES[face.key] = { name: face.name, kind: face.kind, label: face.label };
+}
+
+/** Forget one reader-supplied face, or all of them. */
+export function unregisterUserFaces(keys?: string[]): void {
+  for (const key of keys ?? Object.keys(FACES)) {
+    if (!key.startsWith("user:")) continue;
+    const face = FACES[key];
+    if (!face) continue;
+    delete FACES[key];
+    const i = EMBEDDED.findIndex((f) => f.name === face.name);
+    if (i >= 0) EMBEDDED.splice(i, 1);
+  }
+}
+
 export const faceStack = (key: unknown): string | null => {
   if (FACES[key as string])
     return `"${FACES[key as string].name}", ${FACES[key as string].kind === "serif" ? "Georgia, serif" : "Arial, sans-serif"}`;

@@ -26,6 +26,7 @@ import type { Settings } from "@/lib/settings";
 import { useDocStore, useUiStore } from "@/lib/store";
 import type { TemplateDocument } from "@/lib/templates";
 import { resolveTemplate, TEMPLATES } from "@/lib/templates";
+import { useUserFonts } from "@/lib/user-fonts";
 import { armVersionSnapshots, snapshot } from "@/lib/versions";
 import { anyDialogOpen, CommandPalette } from "./command-palette";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -77,6 +78,9 @@ export function StudioShell() {
   /* ---------------- boot: restore the last session, arm autosave ---------------- */
   useEffect(() => {
     let disarm = () => {};
+    /* The reader's own typefaces register before the first compose, so a
+       document set in one is drawn in it from the first paint (§8.2). */
+    void useUserFonts.getState().refresh();
     (async () => {
       const restored = await restoreSession();
       if (!restored && !useDocStore.getState().source) {

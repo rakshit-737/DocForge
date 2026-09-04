@@ -11,7 +11,7 @@ import type { Command, EditorView } from "@codemirror/view";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Toolbar from "@radix-ui/react-toolbar";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ImageTool } from "@/components/image-tool";
 import { loadStudio } from "@/lib/bootstrap";
 import {
@@ -53,6 +53,7 @@ import {
   toggleUnderline,
 } from "@/lib/editor-commands";
 import { styleActiveSelection } from "@/lib/live-edit";
+import { userFaceEntries, useUserFonts } from "@/lib/user-fonts";
 
 /* ---------------- desk plate styling ---------------- */
 
@@ -624,7 +625,18 @@ function SizeSelect({ onPick }: { onPick: (pt: string) => void }) {
 /* ---------------- the toolbar ---------------- */
 
 export function FormatToolbar({ view }: { view: EditorView | null }) {
-  const catalog = useFontCatalog();
+  const baseCatalog = useFontCatalog();
+  /* The reader's own typefaces sit beside the embedded ones in the Typeface
+     select — a per-selection face is written as a span attribute, and
+     sysStack quotes any registered family (§8.2). */
+  const userFonts = useUserFonts((s) => s.fonts);
+  const catalog = useMemo(
+    () =>
+      baseCatalog
+        ? { ...baseCatalog, faces: { ...baseCatalog.faces, ...userFaceEntries(userFonts) } }
+        : baseCatalog,
+    [baseCatalog, userFonts],
+  );
   // Dispatch into the live editor, then hand focus back to the writing surface.
   const pick = (cmd: Command) => {
     if (!view) return;

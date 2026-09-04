@@ -66,10 +66,16 @@ export function loadFontData(): Promise<Record<string, string>> {
   fontData ??= (async () => {
     const { Engine } = await loadStudio();
     const out: Record<string, string> = {};
+    const have = (globalThis as { __FONT_DATA__?: Record<string, string> }).__FONT_DATA__ ?? {};
     await Promise.all(
       Engine.EMBEDDED.flatMap((fam) =>
         Object.keys(fam.cuts).map(async (cut) => {
-          const file = `${fam.stem}-${Engine.CUT_FILE[cut]}.ttf`;
+          const key = `${fam.stem}-${Engine.CUT_FILE[cut]}`;
+          /* A typeface the reader installed is EMBEDDED too, but its bytes are
+             already in hand — there is no file for it under /fonts, and
+             asking for one would 404 on every export. */
+          if (have[key]) return;
+          const file = `${key}.ttf`;
           const res = await fetch(`/fonts/${file}`);
           if (!res.ok) return;
           const buf = new Uint8Array(await res.arrayBuffer());
@@ -78,11 +84,14 @@ export function loadFontData(): Promise<Record<string, string>> {
           for (let i = 0; i < buf.length; i += CHUNK) {
             bin += String.fromCharCode(...buf.subarray(i, i + CHUNK));
           }
-          out[`${fam.stem}-${Engine.CUT_FILE[cut]}`] = btoa(bin);
+          out[key] = btoa(bin);
         }),
       ),
     );
-    (globalThis as Record<string, unknown>).__FONT_DATA__ = out;
+    /* MERGED, never assigned: the reader's own typefaces (lib/user-fonts.ts)
+       land in this same map at boot, and an export must not wipe them. */
+    const g2 = globalThis as { __FONT_DATA__?: Record<string, string> };
+    g2.__FONT_DATA__ = { ...(g2.__FONT_DATA__ ?? {}), ...out };
     return out;
   })();
   return fontData;

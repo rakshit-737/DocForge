@@ -34,23 +34,40 @@ export interface StoredVersion {
   words: number;
 }
 
+/* A typeface the reader supplied (lib/user-fonts.ts owns the reading and the
+   registration). Keyed by family name, so a second file of the same family
+   adds its cut instead of making a rival entry. Device-scoped on purpose:
+   these bytes have no business inside every autosave. */
+export interface StoredUserFont {
+  name: string;
+  stem: string;
+  kind: "sans" | "serif";
+  cuts: Partial<Record<"regular" | "bold" | "italic" | "boldItalic", string>>;
+  addedAt: number;
+}
+
 interface DocForgeDB extends DBSchema {
   documents: { key: string; value: StoredDoc };
   versions: { key: string; value: StoredVersion; indexes: { "by-time": number } };
+  fonts: { key: string; value: StoredUserFont };
 }
 
 let db: Promise<IDBPDatabase<DocForgeDB>> | null = null;
 /** The one connection to the "docforge" database, shared by every module that
-    stores anything. Schema 2 adds the version timeline; a reader upgrading
-    from 1 keeps their document untouched. */
+    stores anything. Schema 2 added the version timeline, 3 the reader's own
+    typefaces; each upgrade only creates what is missing, so a reader arriving
+    from any earlier version keeps everything they had. */
 export function docforgeDB(): Promise<IDBPDatabase<DocForgeDB>> {
-  db ??= openDB<DocForgeDB>("docforge", 2, {
+  db ??= openDB<DocForgeDB>("docforge", 3, {
     upgrade(d) {
       if (!d.objectStoreNames.contains("documents")) {
         d.createObjectStore("documents", { keyPath: "id" });
       }
       if (!d.objectStoreNames.contains("versions")) {
         d.createObjectStore("versions", { keyPath: "id" }).createIndex("by-time", "at");
+      }
+      if (!d.objectStoreNames.contains("fonts")) {
+        d.createObjectStore("fonts", { keyPath: "name" });
       }
     },
   });

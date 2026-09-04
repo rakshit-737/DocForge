@@ -36,7 +36,7 @@ describe("mergeDefinitions", () => {
     const src = "# Paper\n\nText.\n\n[references]\n";
     const out = mergeDefinitions(src, DEFS);
     const lines = out.source.split("\n");
-    const refIdx = lines.findIndex((l) => l === "[references]");
+    const refIdx = lines.indexOf("[references]");
     const oneIdx = lines.findIndex((l) => l.startsWith("[@one]:"));
     expect(oneIdx).toBeGreaterThan(-1);
     expect(oneIdx).toBeLessThan(refIdx);
