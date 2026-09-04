@@ -13,12 +13,18 @@ p.on("pageerror", e => errors.push("PAGEERROR: " + String(e).slice(0, 200)));
 p.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 200)); });
 
 await p.goto("file://" + dist);
-await p.evaluate(() => localStorage.clear());
+/* Fresh state, minus the one-time first-run manual — it opens over the desk
+   and swallows the clicks this suite makes (firstrun-smoke owns that door). */
+await p.evaluate(() => { localStorage.clear(); localStorage.setItem("docforge.helped", "1"); });
 await p.reload();
 await p.waitForSelector(".pagedjs_page", { timeout: 25000 });
 
 async function applyTemplate(id) {
-  await p.selectOption("#templateSelect", id);
+  /* Templates used to be a <select>; they are a menu button now, so the suite
+     opens the menu and picks the item the way a reader does. */
+  await p.click("#templateSelect");
+  await p.waitForSelector("#tplMenu .tpl-item", { state: "visible" });
+  await p.click(`#tplMenu .tpl-item[data-id="${id}"]`);
   await p.waitForSelector("#confirmOverlay.open");
   await p.click("#cfYes");
   await p.waitForTimeout(2600);

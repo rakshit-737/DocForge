@@ -12,6 +12,10 @@ p.on("console", m => { if (m.type() === "error") errors.push(m.text().slice(0, 3
 p.on("pageerror", e => errors.push("PAGEERROR: " + String(e).slice(0, 300)));
 
 await p.goto("file://" + dist);
+/* Fresh state, minus the one-time first-run manual — it opens over the desk
+   and swallows every click below (firstrun-smoke owns that door). */
+await p.evaluate(() => { localStorage.clear(); localStorage.setItem("docforge.helped", "1"); });
+await p.reload();
 try {
   await p.waitForSelector(".pagedjs_page", { timeout: 25000 });
   await p.waitForTimeout(2500);

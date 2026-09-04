@@ -37,7 +37,24 @@ await page.click("#templateSelect");
 await page.click('.tpl-item[data-id="assignment"]');
 await page.click("#cfYes");
 await settle(page, 60000);
-ok(await page.evaluate(() => !!document.querySelector(".pagedjs_page .cover")), "templates that want a cover still get one");
+/* Every first-party template now opens WITHOUT a cover — the ledger's "cover
+   off by default" fix reaches the templates too, and a cover page a reader
+   did not ask for is the thing that fix was about. What still has to be true
+   is that the cover is one click away and really arrives. */
+ok(
+  await page.evaluate(() => !document.querySelector(".pagedjs_page .cover")),
+  "a template opens without a cover page either",
+);
+await page.evaluate(() => {
+  const t = document.getElementById("tCover");
+  t.checked = true;
+  t.dispatchEvent(new Event("change", { bubbles: true }));
+});
+await settle(page, 60000);
+ok(
+  await page.evaluate(() => !!document.querySelector(".pagedjs_page .cover")),
+  "and the toggle still puts one on the front",
+);
 
 const errs = page.__errors || [];
 ok(errs.length === 0, "no page errors");
