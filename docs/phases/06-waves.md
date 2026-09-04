@@ -32,6 +32,23 @@ lists** (`b5b2eed`, 20 tests, probe 9/9).
 | Share target / open-with (§8.5) | **Shipped** (`3a42346`) | `lib/launch-files.ts`, 12 tests · live probe 10/10 |
 | OCR (§8.4), charts (§8.2), track-changes (§8.1) | Not started | OCR needs tesseract.js — another owner decision |
 
+## Beyond the waves, still dependency-free
+
+| §8 item | State | Evidence |
+| --- | --- | --- |
+| Headers/footers editor (§8.2) | **Shipped** (`a72c2a3`) | four slots with {title} {author} {date} {kicker} {section}; {section} stays live on BOTH sides (string(sect) / STYLEREF). 18 engine tests, 13 export tests reading the real OOXML, probe 10/10, parity green, and a golden matrix case (`1665aa8`) |
+| Equation palette (§8.2) | **Shipped** (`52f3648`) | searchable by what a symbol does; 23 tests, probe 8/8 |
+
+The headers/footers work carried one trap worth remembering: adding the
+new `@bottom-left` / `@bottom-right` boxes to `@page cover`
+unconditionally changed the CSS of **every** document, including ones
+that set no footer at all. The byte-parity suite caught it immediately —
+the exemption list now grows only when a foot slot exists. Page numbers
+are deliberately not tokens in the side slots: the folio counts a dual
+front-matter/body sequence that a CSS margin box cannot express, and
+promising `{page}` there would promise something one of the two formats
+could not keep.
+
 ## What the multi-document workspace retired
 
 §8.1 says the workspace "kills the destructive-replace bug class for good", and
