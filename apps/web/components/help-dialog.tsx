@@ -250,6 +250,12 @@ export function HelpDialog({
 
             <H>DocForge extras</H>
             <Crib>
+              <Row k={<code>/</code>}>
+                <b>Slash commands</b> — type <code>/</code> at the start of a line and the dialect
+                offers itself: <code>/table 3x4</code>, <code>/figure</code>, <code>/equation</code>
+                , <code>/callout warning</code>, <code>/citation</code>, <code>/code python</code>.
+                Enter inserts, Escape dismisses
+              </Row>
               <Row k={<code>[screenshot: caption]</code>}>
                 Screenshot placeholder — prints as a neat labelled box, numbered &ldquo;Figure
                 N&rdquo;. Options after <code>|</code>: <code>w:60%</code> width,{" "}

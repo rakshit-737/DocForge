@@ -2,6 +2,7 @@
 /* The source pane — CodeMirror 6 wearing the copy desk. Replaces the classic
    textarea with real editor machinery: markdown highlighting, proper undo,
    multiple cursors, and (stage 3) the search panel with counts and toggles. */
+import { autocompletion, closeCompletion, completionKeymap } from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { EditorState } from "@codemirror/state";
@@ -12,6 +13,7 @@ import { findKeymap, toast } from "@/lib/find";
 import { htmlToMd } from "@/lib/html-to-md";
 import { deskKeymap } from "@/lib/keymap";
 import { flushActiveLiveEdit } from "@/lib/live-edit";
+import { slashCompletions } from "@/lib/slash";
 import { consumeSplice, useDocStore } from "@/lib/store";
 
 const deskTheme = EditorView.theme({
@@ -34,6 +36,39 @@ const deskTheme = EditorView.theme({
   },
   ".cm-line": { padding: "0" },
   ".cm-scroller": { overflow: "auto" },
+  /* The slash menu wears the desk: a tray-coloured plate on the elevation
+     scale, square corners, mono labels, one accent bar on the selection —
+     never the browser's default listbox. */
+  ".cm-tooltip.cm-tooltip-autocomplete": {
+    border: "1px solid var(--line)",
+    background: "var(--bg2)",
+    borderRadius: "2px",
+    boxShadow: "var(--elev-m)",
+    overflow: "hidden",
+  },
+  ".cm-tooltip-autocomplete > ul": {
+    fontFamily: "var(--mono)",
+    fontSize: "12px",
+    maxHeight: "18em",
+  },
+  ".cm-tooltip-autocomplete > ul > li": {
+    padding: "5px 10px",
+    color: "var(--tx2)",
+    borderLeft: "2px solid transparent",
+  },
+  ".cm-tooltip-autocomplete > ul > li[aria-selected]": {
+    background: "var(--bg3)",
+    color: "var(--tx)",
+    borderLeftColor: "var(--pri)",
+  },
+  ".cm-completionLabel": { color: "var(--tx)" },
+  ".cm-completionDetail": {
+    display: "block",
+    marginTop: "1px",
+    fontStyle: "normal",
+    fontSize: "11px",
+    color: "var(--tx3)",
+  },
 });
 
 export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => void }) {
@@ -51,6 +86,18 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
         history(),
         markdown(),
         placeholder("Write here — plain text with the DocForge dialect."),
+        /* Slash commands (§8.1): `/table 3x4`, `/figure`, `/callout warning`
+           — the dialect offering itself at the head of a line. Its keymap
+           sits above the desk's so Enter takes the highlighted entry while
+           the menu is open, and falls through to the editor when it isn't. */
+        autocompletion({
+          override: [slashCompletions],
+          activateOnTyping: true,
+          icons: false,
+          defaultKeymap: false,
+          aboveCursor: false,
+        }),
+        keymap.of(completionKeymap),
         deskKeymap, // Prec.high: Mod-b/i/u/e/k, Mod-1/2/3 heading toggles (I5)
         keymap.of([...findKeymap]), // Mod-f/h, F3/Shift-F3, Esc-closes-find — before defaults
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
@@ -87,6 +134,10 @@ export function SourcePane({ viewRef }: { viewRef?: (v: EditorView | null) => vo
         EditorView.domEventHandlers({
           focus: () => {
             flushActiveLiveEdit();
+          },
+          blur: (_e, v) => {
+            closeCompletion(v); // a menu must never outlive the caret that opened it
+            return false;
           },
         }),
         EditorView.updateListener.of((u) => {
