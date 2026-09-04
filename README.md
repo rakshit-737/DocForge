@@ -46,6 +46,7 @@ These are commitments, not marketing (MASTER-PROMPT §5):
 - **Editor comforts** — command palette (Ctrl+K), focus mode, a draggable split that remembers its place, folio readout, outline navigator, find & replace, pasted Word/web content auto-converted to Markdown, a gentle structure checker, and a light/dark switch for the app chrome (the document always prints on white)
 - **Export PDF** — via the browser print engine (*Save as PDF*), margins and headers pre-configured; text stays selectable and searchable
 - **Export Word** — a real `.docx` with the same fonts embedded, styled headings, cover, tables with true column widths, figures, footnotes, equations and an auto-updating TOC field
+- **Export a standalone web page** — one `.html` file carrying the document, the product stylesheet, the embedded typefaces and KaTeX's maths fonts. It opens anywhere, forever, with no network and no DocForge — the same promise the single-file edition makes for the app
 - **Export Markdown** — the document handed back as a plain `.md` file; with Open, that's a MarkItDown-style converter that runs entirely offline
 - **Templates** — one house style across the set, each a working specimen rather than a bare skeleton: assignment/lab report, business proposal, project report, formal letter, article/essay, and a guided quick tour
 - **Autosave** in the browser + `.docforge.json` project files (images included) you can reopen anywhere

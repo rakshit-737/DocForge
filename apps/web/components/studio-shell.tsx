@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captionForFile, insertFigure, processImageFile } from "@/lib/attachments";
 import { importReport, mergeDefinitions } from "@/lib/bibliography";
-import { downloadBlob, exportDocx, exportPdf } from "@/lib/exports";
+import { downloadBlob, exportDocx, exportHtml, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
 import { useFocusMode, useMobilePane } from "@/lib/focus-mode";
 import { importFile, isHeavyImport } from "@/lib/imports";
@@ -348,6 +348,19 @@ export function StudioShell() {
     }
   }, [controller]);
 
+  /* One file that carries the document, its stylesheet and its typefaces —
+     openable anywhere, forever, with no DocForge involved (§8.4). */
+  const doExportHtml = useCallback(async () => {
+    const s = useDocStore.getState();
+    try {
+      const name = await exportHtml(s.settings, s.source, s.attachments);
+      toast(`${name} downloaded — a single page carrying its own fonts and styles`, "info", 5000);
+    } catch (e) {
+      console.error("[DocForge] html export failed", e);
+      toast("HTML export failed — nothing was lost; try again", "warn");
+    }
+  }, []);
+
   const doExportMd = useCallback(() => {
     flushActiveLiveEdit();
     const s = useDocStore.getState();
@@ -423,6 +436,12 @@ export function StudioShell() {
     { group: "Actions", label: "Export Word document", hint: "one click", run: doExportDocx },
     { group: "Actions", label: "Export PDF", hint: "print route", run: doExportPdf },
     { group: "Actions", label: "Export Markdown", hint: ".md source", run: doExportMd },
+    {
+      group: "Actions",
+      label: "Export standalone HTML",
+      hint: "one shareable file",
+      run: () => void doExportHtml(),
+    },
     { group: "Actions", label: "Save on this device", hint: "Ctrl+S", run: saveLocal },
     { group: "Actions", label: "Save project file", hint: ".docforge.json", run: saveProject },
     { group: "Actions", label: "Open project…", run: () => void doOpen() },

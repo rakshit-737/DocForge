@@ -3,7 +3,7 @@
      public/fonts/*    — the embedded OFL cuts
      public/fonts.css  — @font-face over static URLs, mirroring engine.fontFaceCss()
    Runs before dev and build (predev/prebuild). */
-import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,6 +22,19 @@ copyFileSync(
   join(REPO, "node_modules", "pagedjs", "dist", "paged.js"),
   join(APP, "lib", "vendor", "paged.cjs"),
 );
+
+/* KaTeX's stylesheet with every woff2 inlined — what the standalone-HTML
+   export hands a reader who has never heard of DocForge (lib/exports.ts).
+   The same move build.mjs makes for the single-file edition. */
+{
+  const katexDir = join(REPO, "node_modules", "katex", "dist");
+  const css = readFileSync(join(katexDir, "katex.min.css"), "utf8").replace(
+    /src:url\(fonts\/([A-Za-z0-9_-]+)\.woff2\)[^;}]*/g,
+    (_m, name) =>
+      `src:url(data:font/woff2;base64,${readFileSync(join(katexDir, "fonts", `${name}.woff2`)).toString("base64")}) format("woff2")`,
+  );
+  writeFileSync(join(PUB, "katex-inline.css"), css);
+}
 
 const CUT_STYLE = {
   Regular: { weight: 400, style: "normal" },
