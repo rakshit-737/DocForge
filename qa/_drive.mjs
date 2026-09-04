@@ -3,8 +3,21 @@ import { resolve } from "node:path";
 
 export const DIST = "file:///" + resolve("dist/DocForge.html").replace(/\\/g, "/");
 
-const FIELDS = { title: "sTitle", subtitle: "sSubtitle", author: "sAuthor", kicker: "sKicker", metaExtra: "sMetaExtra", date: "sDate" };
-const SELECTS = { theme: "sTheme", page: "sPage", margins: "sMargins", citeStyle: "sCiteStyle", borderStyle: "sBorderStyle", borderWeight: "sBorderWeight", borderColor: "sBorderColor", fontHead: "sFontHead", fontBody: "sFontBody", baseSize: "sBaseSize", lineSpacing: "sLineSpacing" };
+/* Every setting the drawer can express, by the id of the control that holds it.
+   A case whose settings are missing from these maps renders the DEFAULTS and
+   silently proves nothing — which is exactly what happened to the running-head
+   and watermark cases until the forever edition grew their controls. */
+const FIELDS = {
+  title: "sTitle", subtitle: "sSubtitle", author: "sAuthor", kicker: "sKicker",
+  metaExtra: "sMetaExtra", date: "sDate",
+  headerLeft: "sHeaderLeft", headerRight: "sHeaderRight",
+  footerLeft: "sFooterLeft", footerRight: "sFooterRight",
+  watermark: "sWatermark",
+  /* the picker writes the data URL into this hidden field; the harness writes
+     it straight in, which is the same road the setting takes either way */
+  letterhead: "sLetterhead",
+};
+const SELECTS = { theme: "sTheme", page: "sPage", margins: "sMargins", citeStyle: "sCiteStyle", borderStyle: "sBorderStyle", borderWeight: "sBorderWeight", borderColor: "sBorderColor", fontHead: "sFontHead", fontBody: "sFontBody", baseSize: "sBaseSize", lineSpacing: "sLineSpacing", letterheadSize: "sLetterheadSize" };
 const TOGGLES = { cover: "tCover", header: "tHeader", pageNums: "tPageNums", numbered: "tNumbered", justify: "tJustify", h1break: "tH1break", hardWrap: "tHardWrap" };
 
 export async function open(browser, { viewport = { width: 1560, height: 980 } } = {}) {

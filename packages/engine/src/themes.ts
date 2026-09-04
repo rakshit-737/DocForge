@@ -524,6 +524,107 @@ export function headContent(template: unknown, settings: Settings): string {
     .join(" ");
 }
 
+/* ---------- letterhead & watermark geometry (§8.2) ---------- */
+
+/** The pixel size written inside a PNG, JPEG or GIF data URL.
+
+    Both formats need it and neither can ask the document: the letterhead is a
+    data URL in the settings, never an element on the page, so nothing has
+    measured it. The CSS needs the width to keep the logo's proportions at the
+    height the reader chose (Chrome resolves `width:auto` on generated content
+    to the image's own pixels, not to the scaled aspect), and the .docx needs
+    it because Word stretches an image into whatever box it is given. One
+    reader, so the two formats cannot disagree about the shape of a logo. */
+export function imageMetrics(dataUrl: unknown): { w: number; h: number } | null {
+  const src = String(dataUrl ?? "");
+  const comma = src.indexOf(",");
+  if (!src.startsWith("data:image/") || comma < 0) return null;
+  const type = /^data:image\/([a-z]+)/.exec(src)?.[1] ?? "";
+  let bytes: Uint8Array;
+  try {
+    /* Only the head of the file carries the dimensions; 48 KB is past any
+       sane EXIF or colour profile without decoding a whole photograph. */
+    const b64 = src.slice(comma + 1, comma + 1 + 65536).replace(/[^A-Za-z0-9+/=]/g, "");
+    const bin = atob(b64.slice(0, b64.length - (b64.length % 4)));
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch {
+    return null;
+  }
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  try {
+    if (type === "png" && bytes.length > 24) return { w: v.getUint32(16), h: v.getUint32(20) };
+    if (type === "gif" && bytes.length > 10)
+      return { w: v.getUint16(6, true), h: v.getUint16(8, true) };
+    if (type === "jpeg" || type === "jpg") {
+      let i = 2;
+      while (i + 9 < bytes.length) {
+        if (bytes[i] !== 0xff) {
+          i++;
+          continue;
+        }
+        const marker = bytes[i + 1] ?? 0;
+        // SOF0–SOF15 carry the frame size; DHT (c4), DAC (c8) and DNL (cc) do not.
+        if (
+          marker >= 0xc0 &&
+          marker <= 0xcf &&
+          marker !== 0xc4 &&
+          marker !== 0xc8 &&
+          marker !== 0xcc
+        )
+          return { w: v.getUint16(i + 7), h: v.getUint16(i + 5) };
+        i += 2 + v.getUint16(i + 2);
+      }
+    }
+  } catch {
+    /* a truncated or lying header — better no logo than a stretched one */
+  }
+  return null;
+}
+
+/* ---------- watermark geometry ---------- */
+
+export interface WatermarkMetrics {
+  /** The word itself, trimmed and capped. Empty means "no watermark". */
+  text: string;
+  /** Type size of the mark, in points. */
+  sizePt: number;
+  /** How wide and tall the set word runs, in points — Word needs a box to
+      stretch its textpath into, and it must be the box the CSS draws. */
+  widthPt: number;
+  heightPt: number;
+}
+
+/** One measurement for both formats. The preview sets the word in CSS and the
+    .docx stretches it into a VML shape, so if they disagree about the size the
+    same document carries two different stamps. They ask here instead.
+
+    The word is scaled to fill most of the page's diagonal, so DRAFT and
+    CONFIDENTIAL both read as one mark rather than one giant and one small,
+    and it is capped so a two-letter stamp does not swallow the page. */
+export function watermarkMetrics(text: unknown, page?: PageSpec): WatermarkMetrics {
+  const word = String(text ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 48);
+  const pg = page || PAGES.A4;
+  const PT = 2.834645669; // points per millimetre
+  const diagonal = Math.hypot(pg.w, pg.h) * PT;
+  const AVG = 0.62; // average advance of a bold capital, in ems
+  const span = diagonal * 0.55; // the part of the diagonal the word should fill
+  /* 130pt is where a short word stops growing — Word's own DRAFT stamp is
+     about 117pt tall, and past that a five-letter mark starts running off
+     the corners of the sheet rather than across it. */
+  const size = Math.max(20, Math.min(130, span / (Math.max(word.length, 1) * AVG)));
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return {
+    text: word,
+    sizePt: round(size),
+    widthPt: round(size * AVG * Math.max(word.length, 1)),
+    heightPt: round(size * 1.24),
+  };
+}
+
 /* ---------- dynamic CSS (@page + vars) ---------- */
 export function dynamicCss(settings: Settings): string {
   const t = tints(settings.accent as string);
@@ -575,6 +676,29 @@ export function dynamicCss(settings: Settings): string {
     css += `
   @bottom-right { content: ${footR}; font-family:${f.body}; font-size:7.6pt; color:#828a99; margin-top:6mm; max-width:60mm; overflow:hidden; }`;
   }
+  /* The letterhead rides in the top-centre margin box, which nothing else
+     uses, so it sits between the running head's two ends on every page —
+     which is where Word puts a letterhead too. Unset, not a byte is emitted. */
+  const letterhead = typeof settings.letterhead === "string" ? settings.letterhead.trim() : "";
+  const lhMm = Math.max(6, Math.min(30, parseFloat(settings.letterheadSize as string) || 14));
+  /* A logo whose own header cannot be read is not printed at all — in either
+     format. A stretched letterhead is worse than none. */
+  const lhSize = imageMetrics(letterhead);
+  if (lhSize) {
+    /* The logo is wrapped in an SVG that declares its printed size in
+       millimetres, rather than being sized by a CSS rule: a margin box's
+       content is generated content, and Chrome sizes generated images from
+       their own pixels when it prints — the rule that works on screen is
+       ignored on paper, and a 480-pixel logo lands 127 mm wide across the
+       running head. An intrinsic size cannot be ignored by either. */
+    const lhWmm = Math.round(((lhMm * lhSize.w) / lhSize.h) * 100) / 100;
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${lhWmm}mm" height="${lhMm}mm" ` +
+      `viewBox="0 0 ${lhSize.w} ${lhSize.h}">` +
+      `<image href="${letterhead}" x="0" y="0" width="${lhSize.w}" height="${lhSize.h}"/></svg>`;
+    css += `
+  @top-center { content: url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}"); margin-bottom: 4mm; }`;
+  }
   if (settings.pageNums) {
     // The folio text is written per page by the PageNumbering handler in main.js, because
     // front matter and the body run on two different sequences and the body's "of N" must
@@ -595,6 +719,11 @@ export function dynamicCss(settings: Settings): string {
     footL || footR
       ? `
   @bottom-left { content: none; } @bottom-right { content: none; }`
+      : ""
+  }${
+    lhSize
+      ? `
+  @top-center { content: none; }`
       : ""
   }
 }
@@ -642,6 +771,52 @@ export function dynamicCss(settings: Settings): string {
   z-index: 5;
 }
 .pagedjs_page:has(.cover)::after { content: none; }
+`;
+  }
+
+  /* The watermark — a word set diagonally across the sheet, drawn as TEXT
+     rather than a background so it prints whether or not the reader ticks
+     "background graphics", and at an ink light enough to read under the prose
+     rather than over it. The cover is exempt, exactly as it is from the page
+     border, and the .docx cover section carries no header for Word to stamp —
+     so both formats leave the cover alone. */
+
+  /* Two placements decided by looking at printed pages, not at the screen:
+
+     The mark is anchored in the page's own MILLIMETRES rather than a
+     percentage of its box. Paged.js computes a different height for
+     .pagedjs_page in print media than on screen, so a mark centred on that box
+     sits right in the preview and drifts up the sheet in the PDF. The sheet's
+     top-left corner is the one thing both media agree on.
+
+     And it rides OVER the page rather than under it: a negative layer sinks
+     behind the sheet's own background and disappears entirely. So the ink is
+     translucent — a tenth of the page's ink, which over white reads as the
+     light grey Word fills its own shape with, and over a line of type leaves
+     every glyph legible. */
+  const mark = watermarkMetrics(settings.watermark, pg);
+  if (mark.text) {
+    css += `
+.pagedjs_page { position: relative; }
+.pagedjs_page::before {
+  content: "${cssStr(mark.text)}";
+  position: absolute;
+  left: 0;
+  top: ${Math.round((pg.h / 2) * 100) / 100}mm;
+  width: ${pg.w}mm;
+  text-align: center;
+  line-height: 1;
+  z-index: 4;
+  transform: translateY(-50%) rotate(-45deg);
+  font-family: ${f.head};
+  font-weight: 800;
+  font-size: ${mark.sizePt}pt;
+  letter-spacing: 0.04em;
+  color: rgba(15, 23, 42, 0.11);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pagedjs_page:has(.cover)::before { content: none; }
 `;
   }
   return css;

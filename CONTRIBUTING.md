@@ -50,6 +50,7 @@ The law has two clauses:
 | Offline gate | `node build.mjs && node qa/offline-gate.mjs` | Opens `dist/DocForge.html` from `file://` with every non-file request aborted. Zero network attempts is the bar — the forever edition's whole promise. CI runs it. |
 | CLI corpus gate | `corepack pnpm --filter @docforge/cli build && node qa/cli-corpus.mjs` | Converts all 17 golden-corpus documents headlessly; `--pdf` also prints two through Chromium. CI runs the `.docx` half. |
 | npm build gate | `node qa/dist-consume.mjs` | Imports the two publishable packages' `dist/` from plain Node ESM (build them first). Catches a dist that bundlers forgive and Node rejects. CI runs it. |
+| Watermark & letterhead | `node qa/stamp.mjs` | Builds one document both ways through the CLI, opens the `.docx` with the real **Word** and prints that too, then counts the ink in both rasters: the mark and the logo are there, at a comparable size, in both — and gone when the settings are cleared. Windows + Word only, like the contact sheet. |
 | Visual contact sheet | `node qa/visual.mjs` | Renders the torture document in every theme, exports both formats, and — on Windows with Office installed — converts the `.docx` through real Word for a side-by-side sheet. Optional lane; don't block on it if you have no Word. |
 
 A change is ready when lint, typecheck, unit tests (parity armed) and the golden gate are green, plus whichever UI suites cover the surface you touched.

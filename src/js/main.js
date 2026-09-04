@@ -28,6 +28,11 @@
     borderStyle: "none", borderWeight: "medium", borderColor: "ink",
     fontHead: "theme", fontBody: "theme",
     baseSize: "11", lineSpacing: "default",
+    /* Running header/footer slots and the two stamps (§8.2). All empty by
+       default: the engine emits nothing for any of them until one is set, so
+       a document that never asks renders exactly as it always did. */
+    headerLeft: "", headerRight: "", footerLeft: "", footerRight: "",
+    watermark: "", letterhead: "", letterheadSize: "14",
   };
 
   /* Projects saved before the border system grew options carry a single
@@ -918,12 +923,23 @@ Land the piece: return to the opening image or question and say what it means no
   }
 
   /* ---------------- settings UI ---------------- */
-  const FIELDS = { sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker", sMetaExtra: "metaExtra", sDate: "date" };
+  const FIELDS = {
+    sTitle: "title", sSubtitle: "subtitle", sAuthor: "author", sKicker: "kicker",
+    sMetaExtra: "metaExtra", sDate: "date",
+    sHeaderLeft: "headerLeft", sHeaderRight: "headerRight",
+    sFooterLeft: "footerLeft", sFooterRight: "footerRight",
+    sWatermark: "watermark",
+    /* The letterhead's value lives in a hidden field: the picker writes the
+       data URL into it, and from there it is an ordinary setting like any
+       other — one binding, one place it is read from. */
+    sLetterhead: "letterhead",
+  };
   const SELECTS = {
     sTheme: "theme", sPage: "page", sMargins: "margins", sCiteStyle: "citeStyle",
     sBorderStyle: "borderStyle", sBorderWeight: "borderWeight", sBorderColor: "borderColor",
     sFontHead: "fontHead", sFontBody: "fontBody",
     sBaseSize: "baseSize", sLineSpacing: "lineSpacing",
+    sLetterheadSize: "letterheadSize",
   };
   const TOGGLES = { tCover: "cover", tHeader: "header", tPageNums: "pageNums", tNumbered: "numbered", tJustify: "justify", tH1break: "h1break", tHardWrap: "hardWrap" };
 
@@ -1015,6 +1031,13 @@ Land the piece: return to the opening image or question and say what it means no
     for (const [id, k] of Object.entries(SELECTS)) $("#" + id).value = state.settings[k];
     for (const [id, k] of Object.entries(TOGGLES)) $("#" + id).checked = !!state.settings[k];
     $("#cAccent").value = state.settings.accent;
+    const lh = state.settings.letterhead || "";
+    const lhImg = $("#sLetterheadPreview");
+    lhImg.hidden = !lh;
+    if (lh) lhImg.src = lh;
+    $("#sLetterheadClear").hidden = !lh;
+    $("#sLetterheadSizeField").hidden = !lh;
+    $("#sLetterheadPick").textContent = lh ? "Replace…" : "Choose an image…";
     $$(".sw").forEach(sw => {
       const on = sw.dataset.c === state.settings.accent;
       sw.classList.toggle("on", on);
@@ -1053,6 +1076,39 @@ Land the piece: return to the opening image or question and say what it means no
       state.settings.accent = e.target.value; state.accentTouched = true;
       $$(".sw").forEach(s => s.classList.remove("on"));
       markDirty(); scheduleRender();
+    });
+
+    /* The letterhead: a picker in front, an ordinary setting behind. Held to
+       PNG/JPEG under 512 KB — it travels inside the document, the project
+       file and every export, and a .docx header is no place for a
+       photograph. */
+    const lhInput = $("#lhInput");
+    $("#sLetterheadPick").addEventListener("click", () => lhInput.click());
+    $("#sLetterheadClear").addEventListener("click", () => {
+      $("#sLetterhead").value = "";
+      state.settings.letterhead = "";
+      syncSettingsUI(); markDirty(); scheduleRender();
+    });
+    lhInput.addEventListener("change", () => {
+      const file = lhInput.files && lhInput.files[0];
+      lhInput.value = "";
+      if (!file) return;
+      if (!/^image\/(png|jpeg)$/.test(file.type)) {
+        toast("A letterhead must be a PNG or a JPEG — Word carries no other kind", "warn");
+        return;
+      }
+      if (file.size > 512 * 1024) {
+        toast(`That image is ${Math.round(file.size / 1024)} KB; a letterhead has to stay under 512 KB`, "warn");
+        return;
+      }
+      const fr = new FileReader();
+      fr.onerror = () => toast("That image could not be read", "warn");
+      fr.onload = () => {
+        $("#sLetterhead").value = String(fr.result);
+        state.settings.letterhead = String(fr.result);
+        syncSettingsUI(); markDirty(); scheduleRender();
+      };
+      fr.readAsDataURL(file);
     });
   }
 

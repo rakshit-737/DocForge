@@ -24,6 +24,7 @@ import {
   fontFaceCss,
   headContent,
   headParts,
+  imageMetrics,
   MARGINS,
   PAGES,
   registerUserFace,
@@ -31,6 +32,7 @@ import {
   tints,
   unregisterUserFaces,
   WORD_CATALOG,
+  watermarkMetrics,
 } from "./themes";
 import { esc } from "./util";
 
@@ -68,11 +70,13 @@ export const globalApi = {
   ...api,
   headParts,
   headContent,
+  imageMetrics,
+  watermarkMetrics,
   registerUserFace,
   unregisterUserFaces,
 };
 
-export type { HeadPart, UserFace } from "./themes";
+export type { HeadPart, UserFace, WatermarkMetrics } from "./themes";
 export type {
   Attachment,
   Attachments,
@@ -107,6 +111,7 @@ export {
   HL_COLORS,
   headContent,
   headParts,
+  imageMetrics,
   MARGINS,
   PAGES,
   RE_SHOT,
@@ -116,4 +121,5 @@ export {
   tints,
   unregisterUserFaces,
   WORD_CATALOG,
+  watermarkMetrics,
 };

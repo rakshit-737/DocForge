@@ -52,6 +52,12 @@ export interface CliSettings {
   borderStyle: string;
   borderWeight: string;
   borderColor: string;
+  /* Watermark & letterhead (§8.2). --letterhead takes a PNG or JPEG path and
+     the file is inlined before the build, because both exporters read a data
+     URL out of the settings exactly as the studio hands them one. */
+  watermark: string;
+  letterhead: string;
+  letterheadSize: string;
   fontHead: string;
   fontBody: string;
   baseSize: string;
@@ -95,6 +101,9 @@ export function defaultSettings(): CliSettings {
     borderStyle: "none",
     borderWeight: "medium",
     borderColor: "ink",
+    watermark: "",
+    letterhead: "",
+    letterheadSize: "14",
     fontHead: "theme",
     fontBody: "theme",
     baseSize: "11",
@@ -119,6 +128,9 @@ const STRING_FLAGS: Record<string, string> = {
   "--border-style": "borderStyle",
   "--border-weight": "borderWeight",
   "--border-color": "borderColor",
+  "--watermark": "watermark",
+  "--letterhead": "letterhead",
+  "--letterhead-size": "letterheadSize",
   "--font-head": "fontHead",
   "--font-body": "fontBody",
   "--base-size": "baseSize",
@@ -184,6 +196,14 @@ function setOverride(o: CliOptions, key: string, raw: string): void {
     }
     value = raw.startsWith("#") ? raw : `#${raw}`;
   }
+  if (key === "letterhead" && !/\.(?:png|jpe?g)$/i.test(raw)) {
+    o.errors.push(`--letterhead must be a PNG or JPEG file (got "${raw}")`);
+    return;
+  }
+  if (key === "letterheadSize" && !(Number.parseFloat(raw) > 0)) {
+    o.errors.push(`--letterhead-size must be a height in millimetres (got "${raw}")`);
+    return;
+  }
   if (key === "baseSize" && !(Number.parseFloat(raw) > 0)) {
     o.errors.push(`--base-size must be a point size (got "${raw}")`);
     return;
@@ -247,6 +267,21 @@ export function settingsFrom(o: CliOptions): CliSettings {
   if (typeof theme === "string" && THEME_ACCENT[theme]) s.accent = THEME_ACCENT[theme];
   for (const [k, v] of Object.entries(o.overrides)) s[k] = v;
   return s;
+}
+
+/** Inline a letterhead file as the data URL both exporters expect. The studio
+    hands them one from a file picker; the CLI reads it off disk instead, and
+    holds it to the same PNG/JPEG-under-512-KB rule so a .docx header never
+    carries a photograph by accident. */
+export function letterheadDataUrl(path: string): string {
+  const bytes = readFileSync(path);
+  if (bytes.length > 512 * 1024) {
+    throw new CliError(
+      `--letterhead is ${Math.round(bytes.length / 1024)} KB; a letterhead has to stay under 512 KB`,
+    );
+  }
+  const mime = /\.png$/i.test(path) ? "image/png" : "image/jpeg";
+  return `data:${mime};base64,${bytes.toString("base64")}`;
 }
 
 /* ---------------- the headless pipeline ---------------- */
@@ -736,6 +771,9 @@ Page border
   --border-style <name>  rule | double | triple | dashed | dotted | thickthin | thinthick
   --border-weight <name> fine | medium | bold
   --border-color <name>  ink | accent
+  --watermark <word>     DRAFT, CONFIDENTIAL … stamped across every page
+  --letterhead <file>    a PNG or JPEG logo for the top margin
+  --letterhead-size <mm> its printed height (default 14)
 
   --help  -h             --version  -v
 `;
@@ -768,6 +806,9 @@ export async function main(argv: string[]): Promise<number> {
     return 2;
   }
   const settings = settingsFrom(o);
+  if (settings.letterhead && !settings.letterhead.startsWith("data:")) {
+    settings.letterhead = letterheadDataUrl(settings.letterhead);
+  }
   if (o.docx) {
     const outPath = await buildDocxFile(o.input, o.out, settings);
     const kb = (readFileSync(outPath).length / 1024).toFixed(1);

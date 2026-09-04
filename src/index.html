@@ -201,6 +201,58 @@ finish review, the verdict, and DESIGN.md
       <select id="sCiteStyle">
         <option value="ieee">Numeric — [1], IEEE-style</option>
         <option value="apa">Author–year — (Smith, 2020)</option>
+        <option value="apa7">Author–year — APA 7, disambiguated</option>
+      </select>
+    </div>
+    </details>
+
+    <details class="sgroup">
+    <summary>Running header &amp; footer</summary>
+    <p class="hint">Leave these empty for the house style — the title at the head&rsquo;s left, the
+      current section at its right. Tokens: <code>{title}</code> <code>{author}</code>
+      <code>{date}</code> <code>{kicker}</code> <code>{section}</code>. Page numbers stay in the
+      footer&rsquo;s centre.</p>
+    <div class="frow">
+      <div class="field"><label for="sHeaderLeft">Header, left</label>
+        <input type="text" id="sHeaderLeft" placeholder="{title}"></div>
+      <div class="field"><label for="sHeaderRight">Header, right</label>
+        <input type="text" id="sHeaderRight" placeholder="{section}"></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label for="sFooterLeft">Footer, left</label>
+        <input type="text" id="sFooterLeft" placeholder="—"></div>
+      <div class="field"><label for="sFooterRight">Footer, right</label>
+        <input type="text" id="sFooterRight" placeholder="—"></div>
+    </div>
+    </details>
+
+    <details class="sgroup">
+    <summary>Watermark &amp; letterhead</summary>
+    <p class="hint">A word stamped diagonally across every page, and a logo in the top margin.
+      Both print in the PDF and the .docx; both leave the cover to its own design.</p>
+    <div class="field"><label for="sWatermark">Watermark</label>
+      <input type="text" id="sWatermark" list="dfWatermarkWords" maxlength="48" placeholder="DRAFT">
+      <datalist id="dfWatermarkWords">
+        <option value="DRAFT"></option><option value="CONFIDENTIAL"></option>
+        <option value="SAMPLE"></option><option value="DO NOT COPY"></option>
+        <option value="INTERNAL"></option>
+      </datalist>
+    </div>
+    <div class="field"><label for="sLetterheadPick">Letterhead <span style="opacity:.6">— PNG or JPEG, under 512 KB</span></label>
+      <div class="lhrow">
+        <img id="sLetterheadPreview" alt="The letterhead this document carries" hidden>
+        <button type="button" class="btn" id="sLetterheadPick">Choose an image…</button>
+        <button type="button" class="btn" id="sLetterheadClear" hidden>Remove</button>
+      </div>
+      <!-- the value itself: written by the picker, read by the settings binding -->
+      <input type="hidden" id="sLetterhead">
+    </div>
+    <div class="field" id="sLetterheadSizeField" hidden><label for="sLetterheadSize">Letterhead height</label>
+      <select id="sLetterheadSize">
+        <option value="10">Small — 10 mm</option>
+        <option value="14">Medium — 14 mm</option>
+        <option value="18">Large — 18 mm</option>
+        <option value="24">Extra large — 24 mm</option>
       </select>
     </div>
     </details>
@@ -403,6 +455,7 @@ finish review, the verdict, and DESIGN.md
 </div>
 
 <input type="file" id="peImgInput" hidden accept="image/png,image/jpeg">
+<input type="file" id="lhInput" hidden accept="image/png,image/jpeg">
 <input type="file" id="imgInput" hidden accept="image/png,image/jpeg,image/gif,image/webp">
 <input type="file" id="projInput" hidden accept=".json,.docforge.json,.docx,.pdf,.md,.markdown,.txt,.html,.htm,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,image/png,image/jpeg,image/gif,image/webp,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
 

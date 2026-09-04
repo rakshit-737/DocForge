@@ -25,6 +25,9 @@ export interface Settings {
   citeStyle: string;
   borderStyle: string;
   borderWeight: string;
+  watermark: string;
+  letterhead: string;
+  letterheadSize: string;
   borderColor: string;
   fontHead: string;
   fontBody: string;
@@ -75,6 +78,11 @@ export function defaultSettings(): Settings {
     citeStyle: "ieee",
     borderStyle: "none",
     borderWeight: "medium",
+    /* Watermark & letterhead (§8.2). Both empty by default; the engine emits
+       nothing for either until one is set. */
+    watermark: "",
+    letterhead: "",
+    letterheadSize: "14",
     borderColor: "ink",
     fontHead: "theme",
     fontBody: "theme",

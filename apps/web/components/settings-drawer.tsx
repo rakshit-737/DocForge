@@ -353,6 +353,131 @@ function ToggleRow({
   );
 }
 
+/* ---------- watermark & letterhead (§8.2) ---------- */
+
+const WATERMARK_WORDS = ["DRAFT", "CONFIDENTIAL", "SAMPLE", "DO NOT COPY", "INTERNAL", "COPY"];
+const LETTERHEAD_SIZES = [
+  ["10", "Small — 10 mm"],
+  ["14", "Medium — 14 mm"],
+  ["18", "Large — 18 mm"],
+  ["24", "Extra large — 24 mm"],
+] as const;
+/* A logo travels inside the document, the project file and every export, so it
+   is kept to something a header can carry without turning a 40 KB manuscript
+   into a 4 MB one. */
+const LETTERHEAD_MAX = 512 * 1024;
+
+function StampPanel() {
+  const settings = useDocStore((s) => s.settings);
+  const patch = useDocStore((s) => s.patchSettings);
+  const input = useRef<HTMLInputElement>(null);
+  const logo = String(settings.letterhead ?? "");
+
+  const take = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      if (!/^image\/(png|jpeg)$/.test(file.type)) {
+        toast("A letterhead must be a PNG or a JPEG — Word carries no other kind", "warn", 5000);
+        return;
+      }
+      if (file.size > LETTERHEAD_MAX) {
+        toast(
+          `That image is ${Math.round(file.size / 1024)} KB; a letterhead has to stay under 512 KB`,
+          "warn",
+          5000,
+        );
+        return;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("that file could not be read"));
+        reader.readAsDataURL(file);
+      });
+      patch({ letterhead: dataUrl });
+      toast("Letterhead set — it prints in the top margin of every page but the cover");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "That image could not be read", "warn", 5000);
+    } finally {
+      if (input.current) input.current.value = "";
+    }
+  };
+
+  return (
+    <>
+      <p className="mb-2.5 text-[11.5px] leading-[1.5] text-ink-3">
+        A word stamped diagonally across every page, and a logo in the top margin. Both print in the
+        PDF and the .docx; both leave the cover to its own design.
+      </p>
+      <Field id="sWatermark" label="Watermark" hint="— empty for none">
+        <input
+          id="sWatermark"
+          type="text"
+          list="dfWatermarkWords"
+          className={CONTROL}
+          placeholder="DRAFT"
+          maxLength={48}
+          value={String(settings.watermark ?? "")}
+          onChange={(e) => patch({ watermark: e.target.value })}
+        />
+        <datalist id="dfWatermarkWords">
+          {WATERMARK_WORDS.map((w) => (
+            <option key={w} value={w} />
+          ))}
+        </datalist>
+      </Field>
+      <Field id="sLetterhead" label="Letterhead" hint="— PNG or JPEG, under 512 KB">
+        <div className="flex items-center gap-2">
+          {logo ? (
+            /* The reader's own image: next/image would proxy a data URL for
+               nothing, and its width is unknown until it loads. */
+            // biome-ignore lint/performance/noImgElement: a data URL the reader just chose — there is nothing for next/image to optimise
+            <img
+              src={logo}
+              alt="The letterhead this document carries"
+              className="h-8 max-w-[120px] border border-line bg-white object-contain p-0.5"
+            />
+          ) : null}
+          <button
+            type="button"
+            id="sLetterhead"
+            className="btn-tray border border-line"
+            onClick={() => input.current?.click()}
+          >
+            {logo ? "Replace…" : "Choose an image…"}
+          </button>
+          {logo ? (
+            <button
+              type="button"
+              className="btn-quiet"
+              onClick={() => patch({ letterhead: "" })}
+              title="Print without a letterhead"
+            >
+              Remove
+            </button>
+          ) : null}
+          <input
+            ref={input}
+            type="file"
+            accept="image/png,image/jpeg"
+            className="hidden"
+            onChange={(e) => void take(e.target.files?.[0])}
+          />
+        </div>
+      </Field>
+      {logo ? (
+        <SelectField
+          id="sLetterheadSize"
+          label="Letterhead height"
+          value={String(settings.letterheadSize ?? "14")}
+          options={LETTERHEAD_SIZES}
+          onChange={(v) => patch({ letterheadSize: v })}
+        />
+      ) : null}
+    </>
+  );
+}
+
 /* ---------- saved house styles (§8.2) ---------- */
 
 function ThemeShelf() {
@@ -895,6 +1020,19 @@ export function SettingsDrawer() {
                   />
                 </Field>
               </div>
+            </details>
+
+            <details className="group mt-6">
+              <summary
+                className={`flex cursor-pointer select-none list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden ${GROUP_HEAD} ${FOCUS_RING}`}
+              >
+                Watermark &amp; letterhead
+                <span
+                  aria-hidden="true"
+                  className="ml-auto mr-1 h-[7px] w-[7px] -rotate-45 border-b-[1.5px] border-r-[1.5px] border-ink-3 transition-transform duration-[160ms] ease-out group-open:rotate-45"
+                />
+              </summary>
+              <StampPanel />
             </details>
 
             <h3 className={`mt-6 ${GROUP_HEAD}`}>Saved looks</h3>

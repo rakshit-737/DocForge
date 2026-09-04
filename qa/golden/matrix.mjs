@@ -70,6 +70,13 @@ export const CASES = [
   // gate's own record of what the feature renders.
   { id: "running-heads", postBaseline: true, postClassic: true, doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, title: "Fracture Mechanics", author: "E. Marrow", kicker: "MECH 401", date: "2026-09-04", headerLeft: "{kicker} · {title}", headerRight: "§ {section}", footerLeft: "{author}", footerRight: "{date}" }) },
 
+  // ---- watermark & letterhead (§8.2): the diagonal mark and a logo in the top
+  // margin, on a document that also runs a header and a folio, so the gate holds
+  // the three of them apart. Postdates v1-classic AND the frozen classic engine.
+  // The logo is a 96×24 PNG written by hand — 139 bytes, so the matrix carries
+  // its own fixture rather than reaching for a file.
+  { id: "stamped", postBaseline: true, postClassic: true, doc: "corpus/03-headings-sections.md", settings: s({ theme: "modern", accent: "#2563eb", page: "A4", margins: "normal", cover: false, header: true, pageNums: true, title: "Fracture Mechanics", watermark: "CONFIDENTIAL", letterhead: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAAAYCAIAAACKi2/DAAAAUklEQVR42u3YsREAEBBFQR0IVSDRlvIVQQeXYAT2z6tgs7uUS1NQQgAI0FWgaeEAAdoEqn0cCRAgQIAAAQIECBCgv4AcE4AAXQXyEvNRBAToYQuPvG2grm3pMAAAAABJRU5ErkJggg==`, letterheadSize: "12" }) },
+
   // ---- typography knobs: base size and line spacing off the defaults ----
   { id: "type-large-loose", doc: "corpus/01-inline-marks.md", settings: s({ theme: "executive", page: "A4", margins: "normal", baseSize: "12", lineSpacing: "1.5", cover: false, pageNums: true }) },
   { id: "type-small-single", doc: "corpus/10-code.md", settings: s({ theme: "minimal", page: "A4", margins: "narrow", baseSize: "10", lineSpacing: "1", cover: false, pageNums: true }) },

@@ -239,6 +239,16 @@ export interface Settings {
   headerRight?: string;
   footerLeft?: string;
   footerRight?: string;
+  /* Watermark & letterhead (§8.2). Both are absent by default and emit
+     nothing at all when unset, so a document that never asks for them is
+     byte-for-byte the document it always was.
+     `watermark` is the word stamped diagonally across every page but the
+     cover, which keeps its own design exactly as the page border does.
+     `letterhead` is a PNG/JPEG data URL centred in the top margin, at
+     `letterheadSize` millimetres tall (default 14). */
+  watermark?: string;
+  letterhead?: string;
+  letterheadSize?: number | string;
   baseSize?: number | string;
   lineSpacing?: string; // "1" | "1.15" | "1.5" | "2"
   borderStyle?: string; // rule|double|triple|dashed|dotted|thickthin|thinthick

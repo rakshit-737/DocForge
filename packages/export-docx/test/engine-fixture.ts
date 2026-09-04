@@ -196,11 +196,82 @@ function headParts(
   return out.filter((p) => p.kind === "section" || p.text !== "");
 }
 
+/* The watermark's geometry (§8.2), mirroring packages/engine/src/themes.ts.
+   The exporter asks the engine for it so the VML shape and the CSS stamp the
+   same mark; the real function is tested there. */
+function watermarkMetrics(
+  text: unknown,
+  page?: { w: number; h: number },
+): { text: string; sizePt: number; widthPt: number; heightPt: number } {
+  const word = String(text ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 48);
+  const pg = page || PAGES.A4;
+  const PT = 2.834645669;
+  const diagonal = Math.hypot(pg.w, pg.h) * PT;
+  const AVG = 0.62;
+  const span = diagonal * 0.55;
+  const size = Math.max(20, Math.min(130, span / (Math.max(word.length, 1) * AVG)));
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return {
+    text: word,
+    sizePt: round(size),
+    widthPt: round(size * AVG * Math.max(word.length, 1)),
+    heightPt: round(size * 1.24),
+  };
+}
+
+/* The letterhead's own pixel size (§8.2), mirroring the engine. */
+function imageMetrics(dataUrl: unknown): { w: number; h: number } | null {
+  const src = String(dataUrl ?? "");
+  const comma = src.indexOf(",");
+  if (!src.startsWith("data:image/") || comma < 0) return null;
+  const type = /^data:image\/([a-z]+)/.exec(src)?.[1] ?? "";
+  let bytes: Uint8Array;
+  try {
+    const b64 = src.slice(comma + 1, comma + 1 + 65536).replace(/[^A-Za-z0-9+/=]/g, "");
+    const bin = atob(b64.slice(0, b64.length - (b64.length % 4)));
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch {
+    return null;
+  }
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  try {
+    if (type === "png" && bytes.length > 24) return { w: v.getUint32(16), h: v.getUint32(20) };
+    if (type === "gif" && bytes.length > 10)
+      return { w: v.getUint16(6, true), h: v.getUint16(8, true) };
+    if (type === "jpeg" || type === "jpg") {
+      let i = 2;
+      while (i + 9 < bytes.length) {
+        if (bytes[i] !== 0xff) {
+          i++;
+          continue;
+        }
+        const marker = bytes[i + 1] ?? 0;
+        if (
+          marker >= 0xc0 &&
+          marker <= 0xcf &&
+          marker !== 0xc4 &&
+          marker !== 0xc8 &&
+          marker !== 0xcc
+        )
+          return { w: v.getUint16(i + 7), h: v.getUint16(i + 5) };
+        i += 2 + v.getUint16(i + 2);
+      }
+    }
+  } catch {}
+  return null;
+}
+
 export const EngineFixture = {
   tints,
   faceName,
   fmtDate,
   headParts,
+  watermarkMetrics,
+  imageMetrics,
   PAGES,
   MARGINS,
   EMBEDDED,

@@ -104,6 +104,15 @@ declare global {
         string(sect) in the CSS — so both formats say the same thing on the
         same page. */
     headParts(template: unknown, settings: unknown): { kind: "text" | "section"; text: string }[];
+    /** The pixel size inside a PNG/JPEG/GIF data URL (§8.2) — the letterhead
+        is never an element on the page, so both formats read it from here. */
+    imageMetrics(dataUrl: unknown): { w: number; h: number } | null;
+    /** The diagonal watermark's geometry (§8.2), measured once for both
+        formats so the CSS and the VML shape stamp the same mark. */
+    watermarkMetrics(
+      text: unknown,
+      page?: EnginePage,
+    ): { text: string; sizePt: number; widthPt: number; heightPt: number };
   }
   // eslint-disable-next-line no-var
   var Engine: EngineApi;

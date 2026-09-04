@@ -32,6 +32,12 @@ export interface DocxSettings {
   headerRight?: string;
   footerLeft?: string;
   footerRight?: string;
+  /* Watermark & letterhead (§8.2). The mark is drawn as a VML textpath in the
+     header; the letterhead is a PNG/JPEG data URL centred above the running
+     head, `letterheadSize` millimetres tall. */
+  watermark?: string;
+  letterhead?: string;
+  letterheadSize?: string | number;
   title?: string;
   subtitle?: string;
   author?: string;
@@ -1131,29 +1137,122 @@ export async function build(
   const rightRuns = settings.headerRight
     ? slotRuns(settings.headerRight, false)
     : [new SimpleField("STYLEREF 1 \\* MERGEFORMAT")];
+  /* ---- watermark & letterhead (§8.2) ----
+     Word stamps a watermark with a VML textpath anchored to the page margin
+     and parked in the header, which is why the cover — a section that
+     deliberately carries no header — has none, exactly as the PDF's cover is
+     exempt from the mark. The engine measures the word for both formats, so
+     the same document gets the same stamp on paper and on screen. */
+  const xmlAttr = (s: unknown) =>
+    String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const mark = Engine.watermarkMetrics(settings.watermark, pg);
+  const watermarkRuns = (): unknown[] => {
+    if (!mark.text) return [];
+    const xml =
+      `<w:r><w:pict>` +
+      `<v:shapetype id="_x0000_t136" coordsize="21600,21600" o:spt="136" adj="10800" path="m@7,0l@8,0m@5,21600l@6,21600e">` +
+      `<v:formulas><v:f eqn="sum #0 0 10800"/><v:f eqn="prod #0 2 1"/><v:f eqn="sum 21600 0 @1"/>` +
+      `<v:f eqn="sum 0 0 @2"/><v:f eqn="sum 21600 0 @3"/><v:f eqn="if @0 @3 0"/><v:f eqn="if @0 21600 @1"/>` +
+      `<v:f eqn="if @0 0 @2"/><v:f eqn="if @0 @4 21600"/><v:f eqn="mid @5 @6"/><v:f eqn="mid @8 @5"/>` +
+      `<v:f eqn="mid @7 @8"/><v:f eqn="mid @6 @7"/><v:f eqn="sum @6 0 @5"/></v:formulas>` +
+      `<v:path textpathok="t" o:connecttype="custom" o:connectlocs="@9,0;@10,10800;@11,21600;@12,10800" o:connectangles="270,180,90,0"/>` +
+      `<v:textpath on="t" fitshape="t"/>` +
+      `<v:handles><v:h position="#0,bottomRight" xrange="6629,14971"/></v:handles>` +
+      `<o:lock v:ext="edit" text="t" shapetype="t"/>` +
+      `</v:shapetype>` +
+      `<v:shape id="DocForgeWatermark" o:spid="_x0000_s2049" type="#_x0000_t136" ` +
+      `style="position:absolute;margin-left:0;margin-top:0;width:${mark.widthPt}pt;height:${mark.heightPt}pt;` +
+      `rotation:315;z-index:-251658752;mso-position-horizontal:center;mso-position-horizontal-relative:margin;` +
+      `mso-position-vertical:center;mso-position-vertical-relative:margin" o:allowincell="f" ` +
+      `fillcolor="#d7dbe0" stroked="f">` +
+      `<v:textpath style="font-family:&quot;${xmlAttr(f.head)}&quot;;font-size:1pt;font-weight:bold" string="${xmlAttr(mark.text)}"/>` +
+      `</v:shape></w:pict></w:r>`;
+    return [D.ImportedXmlComponent.fromXmlString(xml).root[0]];
+  };
+
+  /* The letterhead sits centred above the running head, which is where the
+     PDF's @top-center margin box puts it. Its printed height is the reader's;
+     the width follows the image's own proportions, read out of the file's
+     header because a data URL carries no dimensions of its own. */
+  const letterheadParas = (): unknown[] => {
+    const src = typeof settings.letterhead === "string" ? settings.letterhead.trim() : "";
+    if (!src.startsWith("data:image/")) return [];
+    try {
+      const { arr, type } = dataUrlBytes(src);
+      /* The engine reads the logo's own header, so the CSS and Word scale it
+         from the same numbers. */
+      const nat = Engine.imageMetrics(src);
+      if (!nat) return [];
+      const mm = Math.max(6, Math.min(30, parseFloat(String(settings.letterheadSize)) || 14));
+      const h = Math.round((mm * 96) / 25.4);
+      return [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 0, after: 40 },
+          children: [
+            new ImageRun({
+              type: type as never,
+              data: arr,
+              altText: { title: "Letterhead", description: "Letterhead", name: "Letterhead" },
+              transformation: { width: Math.max(1, Math.round((h * nat.w) / nat.h)), height: h },
+            }),
+          ] as never,
+        }),
+      ];
+    } catch {
+      return [];
+    }
+  };
+  const headerLead = [...watermarkRuns()];
   const headerChildren = settings.header
     ? [
+        ...letterheadParas(),
         new Paragraph({
           style: "DFHeader",
           tabStops: [{ type: TabStopType.RIGHT, position: mm2t(pg.w - mg.l - mg.r) }],
-          children: [...leftRuns, new TextRun({ children: [new Tab()] }), ...rightRuns] as never,
+          children: [
+            ...headerLead,
+            ...leftRuns,
+            new TextRun({ children: [new Tab()] }),
+            ...rightRuns,
+          ] as never,
         }),
       ]
-    : [];
+    : /* No running head, but a mark or a letterhead still needs somewhere to
+         live: one bare paragraph in the header carries them. */
+      [
+        ...letterheadParas(),
+        ...(headerLead.length
+          ? [new Paragraph({ style: "DFHeader", children: headerLead as never })]
+          : []),
+      ];
   // The contents page belongs to the front matter, which the PDF numbers in romans and
   // gives no section name — so the Word header drops the STYLEREF there too.
   const frontHeaderChildren = settings.header
     ? [
+        ...letterheadParas(),
         new Paragraph({
           style: "DFHeader",
-          children: (settings.headerLeft
-            ? leftRuns
-            : [
-                new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 }),
-              ]) as never,
+          children: [
+            ...watermarkRuns(),
+            ...(settings.headerLeft
+              ? leftRuns
+              : [
+                  new TextRun({ text: (settings.title || "").toUpperCase(), characterSpacing: 26 }),
+                ]),
+          ] as never,
         }),
       ]
-    : [];
+    : [
+        ...letterheadParas(),
+        ...(mark.text
+          ? [new Paragraph({ style: "DFHeader", children: watermarkRuns() as never })]
+          : []),
+      ];
 
   const pgRun = (kids2: any[]) => new TextRun({ size: HP(8.2), color: "71798A", children: kids2 });
   /* The foot's side slots (§8.2). One paragraph carries all three positions:

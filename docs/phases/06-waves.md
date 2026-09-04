@@ -42,6 +42,7 @@ lists** (`b5b2eed`, 20 tests, probe 9/9).
 | Focus & flow (§8.1) | **Shipped** (`d124f28`) | prose word count + breakdown + session goal + typewriter scrolling in focus mode; 24 tests, probe 11/11 |
 | Batch convert (§8.4) | **Shipped** (`a2c7b77`) | Open and drop both take several files; one queue, awaited, so two imports can't race; probe 5/5 |
 | Theme designer (§8.2) | **Shipped** (`9921e27`) | save a look, apply it anywhere, share it as JSON; the look/content line is what the 18 tests press on; probe 10/10 |
+| Watermark & letterhead (§8.2) | **Shipped** | a diagonal word and a logo in the top margin, in BOTH formats — Word gets a real VML watermark shape and a real header image. 19 engine tests, 11 export tests reading the OOXML, studio probe 12/12, and `qa/stamp.mjs`: one document built both ways, the .docx opened and printed by the real Word, the ink counted in both prints |
 
 The headers/footers work carried one trap worth remembering: adding the
 new `@bottom-left` / `@bottom-right` boxes to `@page cover`
@@ -52,6 +53,40 @@ are deliberately not tokens in the side slots: the folio counts a dual
 front-matter/body sequence that a CSS margin box cannot express, and
 promising `{page}` there would promise something one of the two formats
 could not keep.
+
+## What the stamp work taught about print
+
+Two traps, both invisible on screen and both caught only by looking at the
+printed page — the reason `qa/stamp.mjs` rasterises a real print rather than
+asserting on CSS:
+
+- **Paged.js gives `.pagedjs_page` a different computed height in print media
+  than on screen.** A watermark centred on that box with percentages sits
+  correctly in the preview and drifts up the sheet in the PDF. The mark is
+  anchored in the page's own millimetres now — the sheet's corner is the one
+  thing both media agree about.
+- **Chrome sizes generated content images from their own pixels when it
+  prints.** A CSS rule that sizes a margin box's `content: url(...)` works on
+  screen and is ignored on paper: a 480-pixel logo landed 127 mm wide, straight
+  through the running head. The letterhead is wrapped in an SVG that declares
+  its printed size in millimetres, because an intrinsic size cannot be ignored.
+
+- **A negative layer sinks out of sight.** Word draws its watermark behind the
+  prose, and `z-index: -1` is the web's way to say that — but on a page whose
+  own background paints after it, the mark vanishes completely. It rides over
+  the page instead, in a tenth of the page's ink, so the prose reads straight
+  through it.
+- **The golden gate could not express the settings at all.** The harness drives
+  the forever edition's real drawer, and that drawer had no fields for the
+  running-head slots, `apa7`, or either stamp — so the `running-heads` case had
+  been capturing a document with the classic furniture and proving nothing since
+  the day it was added. The forever edition now carries all three groups of
+  controls, and `qa/_drive.mjs` knows them; the `stamped` case renders what it
+  claims to.
+
+Both of the first two were found by rendering the PDF and looking at it. Neither would have
+failed a unit test, and the second would have shipped a broken running head to
+every reader who uploaded a logo.
 
 ## What the multi-document workspace retired
 
