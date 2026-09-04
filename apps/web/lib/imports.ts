@@ -33,6 +33,11 @@ export interface ImportResult {
   attachments?: Record<string, Attachment>;
   /** pdf only: conversion caveats, already cut to the two the classic edition toasts. */
   warnings?: string[];
+  /** A reference library (.bib/.ris/CSL-JSON): dialect `[@key]: …` lines to
+      MERGE into the document, never a replacement for it. */
+  definitions?: string;
+  /** How many entries those lines carry — for the reader's report. */
+  entryCount?: number;
 }
 
 /* The classic import whitelist (src/js/main.js importFile). */
@@ -50,6 +55,8 @@ const IMPORT_EXTS = [
   "pptx",
   "epub",
   "ipynb",
+  "bib",
+  "ris",
 ];
 
 /* The classic drop router (src/js/main.js editor "drop"): the first document
@@ -184,6 +191,19 @@ async function importPdfFile(f: File): Promise<ImportResult> {
   return { source, warnings: (warnings || []).slice(0, 2) };
 }
 
+/* ---------------- reference libraries ---------------- */
+
+type BibApi = Awaited<ReturnType<typeof importers>>["BibImport"];
+
+/** A library is an ADDITION to the document, so it comes back as definitions
+    for the caller to merge — never as a `source` that would replace the
+    manuscript with a wall of bibliography. */
+function libraryResult(text: string, name: string, BibImport: BibApi): ImportResult {
+  const entries = BibImport.parseLibrary(text, name);
+  if (entries.length === 0) return { error: "No references found in that file" };
+  return { definitions: BibImport.toDefinitions(entries), entryCount: entries.length };
+}
+
 /* ---------------- the router ---------------- */
 
 /** The classic importFile dispatch (src/js/main.js), outcomes as data:
@@ -191,7 +211,14 @@ async function importPdfFile(f: File): Promise<ImportResult> {
     image / shows the error. */
 export async function importFile(f: File): Promise<ImportResult> {
   const ext = ((f.name.match(/\.([a-z0-9]+)$/i) || [])[1] || "").toLowerCase();
-  if (ext === "json") return { project: true };
+  if (ext === "json") {
+    /* Zotero calls its export "CSL JSON" and gives it the same extension a
+       DocForge project uses — so the CONTENT decides, not the name. */
+    const text = await f.text();
+    const { BibImport } = await importers();
+    if (BibImport.looksLikeCslJson(text)) return libraryResult(text, f.name, BibImport);
+    return { project: true };
+  }
   if (ext === "doc") return { error: "Old binary .doc — open it in Word and save as .docx first" };
   // An image picked through Open becomes an attached figure, same as dropping it.
   if (/^image\//.test(f.type)) return { image: f };
@@ -219,6 +246,10 @@ export async function importFile(f: File): Promise<ImportResult> {
     if (ext === "ipynb") {
       const { FileImport } = await importers();
       return { source: FileImport.ipynb(await f.text()) };
+    }
+    if (ext === "bib" || ext === "ris") {
+      const { BibImport } = await importers();
+      return libraryResult(await f.text(), f.name, BibImport);
     }
     return { source: await f.text() }; // md / markdown / txt
   } catch (err) {

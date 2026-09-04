@@ -166,6 +166,8 @@ export async function openWithPicker(): Promise<{ file: File; adopt(): void } | 
           "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
           "application/epub+zip": [".epub"],
           "application/x-ipynb+json": [".ipynb"],
+          "application/x-bibtex": [".bib"],
+          "application/x-research-info-systems": [".ris"],
           "image/png": [".png"],
           "image/jpeg": [".jpg", ".jpeg"],
         },

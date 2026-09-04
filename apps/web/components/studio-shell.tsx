@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captionForFile, insertFigure, processImageFile } from "@/lib/attachments";
+import { importReport, mergeDefinitions } from "@/lib/bibliography";
 import { downloadBlob, exportDocx, exportPdf } from "@/lib/exports";
 import { toast, useFindStore } from "@/lib/find";
 import { useFocusMode, useMobilePane } from "@/lib/focus-mode";
@@ -204,6 +205,20 @@ export function StudioShell() {
         return false;
       }
       if (res.project) return openProjectFile(f);
+      /* A reference library is an ADDITION: the entries merge into the
+         manuscript's own bibliography lines, the document keeps its text, and
+         a key the reader has already defined by hand is never overwritten. */
+      if (res.definitions) {
+        const s = useDocStore.getState();
+        const merged = mergeDefinitions(s.source, res.definitions);
+        if (merged.added.length === 0) {
+          toast(`Every reference in “${f.name}” was already defined here`, "info", 5000);
+          return false;
+        }
+        s.setSource(merged.source);
+        toast(importReport(merged, merged.source), "info", 6000);
+        return false; // the document was extended, not replaced
+      }
       if (res.image) {
         try {
           const key = await processImageFile(res.image);
@@ -758,7 +773,7 @@ export function StudioShell() {
       <input
         ref={fileInput}
         type="file"
-        accept=".md,.markdown,.txt,.json,.docx,.pdf,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,.html,.htm,image/*"
+        accept=".md,.markdown,.txt,.json,.docx,.pdf,.csv,.tsv,.xlsx,.pptx,.epub,.ipynb,.html,.htm,.bib,.ris,image/*"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
