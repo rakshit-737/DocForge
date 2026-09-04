@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-04T22:05:00+05:30",
+  "title": "Design System: DocForge — the drawing sheet (landing)",
+  "extensions": {
+    "governs": {
+      "route": "/",
+      "files": ["apps/web/app/page.tsx", "apps/web/app/landing.css", "apps/web/public/lettering/"],
+      "scopeSelector": ".sheet-root",
+      "notGoverned": "The studio chrome (the copy desk) is recorded in the root DESIGN.md and .impeccable/design.json; the document stylesheet apps/web/public/doc.css is product surface hosted unchanged by the landing and governed by neither world.",
+      "directionContract": "seed 254d96c6 — emitted as an HTML comment at the top of <main> in page.tsx"
+    },
+    "colorMeta": {
+      "cyanotype":            { "role": "neutral",  "displayName": "Cyanotype",              "canonical": "#103474", "cssVar": "--cy", "note": "Reads ≈#12397a on average once --tooth and --coat sit on it; the contract's #12397a is the perceived value, the token is normative.", "tonalRamp": ["#061431", "#0a2148", "#0c2a5e", "#103474", "#1d4a97", "#3f6ab8", "#7a9bd2", "#bccbea"] },
+      "recess":               { "role": "neutral",  "displayName": "Recess",                 "canonical": "rgba(0, 0, 0, 0.28)", "cssVar": "literal on .tb .stampcell", "note": "Composites to ≈#0b2553 over the cyanotype; translucent so the print's texture continues through the APPROVED cell.", "tonalRamp": ["#061431", "#0a2148", "#0b2553", "#103474", "#1d4a97", "#3f6ab8", "#7a9bd2", "#bccbea"] },
+      "line-white":           { "role": "neutral",  "displayName": "Line White",             "canonical": "#e7edf9", "cssVar": "--ln", "tonalRamp": ["#1c2a44", "#34466a", "#536a92", "#7a8fb5", "#a3b4d3", "#bccbea", "#d4deef", "#e7edf9"] },
+      "line-white-soft":      { "role": "neutral",  "displayName": "Line White, Soft",       "canonical": "rgba(231, 237, 249, 0.42)", "cssVar": "--ln-soft", "tonalRamp": ["#1c2a44", "#34466a", "#536a92", "#7a8fb5", "#a3b4d3", "#bccbea", "#d4deef", "#e7edf9"] },
+      "line-white-faint":     { "role": "neutral",  "displayName": "Line White, Faint",      "canonical": "rgba(231, 237, 249, 0.18)", "cssVar": "--ln-faint", "tonalRamp": ["#1c2a44", "#34466a", "#536a92", "#7a8fb5", "#a3b4d3", "#bccbea", "#d4deef", "#e7edf9"] },
+      "lettering":            { "role": "neutral",  "displayName": "Lettering",              "canonical": "#f3f6fc", "cssVar": "--tx", "tonalRamp": ["#1c2a44", "#34466a", "#536a92", "#7a8fb5", "#a3b4d3", "#bccbea", "#dde5f4", "#f3f6fc"] },
+      "lettering-2":          { "role": "neutral",  "displayName": "Lettering 2",            "canonical": "#bccbea", "cssVar": "--tx-2", "tonalRamp": ["#1c2a44", "#34466a", "#536a92", "#7a8fb5", "#a3b4d3", "#bccbea", "#dde5f4", "#f3f6fc"] },
+      "check-print-red":      { "role": "primary",  "displayName": "Check-Print Red",        "canonical": "#c8361f", "cssVar": "--stamp", "tonalRamp": ["#2c0b06", "#57160c", "#7f2010", "#a52a15", "#c8361f", "#d9614b", "#e89383", "#f5c9c0"] },
+      "check-print-red-deep": { "role": "primary",  "displayName": "Check-Print Red, Deep",  "canonical": "#a52a15", "cssVar": "--stamp-2", "tonalRamp": ["#2c0b06", "#57160c", "#7f2010", "#a52a15", "#c8361f", "#d9614b", "#e89383", "#f5c9c0"] },
+      "stamp-ink":            { "role": "primary",  "displayName": "Stamp Ink",              "canonical": "#ffffff", "cssVar": "literal on .stamp — the only text colour on the red; the keyline is the same white at 0.9", "tonalRamp": ["#1a1a1a", "#404040", "#666666", "#8c8c8c", "#b3b3b3", "#d9d9d9", "#f2f2f2", "#ffffff"] },
+      "paper":                { "role": "hosted",   "displayName": "Paper",                  "canonical": "#ffffff", "cssVar": "literal on .page and .print .paper — product surface (doc.css), the only white fields on the sheet", "tonalRamp": ["#1a1a1a", "#404040", "#666666", "#8c8c8c", "#b3b3b3", "#d9d9d9", "#f2f2f2", "#ffffff"] },
+      "paper-ink":            { "role": "hosted",   "displayName": "Paper Ink",              "canonical": "#1c2128", "cssVar": "literal on .page and .print .paper — the same ink doc.css sets on .doc", "tonalRamp": ["#0b0e12", "#1c2128", "#2e3540", "#454d5a", "#667080", "#8d96a5", "#b8bec9", "#e2e5ea"] }
+    },
+    "typographyMeta": {
+      "display":   { "displayName": "Display",   "purpose": "DOCFORGE at the top of sheet 1, once per set. Compacts to clamp(52px, 5.6vw, 78px) on short desks and clamp(52px, 17vw, 72px) on phones. Uppercase." },
+      "headline":  { "displayName": "Headline",  "purpose": "Sheet titles on sheets 2 and 3, on a 2px line-white rule with a 14px lettering-2 caption on the same baseline. Uppercase." },
+      "title":     { "displayName": "Title",     "purpose": "The hook under the units line (≤30ch, balanced). The closing line on sheet 3 is the same voice at clamp(22px, 2.6vw, 36px)/1.15; a detail label's view title is 22px at 0.08em. Uppercase via .lt." },
+      "body":      { "displayName": "Body",      "purpose": "Title block values, parts and revision cells, the sheet-head caption. Base on .sheet-root is 15px/1.45. Material notes (td.m) drop the caps and track 0.02em." },
+      "note":      { "displayName": "Note",      "purpose": "The five general notes in lettering-2, led by a NOTE n counter (11px, 0.14em, lettering) in a 5.2em column; the <b> lead is lettering at weight 400. Capped at 66ch on desktop." },
+      "label":     { "displayName": "Label",     "purpose": "Cell keys (.k), view tags (.tag), column heads (th) in lettering-2. 11px for the footline; 11px/0.1em for zone references; 12px for the units line (.sub) and the REVISIONS heading. Never a kicker above a headline." },
+      "stamp":     { "displayName": "Stamp",     "purpose": "The stamp's lettering, white on red. Big variant clamp(18px, 2vw, 24px); short-desk variant 15px." },
+      "dimension": { "displayName": "Dimension", "purpose": "SVG dimension figures and leader callouts, sized in the 1320×1285 drawing space and scaled by --pz (≈12.5px on a 1440 desktop). Secondary callouts (.s) 17px in lettering-2. Phones: 40/30px so they land at the same screen size after the smaller zoom." },
+      "source":    { "displayName": "Source",    "purpose": "Markdown source in the detail views: DocForge Mono, pre-wrap, no transform, no tracking." }
+    },
+    "shadows": [
+      { "name": "stamp-keyline", "value": "inset 0 0 0 4px var(--ink), inset 0 0 0 5.5px rgba(255, 255, 255, 0.9)", "purpose": "The stamp's 1.5px white keyline set in 4px from the impression's edge. Inset only: a drawn line, not depth. The world has no drop shadows; parts are bounded by outlines (2px --ln offset 6px on .page; 1.5px offset 5px on .print .paper)." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.2, 0, 0, 1)", "purpose": "--ease: the only easing on the sheet, for the draw-in and for 160ms hover transitions (stamp ink, link rules)." },
+      { "name": "df-draw", "value": "0.55s, stroke-dasharray 1 / stroke-dashoffset 1 → 0 with pathLength=1, both", "purpose": "Extension lines (.xl, delay 0.15s) then dimension lines (.dl, delay 0.45s) draw once on load; the margin/callout group (.g2) trails by 0.2s." },
+      { "name": "df-fade", "value": "0.4s, opacity 0 → 1, delay 0.9s (1.1s in .g2)", "purpose": "Dimension figures and leader dots appear after their lines." },
+      { "name": "hover", "value": "160ms var(--ease)", "purpose": "Stamp background-color; link border-color. Nothing moves, lifts or glows." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }", "purpose": "Global block in apps/web/app/globals.css; the landing relies on it. With animations dead every line is simply there." }
+    ],
+    "breakpoints": [
+      { "name": "laptop-width", "value": "1366px", "query": "(max-width: 1366px)", "effect": "--pz 0.46" },
+      { "name": "short-height", "value": "820px", "query": "(max-height: 820px)", "effect": "--pz 0.44" },
+      { "name": "short-desk", "value": "≥1101px and ≤820px tall", "query": "(min-width: 1101px) and (max-height: 820px)", "effect": "type compaction so the title block and stamp stay inside a 1366×768 first viewport" },
+      { "name": "single-column", "value": "1100px", "query": "(max-width: 1100px)", "effect": "--pz 0.6; .ga and .bom become one column" },
+      { "name": "phone", "value": "760px", "query": "(max-width: 760px)", "effect": "--pz 0.31; drawing clipped to 1000px, callouts hidden, dimension type 40/30, strokes 5/3.5, .vd figures +46px; frame 16/14, zones 14px, marks 16px; tables and title block restack" },
+      { "name": "small-phone", "value": "400px", "query": "(max-width: 400px)", "effect": "--pz 0.29" }
+    ],
+    "zoomLadder": {
+      "token": "--pz",
+      "drawingSpace": { "canvas": "1320 × 1285 px", "page": { "origin": [110, 90], "size": [794, 1123], "note": "A4 at 96 dpi; 1 mm = 3.7795 px" }, "leadersLandAt": 990, "calloutLetteringFrom": 1004 },
+      "steps": [
+        { "condition": "desktop > 1366w and > 820h", "pz": 0.48, "drawingWidth": "634px" },
+        { "condition": "≤ 1366w", "pz": 0.46, "drawingWidth": "607px" },
+        { "condition": "≤ 820h", "pz": 0.44, "drawingWidth": "581px" },
+        { "condition": "≤ 1100w", "pz": 0.6, "drawingWidth": "792px" },
+        { "condition": "≤ 760w (canvas clipped to 1000px)", "pz": 0.31, "drawingWidth": "310px" },
+        { "condition": "≤ 400w", "pz": 0.29, "drawingWidth": "290px" }
+      ]
+    },
+    "textures": [
+      { "name": "tooth", "value": "SVG feTurbulence fractalNoise, baseFrequency 0.9, 1 octave, seed 5, alpha 0.06, 240px tile", "purpose": "Paper tooth: white at a few percent over the ground (top layer of background-image)." },
+      { "name": "coat", "value": "SVG feTurbulence fractalNoise, baseFrequency 0.0035, 3 octaves, seed 3, alpha 0.1, 800px tile", "purpose": "Uneven cyanotype coating: large, slow variation under the tooth." },
+      { "name": "ink-mask", "value": "SVG feTurbulence fractalNoise, baseFrequency 0.06, 3 octaves, seed 9, alpha 0.16·n + 0.86, 200px tile", "purpose": "mask-image on .stamp-ink: the stamp's ink density varies 86–100%, as rubber never inks evenly." },
+      { "name": "ink-rough", "value": "SVG filter #ink-rough in page.tsx: feTurbulence baseFrequency 0.85, 2 octaves, seed 11 → feDisplacementMap scale 2.4 (R/G)", "purpose": "Roughens the stamp's edge. One filter, both stamps." }
+    ],
+    "focusRing": { "value": "outline: 2px solid var(--ln); outline-offset: 3px", "appliesTo": "a:focus-visible, button:focus-visible under .sheet-root" },
+    "lineWeights": {
+      "cssRules": { "heavy": "2px — drawing frame, sheet heads, column heads, closing rule, title block right/bottom edge", "light": "1px — cell rules, pane borders, row rules (soft/faint alphas)" },
+      "drawingSpace": { "dimensionLine": "3.5 (5 on phones)", "extensionAndLeader": "2 (3.5 on phones)", "arrowhead": "24 × 24 user-space px, markerUnits=userSpaceOnUse, path M0 0.5 L10 5 L0 9.5 z", "leaderDot": "r 5" }
+    }
+  },
+  "components": [
+    {
+      "name": "Stamp",
+      "kind": "button",
+      "refersTo": "stamp",
+      "description": "The one call to action: a check-print rubber stamp, canted −2°, keylined inset, that always opens the studio. The big variant on sheet 3 (frontmatter stamp-big) is the same impression at clamp(18px, 2vw, 24px) with 18px 30px 17px padding. In the build its edge is displaced by the #ink-rough SVG filter and its density varied by --ink-mask; both are omitted here because they need the page's SVG defs.",
+      "html": "<div class=\"ds-sheet\"><a class=\"ds-stamp\" href=\"#studio\"><span class=\"ds-stamp-ink\">Open the studio</span></a></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-stamp{--ink:#c8361f;position:relative;display:inline-block;transform:rotate(-2deg);color:#fff;text-decoration:none;white-space:nowrap;} .ds-stamp-ink{display:block;padding:13px 22px 12px;background:var(--ink);font-size:16px;letter-spacing:.12em;text-transform:uppercase;line-height:1;box-shadow:inset 0 0 0 4px var(--ink),inset 0 0 0 5.5px rgba(255,255,255,.9);transition:background-color 160ms cubic-bezier(.2,0,0,1);} .ds-stamp:hover{--ink:#a52a15;} .ds-stamp:focus-visible{outline:2px solid #e7edf9;outline-offset:3px;}"
+    },
+    {
+      "name": "Title Block",
+      "kind": "custom",
+      "refersTo": "title-block-cell",
+      "description": "Ruled cells on the sheet, no fills except the translucent APPROVED recess holding the stamp. Each cell draws its top and left rule; the block draws its right and bottom at 2px.",
+      "html": "<div class=\"ds-sheet\"><section class=\"ds-tb\" aria-label=\"Title block\"><div class=\"ds-t3\"><span class=\"ds-k\">Title</span><span class=\"ds-v\">DocForge — Document studio</span></div><div class=\"ds-s2\"><span class=\"ds-k\">Shown</span><span class=\"ds-v\">Assignment template, p. 1</span></div><div><span class=\"ds-k\">Drawn by</span><span class=\"ds-v\">You</span></div><div><span class=\"ds-k\">Checked by</span><span class=\"ds-v\">Nobody — local-first</span></div><div class=\"ds-stampcell\"><span class=\"ds-k\">Approved</span><a class=\"ds-stamp\" href=\"#studio\"><span class=\"ds-stamp-ink\">Open the studio</span></a></div><div><span class=\"ds-k\">Size · Scale</span><span class=\"ds-v\">A4 · NTS</span></div><div><span class=\"ds-k\">Sheet</span><span class=\"ds-v\">1 of 3</span></div><div><span class=\"ds-k\">Rev</span><span class=\"ds-v\">D</span></div><div class=\"ds-links\"><a href=\"#classic\">Single-file edition — one HTML file, yours forever</a><a href=\"#pdf\">PDF bench — patch a finished PDF in place</a></div></section></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-tb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid #e7edf9;border-right-width:2px;border-bottom-width:2px;font-size:14px;text-transform:uppercase;letter-spacing:.07em;} .ds-tb>div{border-top:1px solid #e7edf9;border-left:1px solid #e7edf9;padding:5px 9px 6px;min-width:0;} .ds-k{display:block;font-size:10px;letter-spacing:.16em;color:#bccbea;margin-bottom:3px;} .ds-v{display:block;color:#f3f6fc;line-height:1.3;} .ds-t3{grid-column:1/3;} .ds-s2{grid-column:3/5;} .ds-stampcell{grid-column:3/5;grid-row:2/4;display:flex;flex-direction:column;background:rgba(0,0,0,.28);padding-bottom:12px;} .ds-stampcell .ds-stamp{margin:auto;} .ds-links{grid-column:2/5;display:flex;flex-wrap:wrap;align-items:center;gap:4px 22px;} .ds-links a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(231,237,249,.42);padding-bottom:1px;transition:border-color 160ms cubic-bezier(.2,0,0,1);} .ds-links a:hover{border-color:#e7edf9;} .ds-links a:focus-visible{outline:2px solid #e7edf9;outline-offset:3px;} .ds-stamp{--ink:#c8361f;position:relative;display:inline-block;transform:rotate(-2deg);color:#fff;text-decoration:none;white-space:nowrap;} .ds-stamp-ink{display:block;padding:13px 22px 12px;background:var(--ink);font-size:16px;letter-spacing:.12em;text-transform:uppercase;line-height:1;box-shadow:inset 0 0 0 4px var(--ink),inset 0 0 0 5.5px rgba(255,255,255,.9);transition:background-color 160ms cubic-bezier(.2,0,0,1);} .ds-stamp:hover{--ink:#a52a15;} .ds-stamp:focus-visible{outline:2px solid #e7edf9;outline-offset:3px;}"
+    },
+    {
+      "name": "General Notes",
+      "kind": "custom",
+      "refersTo": "general-note",
+      "description": "The five general notes of sheet 1: a counter writes NOTE n in a 5.2em column; the lead is a change of ink, not weight.",
+      "html": "<div class=\"ds-sheet\"><ol class=\"ds-notes\"><li><span><b>The source is Markdown.</b> Headings, tables, footnotes, equations, citations and figures are written, not clicked.</span></li><li><span><b>Pages compose live as you type</b>: margins, running heads, folios, a table of contents. The page itself is editable.</span></li><li><span><b>No account. No server.</b> Everything autosaves on this machine and the file never leaves it.</span></li></ol></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-notes{margin:0;padding:0;list-style:none;counter-reset:note;max-width:66ch;font-size:12.5px;line-height:1.4;color:#bccbea;border-top:1px solid rgba(231,237,249,.42);text-transform:uppercase;letter-spacing:.07em;} .ds-notes>li{counter-increment:note;display:grid;grid-template-columns:5.2em 1fr;gap:10px;padding:6px 0;border-bottom:1px solid rgba(231,237,249,.18);} .ds-notes>li::before{content:\"NOTE \" counter(note);color:#f3f6fc;letter-spacing:.14em;font-size:11px;line-height:1.7;} .ds-notes b{color:#f3f6fc;font-weight:400;}"
+    },
+    {
+      "name": "Dimension Line",
+      "kind": "custom",
+      "refersTo": "dimension",
+      "description": "A dimension as the drawing draws it: thin extension lines, a thick dimension line with fixed-size arrowheads at both ends, the figure in lettering above. Values here are the drawing-space values scaled by the desktop --pz (0.48).",
+      "html": "<div class=\"ds-sheet\"><svg class=\"ds-dims\" viewBox=\"0 0 420 90\" width=\"420\" height=\"90\" aria-hidden=\"true\"><defs><marker id=\"ds-ar\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"12\" markerHeight=\"12\" orient=\"auto-start-reverse\"><path d=\"M0 0.5 L10 5 L0 9.5 z\" fill=\"currentColor\"/></marker></defs><line class=\"ds-xl\" x1=\"40\" y1=\"84\" x2=\"40\" y2=\"34\"/><line class=\"ds-xl\" x1=\"380\" y1=\"84\" x2=\"380\" y2=\"34\"/><line class=\"ds-dl\" x1=\"40\" y1=\"46\" x2=\"380\" y2=\"46\" marker-start=\"url(#ds-ar)\" marker-end=\"url(#ds-ar)\"/><text x=\"210\" y=\"36\" text-anchor=\"middle\">210</text><circle class=\"ds-pt\" cx=\"120\" cy=\"70\" r=\"2.4\"/><line class=\"ds-xl\" x1=\"120\" y1=\"70\" x2=\"300\" y2=\"70\"/><text class=\"ds-s\" x=\"306\" y=\"74\">Running head</text></svg></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-dims{display:block;max-width:100%;color:#e7edf9;fill:#f3f6fc;font-family:inherit;} .ds-dims text{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;} .ds-dims text.ds-s{font-size:8px;fill:#bccbea;} .ds-dims .ds-dl{stroke:currentColor;stroke-width:1.7;fill:none;} .ds-dims .ds-xl{stroke:currentColor;stroke-width:1;} .ds-dims .ds-pt{fill:currentColor;}"
+    },
+    {
+      "name": "Sheet Frame",
+      "kind": "custom",
+      "refersTo": "zone-reference",
+      "description": "Every sheet's furniture: a soft trim line, the 2px drawing frame inset 20px, zone references in the 22px gutter (1–8 across, A–F down), and 2×22px centring marks at the four mid-edges.",
+      "html": "<div class=\"ds-sheet ds-sheet--flush\"><section class=\"ds-frame\"><div class=\"ds-zones ds-zx ds-top\"><span>1</span><span>2</span><span>3</span><span>4</span></div><div class=\"ds-zones ds-zx ds-bottom\"><span>1</span><span>2</span><span>3</span><span>4</span></div><div class=\"ds-zones ds-zy ds-left\"><span>A</span><span>B</span><span>C</span></div><div class=\"ds-zones ds-zy ds-right\"><span>A</span><span>B</span><span>C</span></div><span class=\"ds-cm ds-cm-t\"></span><span class=\"ds-cm ds-cm-b\"></span><span class=\"ds-cm ds-cm-l\"></span><span class=\"ds-cm ds-cm-r\"></span><div class=\"ds-body\">Sheet body</div></section></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-sheet--flush{padding:14px;} .ds-frame{position:relative;border:1px solid rgba(231,237,249,.42);padding:22px;display:flex;min-height:220px;} .ds-frame::after{content:\"\";position:absolute;inset:20px;border:2px solid #e7edf9;pointer-events:none;} .ds-zones{position:absolute;display:flex;font-size:11px;letter-spacing:.1em;color:#bccbea;pointer-events:none;user-select:none;} .ds-zones span{flex:1;text-align:center;position:relative;} .ds-zx{left:21px;right:21px;height:20px;line-height:20px;} .ds-top{top:0;} .ds-bottom{bottom:0;} .ds-zx span+span::before{content:\"\";position:absolute;left:0;top:4px;bottom:4px;border-left:1px solid rgba(231,237,249,.42);} .ds-zy{top:21px;bottom:21px;width:20px;flex-direction:column;} .ds-left{left:0;} .ds-right{right:0;} .ds-zy span{display:flex;align-items:center;justify-content:center;} .ds-zy span+span::before{content:\"\";position:absolute;top:0;left:4px;right:4px;border-top:1px solid rgba(231,237,249,.42);} .ds-cm{position:absolute;background:#e7edf9;pointer-events:none;} .ds-cm-t,.ds-cm-b{left:50%;width:2px;height:22px;margin-left:-1px;} .ds-cm-t{top:0;} .ds-cm-b{bottom:0;} .ds-cm-l,.ds-cm-r{top:50%;height:2px;width:22px;margin-top:-1px;} .ds-cm-l{left:0;} .ds-cm-r{right:0;} .ds-body{flex:1;display:grid;place-items:center;padding:18px 22px 14px;color:#bccbea;font-size:12px;letter-spacing:.16em;text-transform:uppercase;}"
+    },
+    {
+      "name": "Detail Label",
+      "kind": "custom",
+      "refersTo": "balloon",
+      "description": "A detail view's title: the balloon carries its letter as on a drawing, the view title at 22px, the caption in lettering-2.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-dlabel\"><b><i class=\"ds-balloon\" aria-hidden=\"true\">A</i>Detail A</b> Numbered heading and captioned table</div></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-dlabel{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:13px;color:#bccbea;text-transform:uppercase;letter-spacing:.07em;} .ds-dlabel b{flex:none;display:inline-flex;align-items:center;gap:10px;white-space:nowrap;font-weight:400;color:#f3f6fc;font-size:22px;letter-spacing:.08em;} .ds-balloon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:2px solid #e7edf9;border-radius:50%;box-sizing:border-box;font-size:14px;font-style:normal;line-height:1;letter-spacing:0;}"
+    },
+    {
+      "name": "Source Pane",
+      "kind": "card",
+      "refersTo": "source-pane",
+      "description": "The left pane of a detail view: Markdown source in the mono face inside a soft rule, with its view tag 19px above the top-left edge.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-pane-wrap\"><pre class=\"ds-src\"><span class=\"ds-tag\">Source — Markdown</span># Deployment Details\n\n[table: The configuration as deployed | #tbl-deploy]\n| Setting | Value |\n| --- | --- |\n| Resource name | your-resource-name |\n| Region | Region label — region-code |</pre></div></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-pane-wrap{padding-top:19px;} .ds-src{position:relative;margin:0;border:1px solid rgba(231,237,249,.42);padding:22px 20px;font-family:'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:12.5px;line-height:1.6;color:#f3f6fc;white-space:pre-wrap;overflow-wrap:anywhere;text-transform:none;letter-spacing:0;} .ds-tag{position:absolute;top:-19px;left:0;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#bccbea;}"
+    },
+    {
+      "name": "Print Pane (paper)",
+      "kind": "card",
+      "refersTo": "paper",
+      "description": "The right pane of a detail view: white paper outlined 1.5px offset 5px inside a soft-ruled pane, hosting the product's document stylesheet. The type inside is doc.css's (shown here as literal pt→px conversions for illustration); the landing never restyles it.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-pane-wrap\"><div class=\"ds-print\"><span class=\"ds-tag\">Print — 1:1</span><div class=\"ds-paper\"><p class=\"ds-paper-h\"><span class=\"ds-hnum\">3</span> Deployment Details</p><p>Set in the product's own document stylesheet, exactly as the studio prints it.</p></div></div></div></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-pane-wrap{padding-top:19px;} .ds-print{position:relative;border:1px solid rgba(231,237,249,.42);padding:24px 22px;display:flex;align-items:center;} .ds-paper{width:100%;background:#fff;color:#1c2128;padding:18px 22px;outline:1.5px solid #e7edf9;outline-offset:5px;text-transform:none;letter-spacing:normal;font-family:'Times New Roman','DocForge Serif',Georgia,serif;font-size:14.67px;line-height:1.59;} .ds-paper p{margin:0 0 11.67px;} .ds-paper p:last-child{margin-bottom:0;} .ds-paper-h{color:#12161c;font-weight:700;font-size:27.3px;line-height:1.25;letter-spacing:-.012em;padding-bottom:8px;border-bottom:1.87px solid #ab390b;} .ds-hnum{color:#ab390b;margin-right:4.67px;font-variant-numeric:tabular-nums;} .ds-tag{position:absolute;top:-19px;left:0;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#bccbea;}"
+    },
+    {
+      "name": "Parts List",
+      "kind": "custom",
+      "refersTo": "parts-row",
+      "description": "Sheet 3's ruled table in lettering: 10px tracked heads on a 2px rule, faint row rules, numbers in lettering-2, descriptions in lettering, material notes in sentence case with the lead in lettering.",
+      "html": "<div class=\"ds-sheet\"><table class=\"ds-parts\"><thead><tr><th>Item</th><th>Qty</th><th>Description</th><th>Material · Notes</th></tr></thead><tbody><tr><td class=\"ds-n\">1</td><td class=\"ds-q\">1</td><td class=\"ds-d\">PDF export</td><td class=\"ds-m\"><b>The browser's print engine</b> over a real paginated layout: margins, running heads, folios, footnotes at the foot, a linked table of contents.</td></tr><tr><td class=\"ds-n\">2</td><td class=\"ds-q\">1</td><td class=\"ds-d\">Word export (.docx)</td><td class=\"ds-m\"><b>Native Word</b>, not a picture of one: embedded fonts, TOC fields, footnotes, equations as Word maths.</td></tr></tbody></table></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-parts{width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;text-transform:uppercase;letter-spacing:.07em;} .ds-parts th{text-align:left;font-weight:400;font-size:10px;letter-spacing:.16em;color:#bccbea;padding:0 12px 8px 0;border-bottom:2px solid #e7edf9;} .ds-parts td{padding:10px 12px 10px 0;border-bottom:1px solid rgba(231,237,249,.18);vertical-align:top;} .ds-n,.ds-q{width:3.5em;color:#bccbea;font-variant-numeric:tabular-nums;} .ds-d{width:30%;color:#f3f6fc;} .ds-m{color:#bccbea;text-transform:none;letter-spacing:.02em;} .ds-m b{font-weight:400;color:#f3f6fc;}"
+    },
+    {
+      "name": "Ruled Link",
+      "kind": "nav",
+      "refersTo": "link-ruled",
+      "description": "A text link on the sheet: lettering with a soft rule under it that rises to full line-white on hover. Never the red.",
+      "html": "<div class=\"ds-sheet\"><p class=\"ds-alt\">Prefer no install? The <a class=\"ds-link\" href=\"#classic\">single-file edition</a> is one HTML document, yours forever. Have a finished PDF to patch? The <a class=\"ds-link\" href=\"#pdf\">PDF bench</a>.</p></div>",
+      "css": ".ds-sheet{background:#103474;color:#f3f6fc;font-family:Osifont,'DocForge Mono',ui-monospace,'Cascadia Code',Consolas,monospace;font-size:15px;line-height:1.45;padding:24px;} .ds-alt{margin:0;font-size:13px;color:#bccbea;text-transform:uppercase;letter-spacing:.07em;} .ds-link{color:#f3f6fc;text-decoration:none;border-bottom:1px solid rgba(231,237,249,.42);padding-bottom:1px;transition:border-color 160ms cubic-bezier(.2,0,0,1);} .ds-link:hover{border-color:#e7edf9;} .ds-link:focus-visible{outline:2px solid #e7edf9;outline-offset:3px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Drawing Sheet",
+    "overview": "This file governs exactly one surface: the landing page at route / of the Next.js app (apps/web/app/page.tsx with apps/web/app/landing.css). It does not govern the studio. The studio's chrome is \"the copy desk\", recorded in the root DESIGN.md and .impeccable/design.json, and nothing in this file overrides, extends, or leaks into it. The two worlds share one law only, inherited from PRODUCT.md: the document prints on white, whatever surrounds it. The document stylesheet apps/web/public/doc.css is product surface belonging to neither world; the landing hosts it unchanged.\n\nThe landing is one engineering drawing set, three sheets, printed as a cyanotype. The finished A4 page is the part being drawn: it sits on sheet 1 at reduced scale with its 210 and 297 overall dimensions and its 22/20/24/20 mm margins measured off its own edges, and leaders call out its furniture (running head, page border, title plate, particulars table, folio). The product's facts live where a drawing keeps its facts: five general notes at the right, a ruled title block at the bottom right, a parts list and a revision table on sheet 3. Sheet 2 is a set of detail views: Markdown source at left, the printed result at right, at 1:1. The only red on any sheet is the check-print stamp in the APPROVED cell, and it opens the studio. Motion is a drawing showing its work once: extension lines, then dimension lines, then lettering, and nothing moves again.\n\nThe world is dense, ruled, and single-voiced. One lettering face at one weight sets everything on the sheet, tracked as ISO 3098 caps; emphasis is a change of ink, never of weight. Lines are one white at three densities. There are no shadows, no gradients, no rounded corners beyond the detail balloon, no filled panels beyond the one recessed cell. Confirmed rejections, evidenced by the build: no headline-plus-two-buttons hero, no floating screenshot, no three-column feature grid. The contract's ground colour (#12397a) is what the sheet reads as; the built token is darker (--cy: #103474) and the two noise layers lift it — the token is normative.",
+    "keyCharacteristics": [
+      "Cyanotype blue ground carrying two SVG noise layers (paper tooth over uneven coating), white at a few percent.",
+      "Line-white for every drawn line; 2px for frames and heavy rules, 1px for cells; 0.42 and 0.18 alpha for soft and faint rules.",
+      "osifont (ISO 3098 lettering) at weight 400 for everything on the sheet, uppercase and tracked 0.07em via .lt.",
+      "Zone-referenced drawing frames (1–8 across, A–F down) with centring marks at the four mid-edges, on every sheet.",
+      "A fixed 1320 × 1285 px drawing space scaled by zoom: var(--pz); the page inside it is A4 at 96 dpi and every dimension is computed from it.",
+      "A ruled title block with no fills except the APPROVED cell; that cell holds the one red stamp.",
+      "Paper is the only white on the sheet, and paper is always set in doc.css.",
+      "Every rule nested under .sheet-root; only @font-face and @keyframes sit at the top level."
+    ],
+    "rules": [
+      { "name": "The One Red Per Sheet Rule", "section": "colors", "body": "Check-print red exists for the stamp and for nothing else: at most one stamp per sheet, and every stamp opens the studio. It is never a text colour, a rule, a link, a hover, or an accent. The accents inside paper (the template's #c2410c on heading rules, numbers and cross-references) are paper's ink, not the sheet's red, and do not count against it." },
+      { "name": "The Paper Is White Rule", "section": "colors", "body": "The only white fields on a sheet are paper (.page, .print .paper), and paper is #ffffff set in doc.css. The sheet never lightens its ground to make a panel; a panel that is not paper is ruled, not filled." },
+      { "name": "The Line-White Rule", "section": "colors", "body": "Every line on the sheet is --ln at one of three densities (1, 0.42, 0.18). No line takes another colour, and no line is drawn in the lettering colours." },
+      { "name": "The Lettering Rule", "section": "typography", "body": "Everything on the sheet is set in Osifont at weight 400, uppercase, tracked. There is no bold on the sheet: <b> is a change of ink from --tx-2 to --tx at the same weight." },
+      { "name": "The Paper Boundary Rule", "section": "typography", "body": "The sheet's caps and tracking stop at the edge of paper. .page and .print .paper reset text-transform: none; letter-spacing: normal and hand typography to doc.css; the source pane does the same (letter-spacing: 0) and hands it to the mono face. Nothing on the sheet restyles .doc." },
+      { "name": "The Labels Live in Cells Rule", "section": "typography", "body": "The 10px tracked label is a cell key, a view tag on a pane's top edge, or a column head. It never floats above a headline as a kicker: the units line sits under the name, not over it." },
+      { "name": "The Scoped World Rule", "section": "layout", "body": "Every rule of this world is nested under .sheet-root. Only @font-face (Osifont) and @keyframes (df-draw, df-fade) sit at the top level, because they must. Nothing in landing.css reaches the studio, and nothing on the sheet reads the studio's tokens (--bg, --pri, --rule…) or its data-light theme. The sheet has one theme." },
+      { "name": "The Drawing Space Rule", "section": "layout", "body": "The drawing is a 1320 × 1285 px canvas holding an A4 page at 96 dpi; the SVG shares the canvas exactly; dimensions are computed from the page's margins; the whole scales by --pz and by nothing else. A dimension that is typed rather than computed, or an SVG sized independently of the page, breaks the registration the drawing exists to show." },
+      { "name": "The First Viewport Rule", "section": "layout", "body": "Sheet 1 is complete in the first viewport at 1440 × 900 and at 1366 × 768: drawing with dimensions and leaders, name, hook, five notes, and the title block with the stamp. The short-desk block exists to keep this true; the ladder is tuned to it, not to a mobile-first stack." },
+      { "name": "The No-Shadow Rule", "section": "elevation", "body": "Nothing on the sheet casts a shadow. A part is bounded by an outline (outline: 2px solid var(--ln), offset 6px), a pane by a 1px soft rule, a cell by its 1px rules. The removal of the earlier build's drop shadows from .page and .paper is the record of this rule being applied." },
+      { "name": "The Keyline Rule", "section": "elevation", "body": "box-shadow may appear only as inset spreads that draw a line inside an edge (the stamp's keyline). Any offset, blur, or outward spread is a shadow and is refused." },
+      { "name": "The Square Corner Rule", "section": "shapes", "body": "border-radius is 0 everywhere except the detail balloon (50%). No rounded panes, pills, or chips; a tag is a label, not a chip." },
+      { "name": "The Shows-Its-Work-Once Rule", "section": "components", "body": "The sheet draws itself once on load. Extension lines draw first (df-draw, 0.55s, pathLength=1 dash from 1 to 0, delay 0.15s), dimension lines next (0.45s), then figures and dots fade in (df-fade, 0.4s, delay 0.9s). The margin and callout group (.g2) trails by 0.2s (0.35 / 0.65 / 1.1s). Easing is --ease: cubic-bezier(0.2, 0, 0, 1) throughout. Only the change is animated: with prefers-reduced-motion: reduce, the global block in globals.css (animation: none; transition: none on everything) leaves every line simply there. Nothing on the sheet animates on scroll, hover or in a loop." }
+    ],
+    "dos": [
+      "Do set every word on the sheet in Osifont at weight 400, uppercase, tracked 0.07em via .lt; emphasise by ink (--tx over --tx-2), never by weight.",
+      "Do draw every line in line-white: 2px --ln for frames, heads and the title block's outer edge; 1px --ln for cells; --ln-soft (0.42) for trim, panes and ticks; --ln-faint (0.18) for row rules.",
+      "Do keep the check-print red for the stamp alone — at most one stamp per sheet, always linking to /studio — with white lettering, hover to --stamp-2 over 160ms.",
+      "Do keep paper white (#ffffff) and set in doc.css; reset text-transform and letter-spacing at the paper boundary and let the document stylesheet take over.",
+      "Do compute every dimension in the 1320 × 1285 drawing space from the page's geometry (origin 110/90, 794 × 1123, 1 mm = 3.7795 px) and scale the whole with --pz.",
+      "Do bound parts and paper with outlines (2px --ln offset 6px; 1.5px offset 5px), and enclose panes and cells with rules.",
+      "Do put tracked 10px labels in cells (.k), on pane edges (.tag) and in column heads (th), in --tx-2.",
+      "Do nest every new rule under .sheet-root, with only @font-face and @keyframes at the top level.",
+      "Do animate only the drawing's one-time draw-in (df-draw, df-fade, --ease), and let the global reduced-motion block kill it.",
+      "Do give every sheet its frame, zones, centring marks and a title block, and keep sheet 1 complete in a 1366 × 768 viewport."
+    ],
+    "donts": [
+      "Don't add a drop shadow, gradient, glow, blur, or translucent panel anywhere on the sheet; box-shadow is inset keylines only.",
+      "Don't use font-weight: 700 on the sheet; the lettering face ships one weight and the world uses one.",
+      "Don't use the red as text, rule, link, hover, focus, or accent, and don't add a second red; the accents inside paper are the template's, not the sheet's.",
+      "Don't restyle .doc, .page's border, or the .tpl-assignment ramp to suit the sheet; they are product surface hosted unchanged.",
+      "Don't round a corner; border-radius is 0 everywhere except the 30px detail balloon.",
+      "Don't compose a headline-plus-two-buttons hero, a floating screenshot, or a three-column feature grid on any sheet; the product's facts go in notes, the title block, the parts list and the revisions.",
+      "Don't float a tracked label above a headline as a kicker; the units line sits under the name.",
+      "Don't size the .dims SVG or the page independently, type a dimension figure by hand, or change the drawing's CSS pixel geometry; change --pz.",
+      "Don't read the studio's tokens (--bg, --pri, --rule, --line) or its data-light theme inside the sheet, and don't let a .sheet-root rule escape into globals.css.",
+      "Don't use a filled panel that is not paper; the APPROVED cell's translucent recess (rgba(0, 0, 0, 0.28)) is the one exception and it is spent."
+    ]
+  }
+}

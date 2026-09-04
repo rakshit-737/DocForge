@@ -129,6 +129,8 @@ Everything below is extracted from the built app — `src/app.css` (tokens + chr
 
 ## Overview
 
+> **Scope.** This file governs the studio chrome (the copy desk) and the PDF bench. The landing page at `/` (apps/web/app/page.tsx, landing.css) is a deliberately separate world — the drawing sheet — recorded in `docs/LANDING-DESIGN.md`; nothing below applies to it, and nothing there reaches the studio.
+
 **Creative North Star: "The Copy Desk"**
 
 DocForge is the copy desk at edition time. Text is copy, the preview is the galley, export is going to press. The chrome is a newspaper composing room: newsprint-white working surfaces with a faint paper grain, ink hairline rules doing the work borders and shadows used to do, square corners, ruled trays and printed-form fields, teletype mono instrumentation, and exactly one color spent editorially — grease-pencil red on the TO-PRESS plate, proof marks, and focus. The masthead is a serif nameplate over a double ink rule; the preview deck is the stone, and pages lie on it like galleys. It deliberately refuses the category default of a soft dark editor with one metallic accent: the *day* desk is what the app boots into, and the dark variant is the same room on the night shift — slate under fluorescents, authored value by value, never an inversion. The document itself is not part of this world: it always renders and prints on white.

@@ -1,0 +1,4 @@
+osifont — ISO 3098 engineering lettering by hikikomori82 and contributors.
+Source: https://github.com/hikikomori82/osifont
+License: GNU LGPL v3 with GPL font exception (osifont-lgpl3fe.ttf, shipped here as osifont.ttf) and osifont-italic.ttf from the same project.
+Used only for the landing sheet lettering; not embedded in any document export.

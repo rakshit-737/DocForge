@@ -1,0 +1,1014 @@
+/* ============================================================
+   The drawing sheet — the landing page's own world.
+
+   The landing is one engineering drawing set, printed as a
+   cyanotype: the finished A4 page is the part being drawn, its
+   margins and furniture are dimensioned in millimetres, and the
+   product's facts live in the title block. Lettering is ISO 3098
+   (osifont), the way every drawing sheet is lettered; the page
+   itself is set in the product's own document stylesheet (doc.css)
+   so what is drawn is what the studio prints.
+
+   Every rule is nested under .sheet-root — the studio keeps the
+   copy desk (globals.css), and nothing in this file reaches it.
+   Only @font-face and @keyframes sit at the top level, because
+   they must.
+   ============================================================ */
+
+@font-face {
+  font-family: "Osifont";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lettering/osifont.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Osifont";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/lettering/osifont-italic.ttf") format("truetype");
+}
+
+.sheet-root {
+  /* the cyanotype: the coated sheet under the texture layers below reads
+     as #12397a on average; the coating varies a few percent either way */
+  --cy: #103474;
+  --ln: #e7edf9;
+  --ln-soft: rgba(231, 237, 249, 0.42);
+  --ln-faint: rgba(231, 237, 249, 0.18);
+  --tx: #f3f6fc;
+  --tx-2: #bccbea;
+  /* the check-print stamp — the one red */
+  --stamp: #c8361f;
+  --stamp-2: #a52a15;
+  --letter: "Osifont", "DocForge Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* the drawing's zoom: 1 CSS px of the A4 page = 1 px at 96 dpi, scaled down to fit */
+  --pz: 0.48;
+  --dim-fs: 26px;
+  --dim-fs-2: 17px;
+  /* the print: uneven coating (large, slow) and paper tooth (fine), both as
+     white at a few percent over the ground */
+  --coat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='800' height='800' filter='url(%23c)'/%3E%3C/svg%3E");
+  --tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23t)'/%3E%3C/svg%3E");
+  /* the stamp's ink density: a rubber stamp never inks evenly (90–98%) */
+  --ink-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='m' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.06' numOctaves='3' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.16 0.86'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23m)'/%3E%3C/svg%3E");
+
+  background: var(--cy);
+  background-image: var(--tooth), var(--coat);
+  color: var(--tx);
+  font-family: var(--letter);
+  font-size: 15px;
+  line-height: 1.45;
+
+  @media (max-width: 1366px) {
+    & {
+      --pz: 0.46;
+    }
+  }
+  @media (max-height: 820px) {
+    & {
+      --pz: 0.44;
+    }
+  }
+
+  & ::selection {
+    background: rgba(231, 237, 249, 0.28);
+  }
+  & a {
+    color: inherit;
+  }
+  & a:focus-visible,
+  & button:focus-visible {
+    outline: 2px solid var(--ln);
+    outline-offset: 3px;
+  }
+
+  /* Lettering — upright ISO caps, tracked as on the sheet. */
+  .lt {
+    font-family: var(--letter);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .lt-i {
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* ---------- the sheet and its frame ---------- */
+  .sheet {
+    position: relative;
+    flex: none; /* a flex item of the scrolling shell: never shrink to the viewport */
+    padding: 14px;
+    min-height: 100dvh;
+    display: flex;
+  }
+  .sheet + .sheet {
+    padding-top: 0;
+  }
+  .sheet-frame {
+    position: relative;
+    flex: 1;
+    border: 1px solid var(--ln-soft); /* the trim line */
+    padding: 22px; /* the zone gutter */
+    display: flex;
+  }
+  .sheet-frame::after {
+    /* the drawing frame */
+    content: "";
+    position: absolute;
+    inset: 20px;
+    border: 2px solid var(--ln);
+    pointer-events: none;
+  }
+  /* zone references in the gutter: 1–8 across, A–F down */
+  .zones {
+    position: absolute;
+    display: flex;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--tx-2);
+    pointer-events: none;
+    user-select: none;
+  }
+  .zones span {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .zones-x {
+    left: 21px;
+    right: 21px;
+    height: 20px;
+    line-height: 20px;
+  }
+  .zones-x.top {
+    top: 0;
+  }
+  .zones-x.bottom {
+    bottom: 0;
+  }
+  .zones-x span + span::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    border-left: 1px solid var(--ln-soft);
+  }
+  .zones-y {
+    top: 21px;
+    bottom: 21px;
+    width: 20px;
+    flex-direction: column;
+  }
+  .zones-y.left {
+    left: 0;
+  }
+  .zones-y.right {
+    right: 0;
+  }
+  .zones-y span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .zones-y span + span::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 4px;
+    right: 4px;
+    border-top: 1px solid var(--ln-soft);
+  }
+  /* centring marks at the four mid-edges */
+  .cmark {
+    position: absolute;
+    background: var(--ln);
+    pointer-events: none;
+  }
+  .cmark.t,
+  .cmark.b {
+    left: 50%;
+    width: 2px;
+    height: 22px;
+    margin-left: -1px;
+  }
+  .cmark.t {
+    top: 0;
+  }
+  .cmark.b {
+    bottom: 0;
+  }
+  .cmark.l,
+  .cmark.r {
+    top: 50%;
+    height: 2px;
+    width: 22px;
+    margin-top: -1px;
+  }
+  .cmark.l {
+    left: 0;
+  }
+  .cmark.r {
+    right: 0;
+  }
+
+  .sheet-body {
+    position: relative;
+    flex: 1;
+    display: grid;
+    gap: 26px 32px;
+    padding: 18px 22px 14px;
+    min-width: 0;
+  }
+
+  /* ---------- sheet 1: general arrangement ---------- */
+  .ga {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 50%);
+    grid-template-rows: auto 1fr auto;
+    gap: 16px 28px;
+  }
+  .ga .drawing-wrap {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+  .ga .head {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .name {
+    margin: 0;
+    font-family: var(--letter);
+    font-weight: 400;
+    font-size: clamp(64px, 6.8vw, 96px);
+    line-height: 0.92;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--tx);
+  }
+  .sub {
+    margin: 14px 0 0;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: var(--tx-2);
+  }
+  .hook {
+    margin: 14px 0 0;
+    font-size: clamp(20px, 1.7vw, 26px);
+    line-height: 1.3;
+    max-width: 30ch;
+    text-wrap: balance;
+  }
+  .notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: note;
+    max-width: 66ch;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--tx-2);
+    border-top: 1px solid var(--ln-soft);
+  }
+  .notes > li {
+    counter-increment: note;
+    display: grid;
+    grid-template-columns: 5.2em 1fr;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ln-faint);
+  }
+  .notes > li::before {
+    content: "NOTE " counter(note);
+    color: var(--tx);
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .notes b {
+    color: var(--tx);
+    font-weight: 400;
+  }
+  .ga .notes {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  /* ---------- the drawing ---------- */
+  .drawing {
+    position: relative;
+    width: 1320px;
+    height: 1285px;
+    zoom: var(--pz);
+    flex: none;
+  }
+  .dims {
+    position: absolute;
+    inset: 0;
+    width: 1320px;
+    height: 1285px;
+    overflow: visible;
+    color: var(--ln);
+    font-family: var(--letter);
+    fill: var(--tx);
+    pointer-events: none;
+  }
+  .dims text {
+    font-size: var(--dim-fs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .dims text.s {
+    font-size: var(--dim-fs-2);
+    fill: var(--tx-2);
+  }
+  /* ISO line weights: thick for dimension lines, thin for extension lines
+     and leaders — both crisp at every zoom the sheet ships at */
+  .dims .dl {
+    stroke: currentColor;
+    stroke-width: 3.5;
+    fill: none;
+  }
+  .dims .xl {
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  .dims .pt {
+    fill: currentColor;
+  }
+  /* the sheet shows its work once: extension lines first, dimension lines,
+     then the lettering. Only the change is animated — with animations dead
+     (reduced motion) every line is simply there. */
+  .dims .dl,
+  .dims .xl {
+    animation: df-draw 0.55s var(--ease) both;
+  }
+  .dims .xl {
+    animation-delay: 0.15s;
+  }
+  .dims .dl {
+    animation-delay: 0.45s;
+  }
+  .dims text,
+  .dims .pt {
+    animation: df-fade 0.4s var(--ease) both;
+    animation-delay: 0.9s;
+  }
+  .dims .g2 .xl {
+    animation-delay: 0.35s;
+  }
+  .dims .g2 .dl {
+    animation-delay: 0.65s;
+  }
+  .dims .g2 text,
+  .dims .g2 .pt {
+    animation-delay: 1.1s;
+  }
+
+  /* The part: an A4 sheet at 96 dpi (794 × 1123 px), in the product's own
+     document stylesheet. Paper is always white — the same law as the studio.
+     A drawn part is bounded by its outline, not lit: no shadow, a thick line. */
+  .page {
+    position: absolute;
+    left: 110px;
+    top: 90px;
+    width: 794px;
+    height: 1123px;
+    background: #fff;
+    color: #1c2128;
+    overflow: hidden;
+    outline: 2px solid var(--ln);
+    outline-offset: 6px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .page::after {
+    /* the assignment template's page border: thick–thin, bold, ink —
+       exactly the overlay dynamicCss() draws in the studio */
+    content: "";
+    position: absolute;
+    inset: 3mm;
+    border: 4.5pt solid #3c434e;
+    box-shadow:
+      inset 0 0 0 2.7pt #fff,
+      inset 0 0 0 4.05pt #3c434e;
+    pointer-events: none;
+  }
+  .page .doc {
+    position: absolute;
+    left: 20mm;
+    right: 20mm;
+    top: 22mm;
+    bottom: 24mm;
+  }
+  .page .rh {
+    position: absolute;
+    top: 7mm;
+    left: 20mm;
+    font-family: var(--font-head);
+    font-size: 7.6pt;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #828a99;
+  }
+  .page .folio {
+    position: absolute;
+    bottom: 7mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 8.2pt;
+    color: #71798a;
+    font-variant-numeric: tabular-nums;
+  }
+  /* the assignment template's accent (#c2410c) as the engine's tint ramp,
+     and its faces — Times, as the template asks for */
+  .tpl-assignment {
+    --a50: #fcf6f4;
+    --a75: #fbf2ee;
+    --a100: #f8e8e2;
+    --a200: #efcec0;
+    --a300: #e4aa92;
+    --a400: #d67e5a;
+    --a500: #c2410c;
+    --a600: #ab390b;
+    --a700: #903009;
+    --a800: #742707;
+    --a900: #571d05;
+    --font-head: "Times New Roman", "DocForge Serif", Georgia, serif;
+    --font-body: "Times New Roman", "DocForge Serif", Georgia, serif;
+  }
+
+  /* ---------- title block ---------- */
+  /* Ruled cells on the sheet itself (no fills, so the print shows through);
+     each cell draws its top and left rule, the block its right and bottom,
+     and the outer frame comes out 2px on every side. */
+  .tb {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--ln);
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    font-size: 14px;
+  }
+  .tb > div {
+    border-top: 1px solid var(--ln);
+    border-left: 1px solid var(--ln);
+    padding: 5px 9px 6px;
+    min-width: 0;
+  }
+  .tb .k {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--tx-2);
+    margin-bottom: 3px;
+  }
+  .tb .v {
+    display: block;
+    color: var(--tx);
+    line-height: 1.3;
+  }
+  .tb .t3 {
+    grid-column: 1 / 3;
+  }
+  .tb .s2 {
+    grid-column: 3 / 5;
+  }
+  .tb .stampcell {
+    grid-column: 3 / 5;
+    grid-row: 2 / 4;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.28); /* translucent: the print shows through */
+    padding-bottom: 12px;
+  }
+  .tb .links {
+    grid-column: 2 / 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 22px;
+  }
+  .tb .links a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--ln-soft);
+    padding-bottom: 1px;
+    transition: border-color 160ms var(--ease);
+  }
+  .tb .links a:hover {
+    border-color: var(--ln);
+  }
+  .tb-compact {
+    grid-template-columns: 1fr auto auto;
+    align-self: end;
+    justify-self: end;
+    width: min(100%, 560px);
+  }
+  .ga .tb {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: end;
+  }
+
+  /* the stamp — the one red on the sheet, printed, not drawn: a slight cant,
+     a roughened edge (the ink filter in page.tsx), uneven ink (the mask),
+     and a keyline set in from the edge by a real gap */
+  .stamp {
+    --ink: var(--stamp);
+    position: relative;
+    display: inline-block;
+    transform: rotate(-2deg);
+    color: #fff;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .stamp-ink {
+    display: block;
+    padding: 13px 22px 12px;
+    background: var(--ink);
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1;
+    box-shadow:
+      inset 0 0 0 4px var(--ink),
+      inset 0 0 0 5.5px rgba(255, 255, 255, 0.9);
+    filter: url("#ink-rough");
+    -webkit-mask-image: var(--ink-mask);
+    mask-image: var(--ink-mask);
+    -webkit-mask-size: 200px 200px;
+    mask-size: 200px 200px;
+    transition: background-color 160ms var(--ease);
+  }
+  .stamp:hover {
+    --ink: var(--stamp-2);
+  }
+  .stamp.big .stamp-ink {
+    font-size: clamp(18px, 2vw, 24px);
+    padding: 18px 30px 17px;
+  }
+  .tb .stampcell .stamp {
+    margin: auto;
+  }
+
+  /* ---------- sheets 2 and 3 ---------- */
+  .stack {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    gap: 26px;
+  }
+  .sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 28px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ln);
+  }
+  .sheet-head h2 {
+    margin: 0;
+    font-weight: 400;
+    font-size: clamp(30px, 3.4vw, 48px);
+    line-height: 1;
+    letter-spacing: 0.05em;
+  }
+  .sheet-head p {
+    margin: 0;
+    color: var(--tx-2);
+    font-size: 14px;
+  }
+
+  /* detail views: source at left, print at right */
+  .details {
+    display: grid;
+    gap: 30px;
+    align-content: start;
+  }
+  .detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 30px;
+    align-items: stretch;
+  }
+  .detail .d-label {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: var(--tx-2);
+  }
+  .detail .d-label b {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    font-weight: 400;
+    color: var(--tx);
+    font-size: 22px;
+    letter-spacing: 0.08em;
+  }
+  /* the detail balloon carries its letter, as on the drawing */
+  .balloon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--ln);
+    border-radius: 50%;
+    box-sizing: border-box;
+    font-size: 14px;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .src,
+  .print {
+    position: relative;
+    min-width: 0;
+  }
+  .src .tag,
+  .print .tag {
+    position: absolute;
+    top: -19px;
+    left: 0;
+    font-family: var(--letter);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--tx-2);
+  }
+  .src {
+    margin: 0;
+    border: 1px solid var(--ln-soft);
+    padding: 22px 20px;
+    font-family: "DocForge Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--tx);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .print {
+    border: 1px solid var(--ln-soft);
+    padding: 24px 22px;
+    display: flex;
+    align-items: center;
+  }
+  .print .paper {
+    width: 100%;
+    background: #fff;
+    color: #1c2128;
+    padding: 18px 22px;
+    outline: 1.5px solid var(--ln);
+    outline-offset: 5px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .print .doc .content > :last-child {
+    margin-bottom: 0;
+  }
+  .print .doc .toc-wrap {
+    break-after: auto;
+  }
+  .print .doc .katex-display {
+    overflow: auto hidden;
+  }
+
+  /* parts list and revisions — ruled tables in lettering */
+  .parts,
+  .revs {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .parts th,
+  .revs th {
+    text-align: left;
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--tx-2);
+    padding: 0 12px 8px 0;
+    border-bottom: 2px solid var(--ln);
+  }
+  .parts td,
+  .revs td {
+    padding: 10px 12px 10px 0;
+    border-bottom: 1px solid var(--ln-faint);
+    vertical-align: top;
+  }
+  .parts td.n,
+  .revs td.n {
+    width: 3.5em;
+    color: var(--tx-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .parts td.q {
+    width: 3.5em;
+    color: var(--tx-2);
+  }
+  .parts td.d {
+    width: 30%;
+    color: var(--tx);
+  }
+  .parts td.m,
+  .revs td.m {
+    color: var(--tx-2);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .parts td.m b,
+  .revs td.m b {
+    font-weight: 400;
+    color: var(--tx);
+  }
+  .bom {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+    gap: 28px 44px;
+    align-content: start;
+  }
+  .bom h3 {
+    margin: 0 0 12px;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: var(--tx-2);
+  }
+  .close {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 22px 40px;
+    align-items: center;
+    padding-top: 26px;
+    border-top: 2px solid var(--ln);
+  }
+  .close p {
+    margin: 0;
+  }
+  .close .big-line {
+    font-size: clamp(22px, 2.6vw, 36px);
+    line-height: 1.15;
+    max-width: 26ch;
+    text-wrap: balance;
+  }
+  .close .alt {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--tx-2);
+  }
+  .close .alt a {
+    color: var(--tx);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ln-soft);
+  }
+  .close .alt a:hover {
+    border-color: var(--ln);
+  }
+  .footline {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 20px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--tx-2);
+  }
+
+  /* short desks (1366 × 768 laptops): the same sheet, set smaller, so the
+     title block and its stamp stay inside the first viewport */
+  @media (min-width: 1101px) and (max-height: 820px) {
+    .sheet-body {
+      padding: 18px 22px 14px;
+    }
+    .ga {
+      gap: 16px 28px;
+    }
+    .name {
+      font-size: clamp(52px, 5.6vw, 78px);
+    }
+    .sub {
+      margin-top: 8px;
+    }
+    .hook {
+      margin-top: 12px;
+      font-size: 19px;
+    }
+    .notes > li {
+      padding: 4px 0;
+    }
+    .tb {
+      font-size: 12px;
+    }
+    .tb > div {
+      padding: 4px 8px 5px;
+    }
+    .stamp-ink {
+      padding: 11px 18px 10px;
+      font-size: 15px;
+    }
+  }
+
+  /* ---------- narrower sheets ---------- */
+  @media (max-width: 1100px) {
+    & {
+      --pz: 0.6;
+    }
+    .ga {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto;
+    }
+    .ga .head {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .ga .drawing-wrap {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .ga .notes {
+      grid-column: 1;
+      grid-row: 3;
+      max-width: none;
+    }
+    .ga .tb {
+      grid-column: 1;
+      grid-row: 4;
+    }
+    .bom {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 760px) {
+    & {
+      /* the drawing without its right-hand callouts: the 1000 px that hold
+         the page and its dimensions, clipped from the same 1320 px canvas
+         so every line stays registered to the page */
+      --pz: 0.31;
+      --dim-fs: 40px;
+      --dim-fs-2: 30px;
+    }
+    .sheet {
+      padding: 10px;
+      min-height: 0;
+    }
+    .sheet-frame {
+      padding: 16px;
+    }
+    .sheet-frame::after {
+      inset: 14px;
+    }
+    .zones-x {
+      left: 15px;
+      right: 15px;
+      height: 14px;
+      line-height: 14px;
+      font-size: 9px;
+    }
+    .zones-y {
+      top: 15px;
+      bottom: 15px;
+      width: 14px;
+      font-size: 9px;
+    }
+    .cmark.t,
+    .cmark.b {
+      height: 16px;
+    }
+    .cmark.l,
+    .cmark.r {
+      width: 16px;
+    }
+    .sheet-body {
+      padding: 18px 12px 14px;
+      gap: 22px;
+    }
+    .drawing {
+      width: 1000px;
+      overflow: hidden;
+    }
+    .dims .callouts {
+      display: none;
+    }
+    .dims .vd {
+      /* the 22/24 numerals move outboard of their dimension line, clear of
+         the page outline and the extension-line ends */
+      transform: translateX(46px);
+    }
+    .dims .dl {
+      stroke-width: 5;
+    }
+    .dims .xl {
+      stroke-width: 3.5;
+    }
+    .name {
+      font-size: clamp(52px, 17vw, 72px);
+    }
+    .hook {
+      margin-top: 18px;
+    }
+    .notes {
+      font-size: 13px;
+    }
+    .notes > li {
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+    .tb {
+      grid-template-columns: 1fr 1fr;
+      font-size: 13px;
+    }
+    .tb .t3,
+    .tb .s2,
+    .tb .links,
+    .tb .stampcell {
+      grid-column: 1 / -1;
+    }
+    .tb .stampcell {
+      grid-row: auto;
+    }
+    .tb-compact {
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+    }
+    .detail {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 30px;
+    }
+    .parts thead {
+      display: none;
+    }
+    .parts tr {
+      display: grid;
+      grid-template-columns: 2.6em 2.6em minmax(0, 1fr);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--ln-faint);
+    }
+    .parts td {
+      border: 0;
+      padding: 2px 8px 2px 0;
+    }
+    .parts td.d {
+      width: auto;
+    }
+    .parts td.m {
+      grid-column: 1 / -1;
+      padding-top: 4px;
+    }
+    .close {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 400px) {
+    & {
+      --pz: 0.29;
+    }
+  }
+}
+
+@keyframes df-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes df-fade {
+  from {
+    opacity: 0;
+  }
+}
