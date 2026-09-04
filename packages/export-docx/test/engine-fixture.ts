@@ -268,7 +268,7 @@ function imageMetrics(dataUrl: unknown): { w: number; h: number } | null {
 /* The sheet with the reader's orientation applied (§8.2), mirroring the
    engine — landscape swaps it, portrait returns the PAGES entry itself. */
 function pageSpec(settings: Record<string, unknown>): { w: number; h: number; label: string } {
-  const base = PAGES[String(settings.page)] || PAGES.A4;
+  const base = PAGES[String(settings.page) as keyof typeof PAGES] || PAGES.A4;
   if (String(settings.orientation ?? "").toLowerCase() !== "landscape") return base;
   return { w: base.h, h: base.w, label: `${base.label} landscape` };
 }
