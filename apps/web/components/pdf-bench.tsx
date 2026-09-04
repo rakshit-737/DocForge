@@ -434,7 +434,10 @@ const BENCH_HTML = `
        same way in both modes. The package tolerates their absence and is
        driven through its api instead. -->
 </div>
-<div id="peScroll"><div id="peDeck"></div></div>
+<!-- tabindex: the proof scroller holds canvases, which nothing can focus, so
+     without it a keyboard user cannot scroll the pages at all (axe:
+     scrollable-region-focusable). -->
+<div id="peScroll" tabindex="0" role="group" aria-label="Proof pages"><div id="peDeck"></div></div>
 <input type="file" id="peImgInput" hidden accept="image/png,image/jpeg">
 `;
 

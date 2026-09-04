@@ -115,10 +115,16 @@ function useEdgeFade() {
 function Row({ children }: { children: ReactNode }) {
   const { ref, fade } = useEdgeFade();
   const mask = `linear-gradient(to right, transparent 0, #000 ${fade.l ? "38px" : "0px"}, #000 calc(100% - ${fade.r ? "38px" : "0px"}), transparent 100%)`;
+  /* A row that actually scrolls has to be reachable by keyboard, or its
+     clipped end is unreachable without a mouse (axe: scrollable-region-
+     focusable). It earns its tab stop only while it overflows — a row that
+     fits adds none, which keeps ledger A4's one-stop strip intact. */
+  const scrolls = fade.l || fade.r;
   return (
     <div
       ref={ref}
-      className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      {...(scrolls ? { tabIndex: 0, role: "group", "aria-label": "Toolbar row, scrollable" } : {})}
+      className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus [&::-webkit-scrollbar]:hidden"
       style={{ WebkitMaskImage: mask, maskImage: mask }}
     >
       {children}
