@@ -25,7 +25,7 @@ caught it (MASTER-PROMPT §10.7).
 | PDF-bench leaves studio masthead armed | **FIXED SINCE** | — | `body.pdf-mode` hides templates/settings/exports (`app.css:164-169`); palette blocked in bench (`main.js:1585`) |
 | Ctrl+S downloads a fresh file every press | **CONFIRMED** | [#4](https://github.com/rakshit-737/docforge/issues/4) | `main.js:2069` → `saveProject()` → unconditional `downloadBlob()` |
 | Find: no "n of m", no toggles, no highlights | **CONFIRMED** | [#8](https://github.com/rakshit-737/docforge/issues/8) | `main.js:1652-1676`; bare textarea, selection-only marking |
-| Esc doesn't close Templates; zoom duplicated | **PARTIAL** | [#5](https://github.com/rakshit-737/docforge/issues/5) | Esc fixed (`main.js:2091-2093`); two zoom clusters in two styles remain |
+| Esc doesn't close Templates; zoom duplicated | **FIXED IN THE REBUILD** (`d5db7a0`) | [#5](https://github.com/rakshit-737/docforge/issues/5) | Esc was fixed in the classic build (`main.js:2091-2093`); the studio now mounts ONE `<ZoomCluster>` in both the preview bar and the PDF bench — same four controls, a percentage that fits when clicked on either, and the same 1.35 fit cap. The frozen 1.x edition keeps its own chrome by design |
 | Shift+Tab no outdent; no Ctrl+1/2/3 | **CONFIRMED** | [#6](https://github.com/rakshit-737/docforge/issues/6) | `main.js:2056` inserts spaces on every Tab; `h1/h2/h3` actions unbound |
 | Template switch destructive behind confirm | **PARTIAL** | [#7](https://github.com/rakshit-737/docforge/issues/7) | text undo landed; settings + attachments still lost for good |
 
