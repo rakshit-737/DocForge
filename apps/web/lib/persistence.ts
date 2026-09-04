@@ -47,19 +47,29 @@ export interface StoredUserFont {
   addedAt: number;
 }
 
+/* A saved house style (lib/theme-presets.ts owns what counts as a "look"):
+   the document's appearance with none of its content, keyed by its name. */
+export interface StoredPreset {
+  name: string;
+  look: Record<string, unknown>;
+  savedAt: number;
+}
+
 interface DocForgeDB extends DBSchema {
   documents: { key: string; value: StoredDoc };
   versions: { key: string; value: StoredVersion; indexes: { "by-time": number } };
   fonts: { key: string; value: StoredUserFont };
+  presets: { key: string; value: StoredPreset };
 }
 
 let db: Promise<IDBPDatabase<DocForgeDB>> | null = null;
 /** The one connection to the "docforge" database, shared by every module that
     stores anything. Schema 2 added the version timeline, 3 the reader's own
-    typefaces; each upgrade only creates what is missing, so a reader arriving
-    from any earlier version keeps everything they had. */
+    typefaces, 4 the saved house styles; each upgrade only creates what is
+    missing, so a reader arriving from any earlier version keeps everything
+    they had. */
 export function docforgeDB(): Promise<IDBPDatabase<DocForgeDB>> {
-  db ??= openDB<DocForgeDB>("docforge", 3, {
+  db ??= openDB<DocForgeDB>("docforge", 4, {
     upgrade(d) {
       if (!d.objectStoreNames.contains("documents")) {
         d.createObjectStore("documents", { keyPath: "id" });
@@ -69,6 +79,9 @@ export function docforgeDB(): Promise<IDBPDatabase<DocForgeDB>> {
       }
       if (!d.objectStoreNames.contains("fonts")) {
         d.createObjectStore("fonts", { keyPath: "name" });
+      }
+      if (!d.objectStoreNames.contains("presets")) {
+        d.createObjectStore("presets", { keyPath: "name" });
       }
     },
   });

@@ -38,6 +38,7 @@ These are commitments, not marketing (MASTER-PROMPT §5):
 - **Screenshot placeholders** — `[screenshot: caption]` prints as a neat labelled box, or click it in the preview to attach the real image
 - **Automatic table of contents** — `[toc]` with dotted leaders and real page numbers
 - **Cover page** — title, subtitle, author, date, course/company label; full-bleed accent band in the PDF *and* the Word file
+- **Save a look, apply it anywhere** — name this document’s appearance (theme, accent, page, typefaces, size, leading, borders, the running head, the citation style) and apply it to any other document, or share it with a classmate as a small JSON file. A saved look carries no title, author or date — the content is always the document’s own
 - **4 themes** (Modern, Executive, Academic, Minimal) × any accent colour × A4/Letter × 3 margin presets
 - **Callouts** — `:::note`, `:::tip`, `:::warning`, `:::important` — tables, lists and code inside them survive into Word intact; `:::banner` sets a filled title plate
 - **Word's Home ribbon** — underline, strikethrough, highlighter in Word's 15 colours, sub/superscript, text colour / shading / per-selection size and typeface, small caps and all caps, alignment blocks, change-case and clear-formatting — every one lands identically in the PDF and as real run properties in the .docx

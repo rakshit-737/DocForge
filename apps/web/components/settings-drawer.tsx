@@ -15,12 +15,21 @@
    Every field writes through useDocStore.patchSettings — the store owns the
    classic accent-follows-theme behaviour. */
 import * as Dialog from "@radix-ui/react-dialog";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { loadStudio } from "@/lib/bootstrap";
 import { toast } from "@/lib/find";
 import type { Settings } from "@/lib/settings";
 import { useDocStore } from "@/lib/store";
+import {
+  deletePreset,
+  listPresets,
+  parsePreset,
+  savePreset,
+  serialisePreset,
+  storePreset,
+  type ThemePreset,
+} from "@/lib/theme-presets";
 import { type UserFont, userFaceEntries, useUserFonts } from "@/lib/user-fonts";
 
 /* ---------- drawer state — the shell (and later the palette) opens it ---------- */
@@ -341,6 +350,135 @@ function ToggleRow({
         className="relative h-[22px] w-10 flex-none rounded-menu bg-desk shadow-[var(--recess)] transition-colors duration-[160ms] ease-out after:absolute after:left-[3px] after:top-[3px] after:h-4 after:w-4 after:rounded-desk after:bg-ink-3 after:transition-[left,background-color] after:duration-[160ms] after:ease-out after:content-[''] peer-checked:bg-ink peer-checked:after:left-[21px] peer-checked:after:bg-surface peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:outline-focus"
       />
     </label>
+  );
+}
+
+/* ---------- saved house styles (§8.2) ---------- */
+
+function ThemeShelf() {
+  const settings = useDocStore((s) => s.settings);
+  const patch = useDocStore((s) => s.patchSettings);
+  const [presets, setPresets] = useState<ThemePreset[]>([]);
+  const [name, setName] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+
+  const refresh = useCallback(async () => setPresets(await listPresets()), []);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const save = async () => {
+    const preset = await savePreset(name || "My house style", settings);
+    setName("");
+    await refresh();
+    toast(`“${preset.name}” saved — apply it to any document`, "info", 4500);
+  };
+
+  const apply = (preset: ThemePreset) => {
+    /* Only the look moves. The document's title, author and date are its own,
+       and a saved style must never carry someone else's into it. */
+    patch(preset.look as Partial<Settings>);
+    toast(`“${preset.name}” applied`);
+  };
+
+  const share = (preset: ThemePreset) => {
+    const blob = new Blob([serialisePreset(preset)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${preset.name.replace(/[^\w-]+/g, "-").slice(0, 40) || "theme"}.docforge-theme.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  };
+
+  const take = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const preset = parsePreset(await file.text());
+      await storePreset(preset);
+      await refresh();
+      toast(`“${preset.name}” added to your styles`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "That theme file could not be read", "warn", 5000);
+    } finally {
+      if (input.current) input.current.value = "";
+    }
+  };
+
+  return (
+    <div className="mt-3">
+      <p className="m-0 mb-1.5 text-[11.5px] leading-[1.5] text-ink-3">
+        Save this document&rsquo;s look — theme, accent, page, typefaces, spacing, borders, the
+        running head — and apply it to any other. A style carries no title, author or date.
+      </p>
+      {presets.length > 0 ? (
+        <ul className="m-0 mb-2 list-none border border-line p-0">
+          {presets.map((p) => (
+            <li
+              key={p.name}
+              className="flex items-center gap-1.5 border-line border-b px-2.5 py-1.5 last:border-b-0"
+            >
+              <button
+                type="button"
+                className="min-w-0 flex-1 truncate text-left text-[12.5px] text-ink hover:text-press"
+                onClick={() => apply(p)}
+                title="Apply this look to the current document"
+              >
+                {p.name}
+              </button>
+              <button
+                type="button"
+                className="btn-quiet shrink-0"
+                onClick={() => share(p)}
+                title="Save it as a file to share"
+              >
+                Share
+              </button>
+              <button
+                type="button"
+                className="btn-quiet shrink-0"
+                onClick={async () => {
+                  await deletePreset(p.name);
+                  await refresh();
+                }}
+                title={`Forget ${p.name}`}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void save();
+          }}
+          placeholder="Name this look"
+          aria-label="Name for the saved look"
+          className="h-7 min-w-0 flex-1 border border-line bg-tray px-2 text-[12.5px] text-ink placeholder:text-ink-3"
+        />
+        <button type="button" className="btn-tray border border-line" onClick={() => void save()}>
+          Save
+        </button>
+        <button
+          type="button"
+          className="btn-quiet"
+          onClick={() => input.current?.click()}
+          title="Add a style someone shared with you"
+        >
+          Add a file…
+        </button>
+        <input
+          ref={input}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={(e) => void take(e.target.files?.[0])}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -758,6 +896,9 @@ export function SettingsDrawer() {
                 </Field>
               </div>
             </details>
+
+            <h3 className={`mt-6 ${GROUP_HEAD}`}>Saved looks</h3>
+            <ThemeShelf />
 
             <h3 className={`mt-6 ${GROUP_HEAD}`}>Layout</h3>
             {TOGGLES.map((t) => (
