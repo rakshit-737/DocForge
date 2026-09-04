@@ -19,19 +19,44 @@ export interface StoredDoc {
   updatedAt: number;
 }
 
+/* One snapshot on the version timeline (lib/versions.ts owns the policy; the
+   shape lives here because the database schema has to be declared in ONE
+   place — two openDB calls at different versions deadlock, the second waiting
+   forever for the first connection to close). */
+export interface StoredVersion {
+  id: string;
+  at: number;
+  kind: "auto" | "manual";
+  label?: string;
+  docId: string;
+  source: string;
+  settings: Settings;
+  words: number;
+}
+
 interface DocForgeDB extends DBSchema {
   documents: { key: string; value: StoredDoc };
+  versions: { key: string; value: StoredVersion; indexes: { "by-time": number } };
 }
 
 let db: Promise<IDBPDatabase<DocForgeDB>> | null = null;
-function open(): Promise<IDBPDatabase<DocForgeDB>> {
-  db ??= openDB<DocForgeDB>("docforge", 1, {
+/** The one connection to the "docforge" database, shared by every module that
+    stores anything. Schema 2 adds the version timeline; a reader upgrading
+    from 1 keeps their document untouched. */
+export function docforgeDB(): Promise<IDBPDatabase<DocForgeDB>> {
+  db ??= openDB<DocForgeDB>("docforge", 2, {
     upgrade(d) {
-      d.createObjectStore("documents", { keyPath: "id" });
+      if (!d.objectStoreNames.contains("documents")) {
+        d.createObjectStore("documents", { keyPath: "id" });
+      }
+      if (!d.objectStoreNames.contains("versions")) {
+        d.createObjectStore("versions", { keyPath: "id" }).createIndex("by-time", "at");
+      }
     },
   });
   return db;
 }
+const open = docforgeDB;
 
 const CURRENT = "current";
 let timer: ReturnType<typeof setTimeout> | null = null;

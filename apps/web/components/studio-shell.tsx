@@ -25,6 +25,7 @@ import type { Settings } from "@/lib/settings";
 import { useDocStore, useUiStore } from "@/lib/store";
 import type { TemplateDocument } from "@/lib/templates";
 import { resolveTemplate, TEMPLATES } from "@/lib/templates";
+import { armVersionSnapshots, snapshot } from "@/lib/versions";
 import { anyDialogOpen, CommandPalette } from "./command-palette";
 import { ConfirmDialog } from "./confirm-dialog";
 import { DropZone } from "./drop-zone";
@@ -40,6 +41,7 @@ import { SettingsDrawer, useSettingsDrawer } from "./settings-drawer";
 import { SourcePane } from "./source-pane";
 import { TemplatesMenu } from "./templates-menu";
 import { FormatToolbar } from "./toolbar";
+import { VersionPanel } from "./version-panel";
 
 export function StudioShell() {
   const [view, setView] = useState<EditorView | null>(null);
@@ -48,6 +50,7 @@ export function StudioShell() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [pdfPending, setPdfPending] = useState<File | null>(null);
   const [savedStamp, setSavedStamp] = useState<string>("");
@@ -82,6 +85,14 @@ export function StudioShell() {
       disarm = armAutosave((at) =>
         setSavedStamp(new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })),
       );
+      /* The timeline arms with autosave: autosave keeps the current state,
+         version history keeps the road back to the earlier ones (§8.1). */
+      const disarmVersions = armVersionSnapshots();
+      const autosaveOnly = disarm;
+      disarm = () => {
+        autosaveOnly();
+        disarmVersions();
+      };
     })();
     try {
       if (localStorage.getItem("docforge.ui.theme") === "dark") {
@@ -365,6 +376,25 @@ export function StudioShell() {
     { group: "Actions", label: "New document", run: () => setConfirmNew(true) },
     {
       group: "Actions",
+      label: "Version history…",
+      hint: "restore an earlier state",
+      run: () => setVersionsOpen(true),
+    },
+    {
+      group: "Actions",
+      label: "Save a checkpoint",
+      hint: "a named point to come back to",
+      run: () => {
+        void snapshot("manual").then((v) =>
+          toast(
+            v ? "Checkpoint saved — find it in Version history" : "Nothing to check point yet",
+            v ? "info" : "warn",
+          ),
+        );
+      },
+    },
+    {
+      group: "Actions",
       label: "Find in source",
       hint: "Ctrl+F",
       run: () => useFindStore.getState().setOpen(true, false),
@@ -465,9 +495,17 @@ export function StudioShell() {
             {openFile}
           </span>
         ) : null}
-        <span className="font-mono text-[11.5px] text-ink-3" aria-live="polite">
-          {savedStamp ? `saved ${savedStamp}` : ""}
-        </span>
+        {/* The autosave stamp is also the door to the timeline: the moment a
+            reader wonders "when was that saved?" is the moment they want the
+            earlier states (§8.1). */}
+        <button
+          type="button"
+          className="font-mono text-[11.5px] text-ink-3 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+          onClick={() => setVersionsOpen(true)}
+          title="Version history — earlier states of this document"
+        >
+          <span aria-live="polite">{savedStamp ? `saved ${savedStamp}` : "version history"}</span>
+        </button>
 
         {/* Hierarchy answers "what do I click first" (§7.2): the file-ops tray
             holds the small verbs, the products stand apart with ONE red plate,
@@ -646,6 +684,11 @@ export function StudioShell() {
       <SettingsDrawer />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} commands={commands} />
       <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      <VersionPanel
+        open={versionsOpen}
+        onOpenChange={setVersionsOpen}
+        onRestore={(label, doc) => applyWithUndo(label, doc)}
+      />
       <FirstRun />
       <ConfirmDialog
         open={confirmNew}
