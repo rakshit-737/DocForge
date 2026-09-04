@@ -32,6 +32,7 @@
    Classic behaviour is the spec: toolbar, toasts and confirm copy ported from
    src/index.html #pdfEditor + src/js/main.js bindPdfEditor()/importFile(). */
 import type { PdfEditorApi } from "@docforge/pdf-editor";
+import { PageTools, type PageToolsLib } from "@docforge/pdf-editor/page-tools";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -109,6 +110,256 @@ function loadPdfEditor(): Promise<PdfEditorApi> {
     });
   }
   return editorLoading;
+}
+
+/* ---------------- the page toolbox (§8.4) ----------------
+   Rotate, delete, reorder, merge, split and number pages — all of it
+   client-side, on the bytes.
+
+   Every operation runs on an EXPORT of the current state, not on the file as
+   opened: overlay edits are baked in first, the pages are rearranged, and the
+   result is re-opened on the bench. That is what keeps the two halves honest
+   with each other — a page index can never drift out from under an edit. */
+
+/** Pages currently on the bench, read from the deck the package rendered. */
+function benchPageCount(): number {
+  return benchRoot ? benchRoot.querySelectorAll(".pe-page").length : 0;
+}
+
+function PageToolbar({ onReopened }: { onReopened: () => void }) {
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [count, setCount] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [ranges, setRanges] = useState("");
+  const mergeInput = useRef<HTMLInputElement>(null);
+
+  /* The deck is the package's DOM, so the strip watches it rather than being
+     told: every operation that changes the page set re-renders it. */
+  useEffect(() => {
+    const tick = () => setCount(benchPageCount());
+    tick();
+    const id = window.setInterval(tick, 900);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const pages = Array.from({ length: count }, (_, i) => i);
+  const chosen = selected.size ? [...selected].sort((a, b) => a - b) : pages;
+
+  const toggle = (i: number) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+
+  /** Bake the edits, run one operation on the bytes, put the result back on
+      the bench. `fn` returns the new document, or null when it handed its own
+      output over (the split downloads its parts). */
+  const run = useCallback(
+    async (
+      label: string,
+      fn: (lib: PageToolsLib, bytes: Uint8Array, name: string) => Promise<Uint8Array | null>,
+    ) => {
+      setBusy(true);
+      try {
+        const api = await loadPdfEditor();
+        await ensurePdfLib();
+        /* ensurePdfLib only guarantees the global — the vendored single-file
+           path never returns a namespace, so the toolbox reads it from where
+           both editions put it. */
+        const lib = window.PDFLib as unknown as PageToolsLib;
+        const { blob, name: exported } = await api.exportPdf();
+        /* exportPdf stamps "-edited" on the name; five toolbox passes would
+           otherwise leave tools-edited-edited-edited-edited-edited.pdf. */
+        const name = exported.replace(/(?:-edited)+(?=\.pdf$)/i, "-edited");
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        const out = await fn(lib, bytes, name);
+        if (out) {
+          const buf = new ArrayBuffer(out.byteLength);
+          new Uint8Array(buf).set(out);
+          await api.open(buf, name);
+          setSelected(new Set());
+          setCount(benchPageCount());
+          onReopened();
+          toast(`${label} — the bench is showing the result`);
+        }
+      } catch (e) {
+        console.error("[DocForge] page tool failed", e);
+        toast(e instanceof Error && e.message ? e.message : `${label} failed`, "warn", 5000);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onReopened],
+  );
+
+  const scope = selected.size ? `${selected.size} selected` : "all pages";
+
+  return (
+    <div
+      data-chrome=""
+      className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-line border-b bg-desk px-4 py-1.5"
+    >
+      <span className="font-mono text-[11px] text-ink-3">
+        Pages <b className="text-ink-2">{count || "—"}</b>
+      </span>
+      <div className="flex max-w-[38vw] flex-wrap items-center gap-1 overflow-x-auto">
+        {pages.map((i) => (
+          <button
+            key={i}
+            type="button"
+            aria-pressed={selected.has(i)}
+            onClick={() => toggle(i)}
+            title={`Page ${i + 1}`}
+            className={`h-6 min-w-6 border px-1.5 font-mono text-[11px] ${
+              selected.has(i)
+                ? "border-press bg-press text-press-ink"
+                : "border-line bg-tray text-ink-2 hover:text-ink"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+      <span className="font-mono text-[10.5px] text-ink-3">{scope}</span>
+      <div className="ml-auto flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !count}
+          onClick={() =>
+            void run("Rotated left", (lib, b) => PageTools.rotatePages(lib, b, chosen, -90))
+          }
+          title="Turn the selected pages a quarter turn anticlockwise"
+        >
+          ⟲
+        </button>
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !count}
+          onClick={() =>
+            void run("Rotated right", (lib, b) => PageTools.rotatePages(lib, b, chosen, 90))
+          }
+          title="Turn the selected pages a quarter turn clockwise"
+        >
+          ⟳
+        </button>
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || selected.size === 0 || selected.size >= count}
+          onClick={() =>
+            void run("Pages deleted", (lib, b) => PageTools.deletePages(lib, b, chosen))
+          }
+          title="Remove the selected pages"
+        >
+          Delete
+        </button>
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || selected.size !== 1 || chosen[0] === 0}
+          onClick={() =>
+            void run("Page moved", (lib, b) => {
+              const i = chosen[0] as number;
+              const order = pages.slice();
+              order.splice(i - 1, 0, ...order.splice(i, 1));
+              return PageTools.reorderPages(lib, b, order);
+            })
+          }
+          title="Move the selected page one place earlier"
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || selected.size !== 1 || chosen[0] === count - 1}
+          onClick={() =>
+            void run("Page moved", (lib, b) => {
+              const i = chosen[0] as number;
+              const order = pages.slice();
+              order.splice(i + 1, 0, ...order.splice(i, 1));
+              return PageTools.reorderPages(lib, b, order);
+            })
+          }
+          title="Move the selected page one place later"
+        >
+          →
+        </button>
+        <span className="h-4 w-px bg-line" aria-hidden />
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !count}
+          onClick={() => mergeInput.current?.click()}
+          title="Append another PDF to this one"
+        >
+          Merge…
+        </button>
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !count}
+          onClick={() =>
+            void run("Pages numbered", (lib, b) =>
+              PageTools.stampPageNumbers(lib, b, {
+                skip: selected.size ? [...selected] : [],
+                format: "{n}",
+              }),
+            )
+          }
+          title="Stamp page numbers into the pages — selected pages are skipped"
+        >
+          Number
+        </button>
+        <input
+          value={ranges}
+          onChange={(e) => setRanges(e.target.value)}
+          placeholder="1-3, 5-"
+          aria-label="Page ranges to split out"
+          className="h-6 w-24 border border-line bg-tray px-1.5 font-mono text-[11px] text-ink placeholder:text-ink-3"
+        />
+        <button
+          type="button"
+          className="btn-ghost"
+          disabled={busy || !count || !ranges.trim()}
+          onClick={() =>
+            void run("Split", async (lib, b, name) => {
+              const parsed = PageTools.parseRanges(ranges, count);
+              const parts = await PageTools.splitPdf(lib, b, parsed);
+              const stem = name.replace(/\.pdf$/i, "");
+              parts.forEach((part: Uint8Array, i: number) => {
+                const copy = new Uint8Array(part.byteLength);
+                copy.set(part);
+                downloadBlob(new Blob([copy], { type: "application/pdf" }), `${stem}-${i + 1}.pdf`);
+              });
+              toast(`${parts.length} file${parts.length === 1 ? "" : "s"} downloaded`);
+              return null; // the parts were handed over; the bench keeps the original
+            })
+          }
+          title="Download each range as its own PDF"
+        >
+          Split
+        </button>
+      </div>
+      <input
+        ref={mergeInput}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          const extra = new Uint8Array(await f.arrayBuffer());
+          void run("Merged", (lib, b) => PageTools.mergePdfs(lib, [b, extra]));
+        }}
+      />
+    </div>
+  );
 }
 
 /* ---------------- the singleton bench chrome ----------------
@@ -446,6 +697,8 @@ export function PdfBench() {
           )}
         </div>
       </header>
+
+      {phase === "open" ? <PageToolbar onReopened={() => setPhase("open")} /> : null}
 
       {/* the bench floor: singleton chrome when a proof is open, else the invitation */}
       <div className="relative flex min-h-0 flex-1 flex-col">

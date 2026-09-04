@@ -5,13 +5,15 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./global": "./src/global.ts"
+    "./global": "./src/global.ts",
+    "./page-tools": "./src/page-tools.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "pdf-lib": "1.17.1",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   }
